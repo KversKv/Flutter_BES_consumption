@@ -265,6 +265,24 @@ class SniffingConfigPanel extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
+        Text('侦听用例'),
+        const SizedBox(height: 6),
+        SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<SniffCase>(
+            segments: const [
+              ButtonSegment(value: SniffCase.btSniff, label: Text('BT sniff')),
+              ButtonSegment(value: SniffCase.btPage, label: Text('BT page')),
+              ButtonSegment(value: SniffCase.btPagescan, label: Text('BT pagescan')),
+              ButtonSegment(value: SniffCase.hdt, label: Text('HDT')),
+              ButtonSegment(value: SniffCase.relay, label: Text('Relay')),
+            ],
+            selected: {st.caseType},
+            onSelectionChanged: (s) => context.read<SniffingState>().setCase(s.first),
+          ),
+        ),
+        const SizedBox(height: 12),
+
         Text('侦听间隔 (ms): ${st.sniffIntervalMs.toStringAsFixed(2)}'),
         Slider(
           value: st.sniffIntervalMs,
