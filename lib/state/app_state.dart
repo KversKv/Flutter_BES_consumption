@@ -69,36 +69,36 @@ class AppState extends ChangeNotifier {
     ),
     
     BleChip(
-      id: 'BES2712B',
-      name: 'BES2712B',
-      vbat: 1.8,
+      id: 'BES2713B',
+      name: 'BES2713B',
+      vbat: 3,
       sleepCurrent_uA: 3.5,
       rxCurrent_mA: 5.2,
       rxWindow_us: 120.0,
       tifs_us: 150,
-      tifsCurrent_mA: 1.5,
+      tifsCurrent_mA: 2.55,
       txPowerLevelsDbm: [
         0, 8
       ],
       txCurrent_mA_forDbm: {
         0: 5.1,
-        8: 7.9,
+        8: 12.03,
       },
       postProcess_us: 590.0,
       postCurrent_mA: 1.03,
       // Setup拆分（总计约 2744us）
-      preProcess_us: 30.0,
-      preProcessCurrent_mA: 3.0,
-      crystalRampUp_us: 578.0,
-      crystalRampUpCurrent_mA: 0.56,
-      standby_us: 1400.0,
-      standbyCurrent_mA: 1.6,
-      startRadio_us: 344.0,
-      startRadioCurrent_mA: 1.6,
+      preProcess_us: 286.72,
+      preProcessCurrent_mA: 2.02,
+      crystalRampUp_us: 635.0,
+      crystalRampUpCurrent_mA: 0.78,
+      standby_us: 1229.0,
+      standbyCurrent_mA: 2.726,
+      startRadio_us: 82.92,
+      startRadioCurrent_mA: 2.17,
       // 广播通道间固定 ADV GAP（示例：5ms，电流取近似低功耗）
       advGap_us: 100.0,
-      advGapCurrent_mA: 1.5, // 1.5mA
-      description: 'BES2712B: low-power BLE transceiver, demo parameters.',
+      advGapCurrent_mA: 2.55, // 1.5mA
+      description: 'BES2713B: low-power BLE transceiver, demo parameters.',
     ),
 
     BleChip(
@@ -460,6 +460,12 @@ class AppState extends ChangeNotifier {
   late String selectedChipId;
   late ProfileParams params;
 
+  // Mode-specific RX parameters
+  double rxWindowConnectedUs = 0.0;
+  double rxCurrentConnected_mA = 0.0;
+  double rxWindowAdvertisingUs = 0.0;
+  double rxCurrentAdvertising_mA = 0.0;
+
   List<PowerEvent> events = [];
   double periodUs = 0;
   double averageCurrent_mA = 0;
@@ -481,6 +487,11 @@ class AppState extends ChangeNotifier {
       connIntervalMs: 200.0,
       payloadBytes: 0,
     );
+    // Initialize mode-specific RX params from the selected chip defaults
+    rxWindowConnectedUs = chip.rxWindow_us;
+    rxCurrentConnected_mA = chip.rxCurrent_mA;
+    rxWindowAdvertisingUs = chip.rxWindow_us;
+    rxCurrentAdvertising_mA = chip.rxCurrent_mA;
     recompute();
   }
 
@@ -489,6 +500,31 @@ class AppState extends ChangeNotifier {
   void setChip(String id) {
     selectedChipId = id;
     params.txPowerDbm = chip.snapTxPower(params.txPowerDbm);
+    // Update RX params when chip changes
+    rxWindowConnectedUs = chip.rxWindow_us;
+    rxCurrentConnected_mA = chip.rxCurrent_mA;
+    rxWindowAdvertisingUs = chip.rxWindow_us;
+    rxCurrentAdvertising_mA = chip.rxCurrent_mA;
+    recompute();
+  }
+
+  void setRxWindowConnectedUs(double us) {
+    rxWindowConnectedUs = us.clamp(50.0, 10000.0);
+    recompute();
+  }
+
+  void setRxCurrentConnected_mA(double ma) {
+    rxCurrentConnected_mA = ma;
+    recompute();
+  }
+
+  void setRxWindowAdvertisingUs(double us) {
+    rxWindowAdvertisingUs = us.clamp(50.0, 10000.0);
+    recompute();
+  }
+
+  void setRxCurrentAdvertising_mA(double ma) {
+    rxCurrentAdvertising_mA = ma;
     recompute();
   }
 
@@ -685,13 +721,13 @@ class AppState extends ChangeNotifier {
     final intervalUs = (params.connIntervalMs * 1000).clamp(7500, 4_000_000).toDouble();
     periodUs = intervalUs;
 
-    final rxI = chip.rxCurrent_mA;
+    final rxI = rxCurrentConnected_mA > 0 ? rxCurrentConnected_mA : chip.rxCurrent_mA;
     final txI = chip.txCurrentForPower(params.txPowerDbm);
     final postUs = chip.postProcess_us;
     final postI = chip.postCurrent_mA;
     final sleepI = chip.sleepCurrent_uA / 1000.0;
 
-  final rxUs = chip.rxWindow_us;
+  final rxUs = rxWindowConnectedUs > 0 ? rxWindowConnectedUs : chip.rxWindow_us;
     final tifs = chip.tifs_us;
     final txUs = _txTimeUs(params.payloadBytes, params.phy);
 

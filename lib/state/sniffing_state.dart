@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/ble_chip.dart';
 import '../models/power_event.dart';
 import 'app_state.dart';
+import '../models/profile_params.dart';
 
 enum SniffCase { btSniff, btPage, btPagescan, hdt, relay }
 
@@ -17,6 +18,14 @@ class SniffingState extends ChangeNotifier {
   double sniffWindowUs = 2000.0;
   int channelsPerCycle = 3;
   double channelGapUs = 5000.0;
+  int hdtRepeats = 2;
+  double relayHopGapUs = 1000.0;
+  // TX power used for modeling TX current in sniffing cases (default to 0dBm if available)
+  double txPowerDbm = 0.0;
+  // Mode and mode-specific intervals
+  Mode mode = Mode.advertising;
+  double connIntervalMs = 200.0;
+  double advIntervalMs = 100.0;
   SniffCase caseType = SniffCase.btSniff;
 
   List<PowerEvent> events = [];
@@ -27,6 +36,26 @@ class SniffingState extends ChangeNotifier {
 
   SniffingState() {
     selectedChipId = chips.first.id;
+    recompute();
+  }
+
+  void setTxPower(double dbm) {
+    txPowerDbm = dbm;
+    recompute();
+  }
+
+  void setMode(Mode m) {
+    mode = m;
+    recompute();
+  }
+
+  void setConnIntervalMs(double ms) {
+    connIntervalMs = ms;
+    recompute();
+  }
+
+  void setAdvIntervalMs(double ms) {
+    advIntervalMs = ms;
     recompute();
   }
 
@@ -59,6 +88,16 @@ class SniffingState extends ChangeNotifier {
 
   void setChannelGapUs(double us) {
     channelGapUs = us.clamp(0.0, 100000.0);
+    recompute();
+  }
+
+  void setHdtRepeats(int n) {
+    hdtRepeats = n.clamp(1, 10);
+    recompute();
+  }
+
+  void setRelayHopGapUs(double us) {
+    relayHopGapUs = us.clamp(0.0, 100000.0);
     recompute();
   }
 
@@ -100,6 +139,7 @@ class SniffingState extends ChangeNotifier {
   }
 
   void _recomputeBtSniff() {
+    // Sniffing: single TRX per period (one setup + one RX + one Post, then Sleep)
     events = [];
     final intervalUs = sniffIntervalMs * 1000.0;
     periodUs = intervalUs;
@@ -110,39 +150,48 @@ class SniffingState extends ChangeNotifier {
     final sleepI = chip.sleepCurrent_uA / 1000.0;
 
     double t = 0;
-    for (int i = 0; i < channelsPerCycle; i++) {
-      _addSetupPhases(events, t, chip);
-      t += _setupTotalUsChip(chip);
+    _addSetupPhases(events, t, chip);
+    t += _setupTotalUsChip(chip);
 
-      events.add(PowerEvent(
-        startUs: t,
-        durationUs: sniffWindowUs,
-        currentMa: rxI,
-        label: 'RX Sniff',
-        color: Colors.blue.shade400,
-      ));
-      t += sniffWindowUs;
+    events.add(PowerEvent(
+      startUs: t,
+      durationUs: sniffWindowUs,
+      currentMa: rxI,
+      label: 'RX Sniff',
+      color: Colors.blue.shade400,
+    ));
+    t += sniffWindowUs;
 
-      events.add(PowerEvent(
-        startUs: t,
-        durationUs: postUs,
-        currentMa: postI,
-        label: 'Post',
-        color: Colors.purple.shade400,
-      ));
-      t += postUs;
+    // TIFS (RX->TX turn-around)
+    events.add(PowerEvent(
+      startUs: t,
+      durationUs: chip.tifs_us,
+      currentMa: chip.tifsCurrent_mA,
+      label: 'TIFS',
+      color: Colors.orange.shade200,
+    ));
+    t += chip.tifs_us;
 
-      if (i < channelsPerCycle - 1) {
-        events.add(PowerEvent(
-          startUs: t,
-          durationUs: channelGapUs,
-          currentMa: sleepI,
-          label: 'Gap',
-          color: Colors.green.shade200,
-        ));
-        t += channelGapUs;
-      }
-    }
+    // TX (part of TRX after RX)
+    final txI = chip.txCurrentForPower(txPowerDbm);
+    events.add(PowerEvent(
+      startUs: t,
+      durationUs: sniffWindowUs,
+      currentMa: txI,
+      label: 'TX',
+      color: Colors.red.shade400,
+    ));
+    t += sniffWindowUs;
+
+    // Post-processing after TX
+    events.add(PowerEvent(
+      startUs: t,
+      durationUs: postUs,
+      currentMa: postI,
+      label: 'Post',
+      color: Colors.purple.shade400,
+    ));
+    t += postUs;
 
     final remaining = math.max(0, intervalUs - t);
     if (remaining > 0) {
@@ -162,7 +211,9 @@ class SniffingState extends ChangeNotifier {
   void _recomputeBtPage() {
     // BT Page: single-channel page-like scan per interval
     events = [];
-    final intervalUs = sniffIntervalMs * 1000.0;
+    // Choose interval based on current mode: connected uses connection interval, advertising uses adv interval
+    final intervalMs = (mode == Mode.connected) ? connIntervalMs : advIntervalMs;
+    final intervalUs = intervalMs * 1000.0;
     periodUs = intervalUs;
 
     final rxI = chip.rxCurrent_mA;
@@ -284,7 +335,7 @@ class SniffingState extends ChangeNotifier {
     final sleepI = chip.sleepCurrent_uA / 1000.0;
 
     double t = 0;
-    final repeats = (channelsPerCycle * 2).clamp(1, 10);
+    final repeats = hdtRepeats;
     for (int i = 0; i < repeats; i++) {
       _addSetupPhases(events, t, chip);
       t += _setupTotalUsChip(chip);
@@ -359,12 +410,12 @@ class SniffingState extends ChangeNotifier {
     // Small internal gap
     events.add(PowerEvent(
       startUs: t,
-      durationUs: channelGapUs * 0.2,
+      durationUs: relayHopGapUs,
       currentMa: sleepI,
       label: 'Relay gap',
       color: Colors.green.shade100,
     ));
-    t += channelGapUs * 0.2;
+    t += relayHopGapUs;
 
     // Second hop
     _addSetupPhases(events, t, chip);

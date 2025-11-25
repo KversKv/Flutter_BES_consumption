@@ -44,7 +44,17 @@ class _ConfigPanelState extends State<ConfigPanel> {
 
   @override
   Widget build(BuildContext context) {
+    // Try to sync SniffingState with AppState if provider is present.
     final app = context.watch<AppState>();
+    try {
+      final sniffState = context.read<SniffingState>();
+      sniffState.setMode(app.params.mode);
+      sniffState.setConnIntervalMs(app.params.connIntervalMs);
+      sniffState.setAdvIntervalMs(app.params.advIntervalMs);
+      sniffState.setTxPower(app.params.txPowerDbm);
+    } catch (_) {
+      // Provider<SniffingState> not found above this widget; ignore sync.
+    }
     final levels = app.chip.txPowerLevelsDbm;
     final currentTx = app.chip.snapTxPower(app.params.txPowerDbm);
 
@@ -283,41 +293,164 @@ class SniffingConfigPanel extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        Text('侦听间隔 (ms): ${st.sniffIntervalMs.toStringAsFixed(2)}'),
-        Slider(
-          value: st.sniffIntervalMs,
-          min: 10,
-          max: 5000,
-          onChanged: (v) => context.read<SniffingState>().setSniffIntervalMs(v),
-        ),
-        const SizedBox(height: 12),
+        // Case-specific panel
+        Builder(builder: (ctx) {
+          switch (st.caseType) {
+            case SniffCase.btSniff:
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Sniffing — 单次 TRX'),
+                  const SizedBox(height: 6),
+                  Text('侦听间隔 (ms): ${st.sniffIntervalMs.toStringAsFixed(2)}'),
+                  Slider(
+                    value: st.sniffIntervalMs,
+                    min: 10,
+                    max: 5000,
+                    onChanged: (v) => context.read<SniffingState>().setSniffIntervalMs(v),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
+                  Slider(
+                    value: st.sniffWindowUs.clamp(50.0, 50000.0),
+                    min: 50.0,
+                    max: 50000.0,
+                    onChanged: (v) => context.read<SniffingState>().setSniffWindowUs(v),
+                  ),
+                ],
+              );
 
-        Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
-        Slider(
-          value: st.sniffWindowUs.clamp(50.0, 50000.0),
-          min: 50.0,
-          max: 50000.0,
-          onChanged: (v) => context.read<SniffingState>().setSniffWindowUs(v),
-        ),
-        const SizedBox(height: 12),
+            case SniffCase.btPage:
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('BT Page'),
+                  const SizedBox(height: 6),
+                  Text('侦听间隔 (ms): ${st.sniffIntervalMs.toStringAsFixed(2)}'),
+                  Slider(
+                    value: st.sniffIntervalMs,
+                    min: 10,
+                    max: 5000,
+                    onChanged: (v) => context.read<SniffingState>().setSniffIntervalMs(v),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
+                  Slider(
+                    value: st.sniffWindowUs.clamp(50.0, 50000.0),
+                    min: 50.0,
+                    max: 50000.0,
+                    onChanged: (v) => context.read<SniffingState>().setSniffWindowUs(v),
+                  ),
+                ],
+              );
 
-        Text('侦听信道数: ${st.channelsPerCycle}'),
-        Slider(
-          value: st.channelsPerCycle.toDouble(),
-          min: 1,
-          max: 3,
-          divisions: 2,
-          onChanged: (v) => context.read<SniffingState>().setChannels(v.round()),
-        ),
-        const SizedBox(height: 12),
+            case SniffCase.btPagescan:
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('BT PageScan'),
+                  const SizedBox(height: 6),
+                  Text('侦听间隔 (ms): ${st.sniffIntervalMs.toStringAsFixed(2)}'),
+                  Slider(
+                    value: st.sniffIntervalMs,
+                    min: 10,
+                    max: 5000,
+                    onChanged: (v) => context.read<SniffingState>().setSniffIntervalMs(v),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
+                  Slider(
+                    value: st.sniffWindowUs.clamp(50.0, 50000.0),
+                    min: 50.0,
+                    max: 50000.0,
+                    onChanged: (v) => context.read<SniffingState>().setSniffWindowUs(v),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('侦听信道数: ${st.channelsPerCycle}'),
+                  Slider(
+                    value: st.channelsPerCycle.toDouble(),
+                    min: 1,
+                    max: 3,
+                    divisions: 2,
+                    onChanged: (v) => context.read<SniffingState>().setChannels(v.round()),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('信道间隙 (µs): ${st.channelGapUs.toStringAsFixed(0)}'),
+                  Slider(
+                    value: st.channelGapUs.clamp(0.0, 100000.0),
+                    min: 0.0,
+                    max: 100000.0,
+                    onChanged: (v) => context.read<SniffingState>().setChannelGapUs(v),
+                  ),
+                ],
+              );
 
-        Text('信道间隙 (µs): ${st.channelGapUs.toStringAsFixed(0)}'),
-        Slider(
-          value: st.channelGapUs.clamp(0.0, 100000.0),
-          min: 0.0,
-          max: 100000.0,
-          onChanged: (v) => context.read<SniffingState>().setChannelGapUs(v),
-        ),
+            case SniffCase.hdt:
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('HDT (High Duty Test)'),
+                  const SizedBox(height: 6),
+                  Text('侦听间隔 (ms): ${st.sniffIntervalMs.toStringAsFixed(2)}'),
+                  Slider(
+                    value: st.sniffIntervalMs,
+                    min: 10,
+                    max: 5000,
+                    onChanged: (v) => context.read<SniffingState>().setSniffIntervalMs(v),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
+                  Slider(
+                    value: st.sniffWindowUs.clamp(50.0, 50000.0),
+                    min: 50.0,
+                    max: 50000.0,
+                    onChanged: (v) => context.read<SniffingState>().setSniffWindowUs(v),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('HDT repeats: ${st.hdtRepeats}'),
+                  Slider(
+                    value: st.hdtRepeats.toDouble(),
+                    min: 1,
+                    max: 10,
+                    divisions: 9,
+                    onChanged: (v) => context.read<SniffingState>().setHdtRepeats(v.round()),
+                  ),
+                ],
+              );
+
+            case SniffCase.relay:
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Relay'),
+                  const SizedBox(height: 6),
+                  Text('侦听间隔 (ms): ${st.sniffIntervalMs.toStringAsFixed(2)}'),
+                  Slider(
+                    value: st.sniffIntervalMs,
+                    min: 10,
+                    max: 5000,
+                    onChanged: (v) => context.read<SniffingState>().setSniffIntervalMs(v),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
+                  Slider(
+                    value: st.sniffWindowUs.clamp(50.0, 50000.0),
+                    min: 50.0,
+                    max: 50000.0,
+                    onChanged: (v) => context.read<SniffingState>().setSniffWindowUs(v),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('Relay hop gap (µs): ${st.relayHopGapUs.toStringAsFixed(0)}'),
+                  Slider(
+                    value: st.relayHopGapUs.clamp(0.0, 100000.0),
+                    min: 0.0,
+                    max: 100000.0,
+                    onChanged: (v) => context.read<SniffingState>().setRelayHopGapUs(v),
+                  ),
+                ],
+              );
+          }
+        }),
         const SizedBox(height: 12),
 
         Text('电池容量 (mAh): ${st.batteryCapacity_mAh.toStringAsFixed(0)}'),
