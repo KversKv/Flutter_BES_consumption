@@ -42,6 +42,8 @@ class BleChip {
   final double advGapCurrent_mA;
   // 芯片简短描述（用于 UI 展示）
   final String description;
+  // HDT 模式下的 IDLE 电流（mA），由芯片厂商给定
+  final double hdtIdleCurrent_mA;
 
   const BleChip({
     required this.id,
@@ -67,6 +69,7 @@ class BleChip {
     required this.advGap_us,
     required this.advGapCurrent_mA,
     required this.description,
+    required this.hdtIdleCurrent_mA,
   });
 
   double txCurrentForPower(double txPowerDbm) {

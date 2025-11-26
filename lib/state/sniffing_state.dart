@@ -9,6 +9,10 @@ import '../models/profile_params.dart';
 
 enum SniffCase { btSniff, btPage, btPagescan, hdt, relay }
 
+/// For HDT case, choose whether this node behaves as host (only TX/IDLE)
+/// or device (only RX/IDLE).
+enum HdtModule { host, device }
+
 class SniffingState extends ChangeNotifier {
   final List<BleChip> chips = AppState().chips;
 
@@ -17,9 +21,47 @@ class SniffingState extends ChangeNotifier {
   double sniffIntervalMs = 100.0;
   double sniffWindowUs = 2000.0;
   int channelsPerCycle = 3;
-  double channelGapUs = 5000.0;
-  int hdtRepeats = 2;
+  double channelGapUs = 150.0;
+  int hdtRepeats = 1;
+  // HDT module role: host (TX-only) or device (RX-only)
+  HdtModule hdtModule = HdtModule.device;
   double relayHopGapUs = 1000.0;
+  // HDT fixed period in microseconds (active+idle total). Configured in code.
+  double hdtPeriodUs = 500.0;
+  // HDT PHY and packet parameters (configurable: PHY rate via UI, others by code)
+  double hdtPhyRateMbps = 15.0; // allowed 2..15
+  int hdtPayloadBytes = 144;
+  int hdtPayloadHeaderBytes = 16;
+  int hdtCrcBits = 32;
+  int hdtMicBits = 64;
+  int hdtZeroPaddingBits = 0;
+
+
+  /// Compute the expected airtime (µs) for the fixed overhead (STS/GI/LTS/CTRL HDR/Trailer).
+  /// We use the values provided for 15 Mbps (total ~44 µs) and scale inversely with PHY rate.
+  double _fixedOverheadUsAtRate() {
+    const double fixedAt15 = 44.0; // µs at 15 Mbps
+    return fixedAt15 * (15.0 / hdtPhyRateMbps);
+  }
+
+  /// Compute PDU airtime (µs) for the configured payload and PHY rate.
+  double _pduAirtimeUs() {
+    final int pduBits = (hdtPayloadBytes + hdtPayloadHeaderBytes) * 8 + hdtCrcBits + hdtMicBits + hdtZeroPaddingBits;
+    // bits / Mbps gives µs
+    return pduBits / hdtPhyRateMbps;
+  }
+
+  /// Compute the HDT active window (µs) = fixed overhead + PDU airtime
+  double computeHdtActiveUs() {
+    final fixed = _fixedOverheadUsAtRate();
+    final pdu = _pduAirtimeUs();
+    return fixed + pdu;
+  }
+
+  void setHdtPhyRate(double mbps) {
+    hdtPhyRateMbps = mbps.clamp(2.0, 15.0);
+    recompute();
+  }
   // TX power used for modeling TX current in sniffing cases (default to 0dBm if available)
   double txPowerDbm = 0.0;
   // Mode and mode-specific intervals
@@ -27,6 +69,8 @@ class SniffingState extends ChangeNotifier {
   double connIntervalMs = 200.0;
   double advIntervalMs = 100.0;
   SniffCase caseType = SniffCase.btSniff;
+
+  BleChip get chip => chips.firstWhere((c) => c.id == selectedChipId);
 
   List<PowerEvent> events = [];
   double periodUs = 0;
@@ -59,20 +103,18 @@ class SniffingState extends ChangeNotifier {
     recompute();
   }
 
-  BleChip get chip => chips.firstWhere((c) => c.id == selectedChipId);
-
   void setChip(String id) {
     selectedChipId = id;
     recompute();
   }
 
-  void setSniffIntervalMs(double ms) {
-    sniffIntervalMs = ms.clamp(10.0, 5000.0);
+  void setCase(SniffCase c) {
+    caseType = c;
     recompute();
   }
 
-  void setCase(SniffCase c) {
-    caseType = c;
+  void setSniffIntervalMs(double ms) {
+    sniffIntervalMs = ms.clamp(10.0, 5000.0);
     recompute();
   }
 
@@ -82,17 +124,17 @@ class SniffingState extends ChangeNotifier {
   }
 
   void setChannels(int n) {
-    channelsPerCycle = n.clamp(1, 3);
+    channelsPerCycle = n.clamp(1, 3).toInt();
     recompute();
   }
 
-  void setChannelGapUs(double us) {
-    channelGapUs = us.clamp(0.0, 100000.0);
+  void setHdtModule(HdtModule m) {
+    hdtModule = m;
     recompute();
   }
 
   void setHdtRepeats(int n) {
-    hdtRepeats = n.clamp(1, 10);
+    hdtRepeats = n.clamp(1, 10).toInt();
     recompute();
   }
 
@@ -111,9 +153,74 @@ class SniffingState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Toggle the hideLowPowerGaps flag (used by UI toggle checkbox)
-  void toggleHideLowPower() {
-    hideLowPowerGaps = !hideLowPowerGaps;
+  void _recomputeHdt() {
+    // HDT: fixed pattern — each repeat is exactly 250us (active) + 250us (idle).
+    // Host: active=TX, Device: active=RX. No setup/post phases included here.
+    events = [];
+    // Use code-configured HDT period (µs)
+    final intervalUs = hdtPeriodUs;
+    periodUs = intervalUs;
+
+    final rxI = chip.rxCurrent_mA;
+    final txI = chip.txCurrentForPower(txPowerDbm);
+    // HDT idle current: use per-chip configured HDT idle current (no fallback)
+    final idleCurrent = chip.hdtIdleCurrent_mA;
+
+    double t = 0;
+    final repeats = hdtRepeats;
+    // Active window computed from PHY and packet params
+    final double computedActive = computeHdtActiveUs();
+    // Ensure active doesn't exceed period; if it does we cap to period
+    final double activeUs = math.min(computedActive, hdtPeriodUs);
+    final double idleUs = math.max(0.0, hdtPeriodUs - activeUs);
+
+    for (int i = 0; i < repeats; i++) {
+      if (hdtModule == HdtModule.device) {
+        // Device: RX then IDLE
+        events.add(PowerEvent(
+          startUs: t,
+          durationUs: activeUs,
+          currentMa: rxI,
+          label: 'HDT RX',
+          color: Colors.blue.shade400,
+        ));
+      } else {
+        // Host: TX then IDLE
+        events.add(PowerEvent(
+          startUs: t,
+          durationUs: activeUs,
+          currentMa: txI,
+          label: 'HDT TX',
+          color: Colors.red.shade400,
+        ));
+      }
+      t += activeUs;
+
+      // Idle after the active window
+      if (idleUs > 0.0) {
+        events.add(PowerEvent(
+          startUs: t,
+          durationUs: idleUs,
+          currentMa: idleCurrent,
+          label: 'Idle',
+          color: Colors.green.shade200,
+        ));
+      }
+      t += idleUs;
+    }
+
+    final remaining = math.max(0, intervalUs - t);
+    if (remaining > 0) {
+      events.add(PowerEvent(
+        startUs: t,
+        durationUs: remaining.toDouble(),
+        currentMa: idleCurrent,
+        label: 'Idle',
+        color: Colors.green.shade200,
+      ));
+    }
+
+    _computeAverageCurrent();
     notifyListeners();
   }
 
@@ -262,7 +369,7 @@ class SniffingState extends ChangeNotifier {
   }
 
   void _recomputeBtPagescan() {
-    // BT PageScan: scan across channels with shorter windows and gaps
+    // BT PageScan: one wakeup/setup, then scan channels with short RX windows
     events = [];
     final intervalUs = sniffIntervalMs * 1000.0;
     periodUs = intervalUs;
@@ -273,38 +380,43 @@ class SniffingState extends ChangeNotifier {
     final sleepI = chip.sleepCurrent_uA / 1000.0;
 
     double t = 0;
-    for (int i = 0; i < channelsPerCycle; i++) {
-      _addSetupPhases(events, t, chip);
-      t += _setupTotalUsChip(chip);
+    // Single setup at the start of the pagescan
+    _addSetupPhases(events, t, chip);
+    t += _setupTotalUsChip(chip);
 
-      final window = sniffWindowUs * 0.6; // pagescan shorter
+    final window = sniffWindowUs * 0.6; // pagescan shorter per-channel window
+
+    for (int i = 0; i < channelsPerCycle; i++) {
+      // RX on channel i
       events.add(PowerEvent(
         startUs: t,
         durationUs: window,
         currentMa: rxI,
-        label: 'PageScan RX',
+        label: 'PageScan RX CH${i+1}',
         color: Colors.indigo.shade400,
       ));
       t += window;
 
+      // Small post-processing per channel (shorter)
       events.add(PowerEvent(
         startUs: t,
-        durationUs: postUs * 0.6,
+        durationUs: postUs * 0.4,
         currentMa: postI,
         label: 'Post',
         color: Colors.purple.shade200,
       ));
-      t += postUs * 0.6;
+      t += postUs * 0.4;
 
+      // Fixed gap between channels (do not re-run full setup)
       if (i < channelsPerCycle - 1) {
         events.add(PowerEvent(
           startUs: t,
-          durationUs: channelGapUs * 0.5,
+          durationUs: channelGapUs,
           currentMa: sleepI,
-          label: 'Gap',
+          label: 'Channel gap',
           color: Colors.green.shade200,
         ));
-        t += channelGapUs * 0.5;
+        t += channelGapUs;
       }
     }
 
@@ -323,57 +435,7 @@ class SniffingState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _recomputeHdt() {
-    // HDT: high-duty test — many RX windows, minimal sleep
-    events = [];
-    final intervalUs = sniffIntervalMs * 1000.0;
-    periodUs = intervalUs;
-
-    final rxI = chip.rxCurrent_mA;
-    final postUs = chip.postProcess_us;
-    final postI = chip.postCurrent_mA;
-    final sleepI = chip.sleepCurrent_uA / 1000.0;
-
-    double t = 0;
-    final repeats = hdtRepeats;
-    for (int i = 0; i < repeats; i++) {
-      _addSetupPhases(events, t, chip);
-      t += _setupTotalUsChip(chip);
-
-      final window = sniffWindowUs * 0.9;
-      events.add(PowerEvent(
-        startUs: t,
-        durationUs: window,
-        currentMa: rxI,
-        label: 'HDT RX',
-        color: Colors.red.shade400,
-      ));
-      t += window;
-
-      events.add(PowerEvent(
-        startUs: t,
-        durationUs: postUs * 0.9,
-        currentMa: postI,
-        label: 'Post',
-        color: Colors.purple.shade300,
-      ));
-      t += postUs * 0.9;
-    }
-
-    final remaining = math.max(0, intervalUs - t);
-    if (remaining > 0) {
-      events.add(PowerEvent(
-        startUs: t,
-        durationUs: remaining.toDouble(),
-        currentMa: sleepI,
-        label: 'Sleep',
-        color: Colors.green.shade200,
-      ));
-    }
-
-    _computeAverageCurrent();
-    notifyListeners();
-  }
+  
 
   void _recomputeRelay() {
     // Relay: two quick RX hops with short gaps to mimic relay behavior

@@ -66,6 +66,7 @@ class AppState extends ChangeNotifier {
       advGap_us: 100.0,
       advGapCurrent_mA: 1.5, // 1.5mA
       description: 'BES2720YP: high performance SOC for BT&BLE.',
+      hdtIdleCurrent_mA: 2.0,
     ),
     
     BleChip(
@@ -99,6 +100,7 @@ class AppState extends ChangeNotifier {
       advGap_us: 100.0,
       advGapCurrent_mA: 2.55, // 1.5mA
       description: 'BES2713B: low-power BLE transceiver, demo parameters.',
+      hdtIdleCurrent_mA: 0.0035,
     ),
 
     BleChip(
@@ -132,6 +134,7 @@ class AppState extends ChangeNotifier {
       advGap_us: 100.0,
       advGapCurrent_mA: 1.5, // 1.5mA
       description: 'BES6100HP_SIMU: low-power BLE transceiver, SIMU parameters.',
+      hdtIdleCurrent_mA: 0.07,
     ),
 
     BleChip(
@@ -191,6 +194,7 @@ class AppState extends ChangeNotifier {
       advGap_us: 100.0,
       advGapCurrent_mA: 1.5, // 1.5mA
       description: 'BES2720IMP: low-power BLE transceiver, demo parameters.',
+      hdtIdleCurrent_mA: 0.025,
     ),
 
     BleChip(
@@ -251,6 +255,7 @@ class AppState extends ChangeNotifier {
         postProcess_us: 900.0,
         postCurrent_mA: 0.7,
         description: 'BES2700IMP: 1503 : The most outstanding low-power chip to date from BES.',
+        hdtIdleCurrent_mA: 0.0182,
       ),
 
 
@@ -305,6 +310,7 @@ class AppState extends ChangeNotifier {
       postProcess_us: 512.0,
       postCurrent_mA: 1.29,
       description: 'BES2610WD: compact BLE SoC, balanced RX/TX currents.',
+      hdtIdleCurrent_mA: 0.0275,
 
     ),
 
@@ -350,6 +356,7 @@ class AppState extends ChangeNotifier {
       advGap_us: 5000.0,
       advGapCurrent_mA: 0.040, // 40 µA
       description: 'BES_2800BP: low-power BLE chip, example parameters.',
+      hdtIdleCurrent_mA: 0.04,
     ),
 
 
@@ -386,6 +393,7 @@ class AppState extends ChangeNotifier {
       advGap_us: 5000.0,
       advGapCurrent_mA: 0.040, // 40 µA
       description: 'BES_2800BP: low-power BLE chip, example parameters.',
+      hdtIdleCurrent_mA: 0.04,
     ),
     BleChip(
       id: 'nrf52832',
@@ -420,6 +428,7 @@ class AppState extends ChangeNotifier {
       advGap_us: 5000.0,
       advGapCurrent_mA: 0.0018, // 1.8 µA
       description: 'nRF52832: Nordic demo profile, for comparison.',
+      hdtIdleCurrent_mA: 0.0018,
     ),
     BleChip(
       id: 'bes2600',
@@ -454,6 +463,7 @@ class AppState extends ChangeNotifier {
       advGap_us: 5000.0,
       advGapCurrent_mA: 0.0020, // 2.0 µA
       description: 'BES2600: demo parameters for power analysis.',
+      hdtIdleCurrent_mA: 0.002,
     ),
   ];
 

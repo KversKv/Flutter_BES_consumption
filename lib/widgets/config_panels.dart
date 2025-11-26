@@ -302,13 +302,9 @@ class SniffingConfigPanel extends StatelessWidget {
                 children: [
                   Text('Sniffing — 单次 TRX'),
                   const SizedBox(height: 6),
-                  Text('侦听间隔 (ms): ${st.sniffIntervalMs.toStringAsFixed(2)}'),
-                  Slider(
-                    value: st.sniffIntervalMs,
-                    min: 10,
-                    max: 5000,
-                    onChanged: (v) => context.read<SniffingState>().setSniffIntervalMs(v),
-                  ),
+                  Text('HDT 周期 (µs): ${st.hdtPeriodUs.toStringAsFixed(0)}'),
+                  const SizedBox(height: 6),
+                  Text('（由代码变量指定，默认 500 µs，不可交互修改）', style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(height: 12),
                   Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
                   Slider(
@@ -376,12 +372,8 @@ class SniffingConfigPanel extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text('信道间隙 (µs): ${st.channelGapUs.toStringAsFixed(0)}'),
-                  Slider(
-                    value: st.channelGapUs.clamp(0.0, 100000.0),
-                    min: 0.0,
-                    max: 100000.0,
-                    onChanged: (v) => context.read<SniffingState>().setChannelGapUs(v),
-                  ),
+                  const SizedBox(height: 6),
+                  Text('（由代码变量指定，默认 150 µs，不可交互修改）', style: Theme.of(context).textTheme.bodySmall),
                 ],
               );
 
@@ -389,22 +381,32 @@ class SniffingConfigPanel extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('HDT (High Duty Test)'),
                   const SizedBox(height: 6),
-                  Text('侦听间隔 (ms): ${st.sniffIntervalMs.toStringAsFixed(2)}'),
-                  Slider(
-                    value: st.sniffIntervalMs,
-                    min: 10,
-                    max: 5000,
-                    onChanged: (v) => context.read<SniffingState>().setSniffIntervalMs(v),
+                  Text('模块角色'),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<HdtModule>(
+                      segments: const [
+                        ButtonSegment(value: HdtModule.device, label: Text('Device')),
+                        ButtonSegment(value: HdtModule.host, label: Text('Host')),
+                      ],
+                      selected: {st.hdtModule},
+                      onSelectionChanged: (s) => context.read<SniffingState>().setHdtModule(s.first),
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
-                  Slider(
-                    value: st.sniffWindowUs.clamp(50.0, 50000.0),
-                    min: 50.0,
-                    max: 50000.0,
-                    onChanged: (v) => context.read<SniffingState>().setSniffWindowUs(v),
+                  Text('HDT PHY 速率 (Mbps): ${st.hdtPhyRateMbps.toStringAsFixed(0)}'),
+                  const SizedBox(height: 6),
+                  DropdownButton<double>(
+                    value: st.hdtPhyRateMbps,
+                    isExpanded: true,
+                    items: List.generate(14, (i) => (i + 2).toDouble())
+                        .map((v) => DropdownMenuItem(value: v, child: Text('${v.toStringAsFixed(0)}')))
+                        .toList(),
+                    onChanged: (v) {
+                      if (v != null) context.read<SniffingState>().setHdtPhyRate(v);
+                    },
                   ),
                   const SizedBox(height: 12),
                   Text('HDT repeats: ${st.hdtRepeats}'),
