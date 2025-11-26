@@ -300,7 +300,7 @@ class SniffingConfigPanel extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Sniffing — 单次 TRX'),
+
                   const SizedBox(height: 6),
                   Text('HDT 周期 (µs): ${st.hdtPeriodUs.toStringAsFixed(0)}'),
                   const SizedBox(height: 6),
@@ -308,9 +308,9 @@ class SniffingConfigPanel extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
                   Slider(
-                    value: st.sniffWindowUs.clamp(50.0, 50000.0),
+                    value: st.sniffWindowUs.clamp(50.0, 3000.0),
                     min: 50.0,
-                    max: 50000.0,
+                    max: 3000.0,
                     onChanged: (v) => context.read<SniffingState>().setSniffWindowUs(v),
                   ),
                 ],

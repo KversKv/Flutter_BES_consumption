@@ -18,8 +18,8 @@ class SniffingState extends ChangeNotifier {
 
   late String selectedChipId;
 
-  double sniffIntervalMs = 100.0;
-  double sniffWindowUs = 2000.0;
+  double sniffIntervalMs = 500.0;
+  double sniffWindowUs = 80.0;
   int channelsPerCycle = 3;
   double channelGapUs = 150.0;
   int hdtRepeats = 1;
