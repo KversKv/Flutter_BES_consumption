@@ -160,6 +160,7 @@ class SniffingState extends ChangeNotifier {
     // Use code-configured HDT period (µs)
     final intervalUs = hdtPeriodUs;
     periodUs = intervalUs;
+    final halfPeriodUs = periodUs/2;
 
     final rxI = chip.rxCurrent_mA;
     final txI = chip.txCurrentForPower(txPowerDbm);
@@ -171,42 +172,76 @@ class SniffingState extends ChangeNotifier {
     // Active window computed from PHY and packet params
     final double computedActive = computeHdtActiveUs();
     // Ensure active doesn't exceed period; if it does we cap to period
+    final double preRF_RX_Us = 70.0;
+    final double postRF_RX_Us = 3.0;
+    final double preRF_TX_Us = 40.0;
+    final double postRF_TX_Us = 10.0;
     final double activeUs = math.min(computedActive, hdtPeriodUs);
-    final double idleUs = math.max(0.0, hdtPeriodUs - activeUs);
+    final double total_RX_ActiveUs = activeUs + preRF_RX_Us + postRF_RX_Us;
+    final double total_TX_ActiveUs = activeUs + preRF_TX_Us + postRF_TX_Us;
+    final double idle_RX_Us = math.max(0.0, hdtPeriodUs - total_RX_ActiveUs);
+    final double idle_TX_Us = math.max(0.0, halfPeriodUs - total_TX_ActiveUs);
 
     for (int i = 0; i < repeats; i++) {
       if (hdtModule == HdtModule.device) {
         // Device: RX then IDLE
         events.add(PowerEvent(
           startUs: t,
-          durationUs: activeUs,
+          durationUs: total_RX_ActiveUs,
           currentMa: rxI,
           label: 'HDT RX',
           color: Colors.blue.shade400,
         ));
+        t += total_RX_ActiveUs;
+        if (idle_RX_Us > 0.0 ) {
+          events.add(PowerEvent(
+            startUs: t,
+            durationUs: idle_RX_Us,
+            currentMa: idleCurrent,
+            label: 'Idle',
+            color: Colors.green.shade200,
+          ));
+          t += idle_RX_Us;
+      }
       } else {
         // Host: TX then IDLE
         events.add(PowerEvent(
           startUs: t,
-          durationUs: activeUs,
+          durationUs: total_TX_ActiveUs,
           currentMa: txI,
           label: 'HDT TX',
           color: Colors.red.shade400,
         ));
-      }
-      t += activeUs;
-
-      // Idle after the active window
-      if (idleUs > 0.0) {
-        events.add(PowerEvent(
+        t += total_RX_ActiveUs;
+        if (idle_TX_Us > 0.0 ) {
+          events.add(PowerEvent(
+            startUs: t,
+            durationUs: idle_TX_Us,
+            currentMa: idleCurrent,
+            label: 'Idle',
+            color: Colors.green.shade200,
+          ));
+          t += idle_TX_Us;
+        }
+                events.add(PowerEvent(
           startUs: t,
-          durationUs: idleUs,
-          currentMa: idleCurrent,
-          label: 'Idle',
-          color: Colors.green.shade200,
+          durationUs: total_TX_ActiveUs,
+          currentMa: txI,
+          label: 'HDT TX',
+          color: Colors.red.shade400,
         ));
+        t += total_RX_ActiveUs;
+        if (idle_TX_Us > 0.0 ) {
+          events.add(PowerEvent(
+            startUs: t,
+            durationUs: idle_TX_Us,
+            currentMa: idleCurrent,
+            label: 'Idle',
+            color: Colors.green.shade200,
+          ));
+          t += idle_TX_Us;
+        }
       }
-      t += idleUs;
     }
 
     final remaining = math.max(0, intervalUs - t);
