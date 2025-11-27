@@ -260,19 +260,25 @@ class SniffingConfigPanel extends StatelessWidget {
 
         Text('芯片'),
         const SizedBox(height: 6),
-        DropdownButton<String>(
-          value: st.selectedChipId,
-          isExpanded: true,
-          items: st.chips
-              .map((c) => DropdownMenuItem(
-                    value: c.id,
-                    child: Text(c.name),
-                  ))
+        Builder(builder: (ctx) {
+          final isBtCase = st.caseType == SniffCase.btSniff ||
+              st.caseType == SniffCase.btPage ||
+              st.caseType == SniffCase.btPagescan;
+          final chipsList = isBtCase ? st.btChips : st.bleChips;
+          return DropdownButton<String>(
+            value: st.selectedChipId,
+            isExpanded: true,
+            items: chipsList
+              .map<DropdownMenuItem<String>>((c) => DropdownMenuItem<String>(
+                  value: (c as dynamic).id as String,
+                  child: Text((c as dynamic).name as String),
+                ))
               .toList(),
-          onChanged: (v) {
-            if (v != null) context.read<SniffingState>().setChip(v);
-          },
-        ),
+            onChanged: (v) {
+              if (v != null) context.read<SniffingState>().setChip(v);
+            },
+          );
+        }),
         const SizedBox(height: 12),
 
         Text('侦听用例'),
@@ -292,6 +298,33 @@ class SniffingConfigPanel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
+
+        // 新增：发射功率选择（与 BLE 配置面板一致的交互）
+        Builder(builder: (ctx) {
+          final levels = st.chip.txPowerLevelsDbm;
+          final currentTx = st.chip.snapTxPower(st.txPowerDbm);
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('发射功率 (dBm): $currentTx'),
+              const SizedBox(height: 6),
+              DropdownButton<double>(
+                value: currentTx,
+                isExpanded: true,
+                items: (levels as List<dynamic>)
+                    .map<DropdownMenuItem<double>>((lv) => DropdownMenuItem<double>(
+                          value: lv as double,
+                          child: Text(lv.toString()),
+                        ))
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) context.read<SniffingState>().setTxPower(v);
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          );
+        }),
 
         // Case-specific panel
         Builder(builder: (ctx) {
@@ -388,8 +421,8 @@ class SniffingConfigPanel extends StatelessWidget {
                     width: double.infinity,
                     child: SegmentedButton<HdtModule>(
                       segments: const [
-                        ButtonSegment(value: HdtModule.device, label: Text('Device')),
-                        ButtonSegment(value: HdtModule.host, label: Text('Host')),
+                        ButtonSegment(value: HdtModule.sink, label: Text('Sink')),
+                        ButtonSegment(value: HdtModule.source, label: Text('Source')),
                       ],
                       selected: {st.hdtModule},
                       onSelectionChanged: (s) => context.read<SniffingState>().setHdtModule(s.first),

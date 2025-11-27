@@ -3,6 +3,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/ble_chip.dart';
+import '../models/bt_chip.dart';
+import '../config/bt_chip_config.dart';
 import '../models/power_event.dart';
 import 'app_state.dart';
 import '../models/profile_params.dart';
@@ -11,10 +13,11 @@ enum SniffCase { btSniff, btPage, btPagescan, hdt, relay }
 
 /// For HDT case, choose whether this node behaves as host (only TX/IDLE)
 /// or device (only RX/IDLE).
-enum HdtModule { host, device }
+enum HdtModule { source, sink }
 
 class SniffingState extends ChangeNotifier {
-  final List<BleChip> chips = AppState().chips;
+  final List<BleChip> bleChips = AppState().chips;
+  final List<BtChip> btChips = defaultBtChips;
 
   late String selectedChipId;
 
@@ -24,7 +27,7 @@ class SniffingState extends ChangeNotifier {
   double channelGapUs = 150.0;
   int hdtRepeats = 1;
   // HDT module role: host (TX-only) or device (RX-only)
-  HdtModule hdtModule = HdtModule.device;
+  HdtModule hdtModule = HdtModule.sink;
   double relayHopGapUs = 1000.0;
   // HDT fixed period in microseconds (active+idle total). Configured in code.
   double hdtPeriodUs = 500.0;
@@ -70,7 +73,14 @@ class SniffingState extends ChangeNotifier {
   double advIntervalMs = 100.0;
   SniffCase caseType = SniffCase.btSniff;
 
-  BleChip get chip => chips.firstWhere((c) => c.id == selectedChipId);
+  // Return either a BleChip or BtChip instance matching selectedChipId
+  dynamic get chip {
+    try {
+      return bleChips.firstWhere((c) => c.id == selectedChipId);
+    } catch (_) {
+      return btChips.firstWhere((c) => c.id == selectedChipId);
+    }
+  }
 
   List<PowerEvent> events = [];
   double periodUs = 0;
@@ -79,7 +89,8 @@ class SniffingState extends ChangeNotifier {
   bool hideLowPowerGaps = true;
 
   SniffingState() {
-    selectedChipId = chips.first.id;
+    // Default to first BLE chip; UI will let user switch to BT chips for BT cases.
+    selectedChipId = bleChips.first.id;
     recompute();
   }
 
@@ -110,6 +121,16 @@ class SniffingState extends ChangeNotifier {
 
   void setCase(SniffCase c) {
     caseType = c;
+    // When switching to a BT case, ensure selectedChipId exists in BT list.
+    if (caseType == SniffCase.btSniff || caseType == SniffCase.btPage || caseType == SniffCase.btPagescan) {
+      if (!btChips.any((b) => b.id == selectedChipId)) {
+        selectedChipId = btChips.first.id;
+      }
+    } else {
+      if (!bleChips.any((b) => b.id == selectedChipId)) {
+        selectedChipId = bleChips.first.id;
+      }
+    }
     recompute();
   }
 
@@ -183,7 +204,7 @@ class SniffingState extends ChangeNotifier {
     final double idle_TX_Us = math.max(0.0, halfPeriodUs - total_TX_ActiveUs);
 
     for (int i = 0; i < repeats; i++) {
-      if (hdtModule == HdtModule.device) {
+      if (hdtModule == HdtModule.sink) {
         // Device: RX then IDLE
         events.add(PowerEvent(
           startUs: t,
