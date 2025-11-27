@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/app_state.dart';
+import '../state/sniffing_state.dart';
+import '../widgets/config_panels.dart';
+import '../widgets/kpi_widgets.dart';
+import '../widgets/chart_widgets.dart';
 import 'bt_sniffing.dart';
 import 'bt_page_main.dart';
 import 'bt_pagescan.dart';
@@ -75,7 +79,59 @@ class _BTPageState extends State<BTPage> {
   Widget _buildCaseContent() {
     switch (selectedCase) {
       case BTCase.sniffing:
-        return const BTSniffingPage();
+        // Provide a SniffingState for the sniffing layout so the config panel
+        // (which now supports BT chips) can be used inside BT page.
+        return ChangeNotifierProvider(
+          create: (_) {
+            final s = SniffingState();
+            // ensure provider starts in BT sniffing mode (explicit)
+            s.setCase(SniffCase.btSniff);
+            return s;
+          },
+          child: Builder(builder: (context) {
+            final theme = Theme.of(context);
+            return Row(
+              children: [
+                SizedBox(
+                  width: 380,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Card(
+                      elevation: 0,
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: SniffingConfigPanel(),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      KPIRowSniffing(),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Card(
+                            elevation: 0,
+                            color: theme.colorScheme.surfaceContainer,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: ChartWithOptionsSniff(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }),
+        );
       case BTCase.page:
         return const BTPageMain();
       case BTCase.pageScan:

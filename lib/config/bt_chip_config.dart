@@ -47,6 +47,15 @@ final List<BtChip> defaultBtChips = [
       14: 49.0,
       15: 54.0,
     },
+
+    txCurrentByBand: {
+    '2.4G': {0: 28, 5: 34.0, 10: 43.0},
+    '5G': {0: 39.2, 5: 41.0, 10: 47.6},
+    },
+    rxCurrentByBand: {
+      '2.4G': 13.0,
+      '5G': 18.0,
+    },
     // Setup拆分（总计约 2744us）
     preProcess_us: 143.36,
     preProcessCurrent_mA: 2.053,

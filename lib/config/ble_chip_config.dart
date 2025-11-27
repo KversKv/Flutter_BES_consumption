@@ -9,42 +9,25 @@ final List<BleChip> defaultBleChips = [
     name: 'BES1505',
     vbat: 3.8,
     sleepCurrent_uA: 116.5,
-    rxCurrent_mA: 5.11,
+    rxCurrent_mA: 13,
     rxWindow_us: 184.32,
     tifs_us: 150,
     tifsCurrent_mA: 2.953,
+    // txPowerLevelsDbm: [
+    //   0, 5, 10
+    // ],
+    // txCurrent_mA_forDbm: {
+    //   0: 39.2,
+    //   5: 41.0,
+    //   10: 47.6
+    // },
     txPowerLevelsDbm: [
-      -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-      10, 11, 12, 13, 14, 15
+      0, 5, 10
     ],
     txCurrent_mA_forDbm: {
-      -10: 15.0,
-      -9: 15.0,
-      -8: 15.0,
-      -7: 16.0,
-      -6: 17.0,
-      -5: 18.0,
-      -4: 19.0,
-      -3: 20.0,
-      -2: 22.0,
-      -1: 22.0,
-      0: 18.282,
-      1: 24.0,
-      2: 25.0,
-      3: 26.0,
-      4: 27.0,
-      5: 28.0,
-      6: 29.0,
-      7: 31.0,
-      8: 32.0,
-      9: 35.0,
-      10: 33.0,
-      11: 37.0,
-      12: 41.0,
-      13: 45.0,
-      14: 49.0,
-      15: 54.0,
+      0: 28.0,
+      5: 34.0,
+      10: 43.0,
     },
     // Setup拆分（总计约 2744us）
     preProcess_us: 143.36,
@@ -516,3 +499,4 @@ final List<BleChip> defaultBleChips = [
     hdtIdleCurrent_mA: 0.002,
   ),
 ];
+

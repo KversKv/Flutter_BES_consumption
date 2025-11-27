@@ -337,8 +337,6 @@ class SniffingConfigPanel extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text('HDT 周期 (µs): ${st.hdtPeriodUs.toStringAsFixed(0)}'),
                   const SizedBox(height: 6),
-                  Text('（由代码变量指定，默认 500 µs，不可交互修改）', style: Theme.of(context).textTheme.bodySmall),
-                  const SizedBox(height: 12),
                   Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
                   Slider(
                     value: st.sniffWindowUs.clamp(50.0, 3000.0),
@@ -426,6 +424,20 @@ class SniffingConfigPanel extends StatelessWidget {
                       ],
                       selected: {st.hdtModule},
                       onSelectionChanged: (s) => context.read<SniffingState>().setHdtModule(s.first),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('频段'),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: '2.4G', label: Text('2.4G')),
+                        ButtonSegment(value: '5G', label: Text('5G')),
+                      ],
+                      selected: {st.band},
+                      onSelectionChanged: (s) => context.read<SniffingState>().setBand(s.first),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -526,9 +538,9 @@ class ChipInfoCard extends StatelessWidget {
               children: [
                 _specItem('型号', chip.name),
                 _specItem('VBAT', '${chip.vbat} V'),
-                _specItem('Sleep', '${chip.sleepCurrent_uA} µA'),
+                // _specItem('Sleep', '${chip.sleepCurrent_uA} µA'),
                 _specItem('RX', '${chip.rxCurrent_mA} mA'),
-                _specItem('RX Window', '${chip.rxWindow_us} µs'),
+                _specItem('TX', '${chip.txCurrent_mA_forDbm[chip.txPowerLevelsDbm.first]} mA'),
                 _specItem('Description', '${chip.description}'),
               ],
             ),

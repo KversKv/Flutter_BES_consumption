@@ -41,6 +41,9 @@ class BtChip {
   final String description;
   // HDT 模式下的 IDLE 电流（mA），由芯片厂商给定
   final double hdtIdleCurrent_mA;
+  // Optional per-band TX current maps and RX currents. Key example: '2.4G', '5G'
+  final Map<String, Map<double, double>>? txCurrentByBand;
+  final Map<String, double>? rxCurrentByBand;
 
   const BtChip({
     required this.id,
@@ -67,9 +70,26 @@ class BtChip {
     required this.advGapCurrent_mA,
     required this.description,
     required this.hdtIdleCurrent_mA,
+    this.txCurrentByBand,
+    this.rxCurrentByBand,
   });
 
-  double txCurrentForPower(double txPowerDbm) {
+  double txCurrentForPower(double txPowerDbm, [String? band]) {
+    if (band != null && txCurrentByBand != null && txCurrentByBand!.containsKey(band)) {
+      final map = txCurrentByBand![band]!;
+      if (map.containsKey(txPowerDbm)) return map[txPowerDbm]!;
+      double closest = map.keys.first;
+      double minDiff = (txPowerDbm - closest).abs();
+      for (final level in map.keys) {
+        final diff = (txPowerDbm - level).abs();
+        if (diff < minDiff) {
+          closest = level;
+          minDiff = diff;
+        }
+      }
+      return map[closest]!;
+    }
+
     if (txCurrent_mA_forDbm.containsKey(txPowerDbm)) {
       return txCurrent_mA_forDbm[txPowerDbm]!;
     }
@@ -83,6 +103,13 @@ class BtChip {
       }
     }
     return txCurrent_mA_forDbm[closest]!;
+  }
+
+  double rxCurrentForBand([String? band]) {
+    if (band != null && rxCurrentByBand != null && rxCurrentByBand!.containsKey(band)) {
+      return rxCurrentByBand![band]!;
+    }
+    return rxCurrent_mA;
   }
 
   double snapTxPower(double txPowerDbm) {

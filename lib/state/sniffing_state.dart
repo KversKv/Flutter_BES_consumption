@@ -67,6 +67,8 @@ class SniffingState extends ChangeNotifier {
   }
   // TX power used for modeling TX current in sniffing cases (default to 0dBm if available)
   double txPowerDbm = 0.0;
+  // Frequency band selection for HDT and sniffing cases. Values: '2.4G' or '5G'
+  String band = '2.4G';
   // Mode and mode-specific intervals
   Mode mode = Mode.advertising;
   double connIntervalMs = 200.0;
@@ -97,6 +99,13 @@ class SniffingState extends ChangeNotifier {
   void setTxPower(double dbm) {
     txPowerDbm = dbm;
     recompute();
+  }
+
+  void setBand(String b) {
+    if (b != band) {
+      band = b;
+      recompute();
+    }
   }
 
   void setMode(Mode m) {
@@ -571,7 +580,7 @@ class SniffingState extends ChangeNotifier {
   }
 
   // Sniffing 的 setup 拆分
-  void _addSetupPhases(List<PowerEvent> list, double startT, BleChip chip) {
+  void _addSetupPhases(List<PowerEvent> list, double startT, dynamic chip) {
     double t = startT;
     list.add(PowerEvent(
       startUs: t,
@@ -609,7 +618,7 @@ class SniffingState extends ChangeNotifier {
     ));
   }
 
-  double _setupTotalUsChip(BleChip chip) {
+  double _setupTotalUsChip(dynamic chip) {
     return chip.preProcess_us +
         chip.crystalRampUp_us +
         chip.standby_us +
