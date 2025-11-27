@@ -192,8 +192,19 @@ class SniffingState extends ChangeNotifier {
     periodUs = intervalUs;
     final halfPeriodUs = periodUs/2;
 
-    final rxI = chip.rxCurrent_mA;
-    final txI = chip.txCurrentForPower(txPowerDbm);
+    var rxI = chip.rxCurrent_mA;
+    var txI = chip.txCurrentForPower(txPowerDbm);
+
+    if(band == "2.4G"){
+       rxI = chip.rxCurrent_mA_HDT_2G4;
+       txI = chip.txCurrentForPower(txPowerDbm, "2.4G");
+    }
+    else if(band == "5G"){
+      rxI = chip.rxCurrent_mA_HDT_5G;
+    }
+
+
+
     // HDT idle current: use per-chip configured HDT idle current (no fallback)
     final idleCurrent = chip.hdtIdleCurrent_mA;
 

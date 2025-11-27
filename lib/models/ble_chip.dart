@@ -10,6 +10,8 @@ class BleChip {
   final double vbat; // V
   final double sleepCurrent_uA; // 休眠电流
   final double rxCurrent_mA; // 接收电流
+  final double rxCurrent_mA_HDT_2G4;
+  final double rxCurrent_mA_HDT_5G;
   // 固定接收窗口（单位：us），现在每个芯片可以配置不同的值
   final double rxWindow_us;
   final double tifs_us; // TIFS，典型 150 us
@@ -54,9 +56,11 @@ class BleChip {
     required this.vbat,
     required this.sleepCurrent_uA,
     required this.rxCurrent_mA,
+    required this.rxCurrent_mA_HDT_2G4,
+    required this.rxCurrent_mA_HDT_5G,
     required this.rxWindow_us,
-  required this.tifs_us,
-  required this.tifsCurrent_mA,
+    required this.tifs_us,
+    required this.tifsCurrent_mA,
     required this.txPowerLevelsDbm,
     required this.txCurrent_mA_forDbm,
     required this.postProcess_us,
