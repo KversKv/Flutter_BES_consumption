@@ -54,7 +54,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.wifi_tethering),
-                      label: Text('BT Sniffing'),
+                      label: Text('BT CASE'),
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.headphones),
