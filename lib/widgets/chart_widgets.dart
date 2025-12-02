@@ -1,29 +1,39 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
-import 'package:provider/provider.dart';
 import '../models/power_event.dart';
-import '../state/app_state.dart';
-import '../state/sniffing_state.dart';
 import 'legend_hover_widgets.dart';
 
 /// ===========================================================================
-/// Chart + 顶部选项 + 图下参数（AppState）
+/// 统一的图表组件 (Unified Chart Widget)
+/// 不再依赖具体的 Provider，而是通过参数传入数据，实现复用
 /// ===========================================================================
 
-class ChartWithOptionsApp extends StatefulWidget {
-  const ChartWithOptionsApp({super.key});
+class UnifiedPowerChart extends StatefulWidget {
+  final List<PowerEvent> events;
+  final double periodUs;
+  final double maxCurrent;
+  final bool hideLowPowerGaps;
+  final ValueChanged<bool> onToggleHideGaps;
+
+  const UnifiedPowerChart({
+    super.key,
+    required this.events,
+    required this.periodUs,
+    required this.maxCurrent,
+    required this.hideLowPowerGaps,
+    required this.onToggleHideGaps,
+  });
+
   @override
-  State<ChartWithOptionsApp> createState() => _ChartWithOptionsAppState();
+  State<UnifiedPowerChart> createState() => _UnifiedPowerChartState();
 }
 
-class _ChartWithOptionsAppState extends State<ChartWithOptionsApp> {
+class _UnifiedPowerChartState extends State<UnifiedPowerChart> {
   PowerEvent? hovered;
 
   @override
   Widget build(BuildContext context) {
-    final app = context.watch<AppState>();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -38,13 +48,13 @@ class _ChartWithOptionsAppState extends State<ChartWithOptionsApp> {
               children: [
                 const Text('隐藏睡眠/空隙'),
                 Switch(
-                  value: app.hideLowPowerGaps,
-                  onChanged: (v) => context.read<AppState>().setHideLowPowerGaps(v),
+                  value: widget.hideLowPowerGaps,
+                  onChanged: widget.onToggleHideGaps,
                 ),
               ],
             ),
             Text(
-              app.hideLowPowerGaps
+              widget.hideLowPowerGaps
                   ? '时间轴：压缩视图（睡眠已隐藏）'
                   : '时间轴：完整周期视图',
               style: const TextStyle(fontSize: 12),
@@ -56,20 +66,19 @@ class _ChartWithOptionsAppState extends State<ChartWithOptionsApp> {
         // 模型图（交互）
         Expanded(
           child: TimelineChartInteractive(
-            events: app.events,
-            periodUs: app.periodUs,
-            maxCurrent: math.max(1.0, app.maxCurrent_mA),
-            hideLowPowerGaps: app.hideLowPowerGaps,
+            events: widget.events,
+            periodUs: widget.periodUs,
+            maxCurrent: math.max(1.0, widget.maxCurrent),
+            hideLowPowerGaps: widget.hideLowPowerGaps,
             onHoverEvent: (e) => setState(() => hovered = e),
           ),
         ),
         const SizedBox(height: 8),
-        // 图下参数区域：事件色块列表（仅显示色块和名称），图上会显示悬浮小窗
-        const SizedBox(height: 8),
+        // 图下参数区域：事件色块列表
         EventLegendPanel(
-          events: app.hideLowPowerGaps
-              ? app.events.where((e) => !e.isSleepOrGap).toList()
-              : app.events,
+          events: widget.hideLowPowerGaps
+              ? widget.events.where((e) => !e.isSleepOrGap).toList()
+              : widget.events,
           hovered: hovered,
           onHover: (e) => setState(() => hovered = e),
         ),
@@ -78,78 +87,7 @@ class _ChartWithOptionsAppState extends State<ChartWithOptionsApp> {
   }
 }
 
-/// ===========================================================================
-/// Chart + 顶部选项 + 图下参数（SniffingState）
-/// ===========================================================================
-
-class ChartWithOptionsSniff extends StatefulWidget {
-  const ChartWithOptionsSniff({super.key});
-  @override
-  State<ChartWithOptionsSniff> createState() => _ChartWithOptionsSniffState();
-}
-
-class _ChartWithOptionsSniffState extends State<ChartWithOptionsSniff> {
-  PowerEvent? hovered;
-
-  @override
-  Widget build(BuildContext context) {
-    final st = context.watch<SniffingState>();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // 顶部选项
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          alignment: WrapAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('隐藏睡眠/空隙'),
-                Switch(
-                  value: st.hideLowPowerGaps,
-                  onChanged: (v) => context.read<SniffingState>().setHideLowPowerGaps(v),
-                ),
-              ],
-            ),
-            Text(
-              st.hideLowPowerGaps
-                  ? '时间轴：压缩视图（睡眠已隐藏）'
-                  : '时间轴：完整周期视图',
-              style: const TextStyle(fontSize: 12),
-              textAlign: TextAlign.right,
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // 模型图（交互）
-        Expanded(
-          child: TimelineChartInteractive(
-            events: st.events,
-            periodUs: st.periodUs,
-            maxCurrent: math.max(1.0, st.maxCurrent_mA),
-            hideLowPowerGaps: st.hideLowPowerGaps,
-            onHoverEvent: (e) => setState(() => hovered = e),
-          ),
-        ),
-        const SizedBox(height: 8),
-        EventLegendPanel(
-          events: st.hideLowPowerGaps
-              ? st.events.where((e) => !e.isSleepOrGap).toList()
-              : st.events,
-          hovered: hovered,
-          onHover: (e) => setState(() => hovered = e),
-        ),
-      ],
-    );
-  }
-}
-
-// ============ 悬浮信息条与图例已在 legend_hover_widgets.dart 中实现
-
-// ============ 交互式模型图（来自 main.txt 的实现）
+// ============ 交互式模型图 (保持原逻辑不变) ============
 
 class TimelineChartInteractive extends StatefulWidget {
   final List<PowerEvent> events;
@@ -201,7 +139,6 @@ class _TimelineChartInteractiveState extends State<TimelineChartInteractive> {
       setState(() => hoveredEvent = hit);
       widget.onHoverEvent?.call(hit);
     } else {
-      // still update pointer pos for popup
       setState(() {});
     }
   }
@@ -313,7 +250,6 @@ List<_EventRect> _computeEventRects({
   return rects;
 }
 
-// 绘图 Painter：去除条块内文字标签，保持样式，仅绘制色块与坐标
 class _TimelinePainter extends CustomPainter {
   final List<PowerEvent> events;
   final double periodUs;
@@ -350,11 +286,9 @@ class _TimelinePainter extends CustomPainter {
       ..color = const Color(0xFF888888)
       ..strokeWidth = 1.0;
 
-    // 坐标轴
     canvas.drawLine(origin, Offset(padding + w, origin.dy), axis); // X
     canvas.drawLine(origin, Offset(origin.dx, origin.dy - h), axis); // Y
 
-    // 网格与刻度
     final gridPaint = Paint()
       ..color = const Color(0x22888888)
       ..strokeWidth = 1.0;
@@ -368,7 +302,7 @@ class _TimelinePainter extends CustomPainter {
       double y = origin.dy - (yVal / maxCurrent) * h;
       canvas.drawLine(Offset(origin.dx, y), Offset(origin.dx + w, y), gridPaint);
       final span = TextSpan(
-        text: '${yVal.toStringAsFixed(1)}',
+        text: yVal.toStringAsFixed(1),
         style: const TextStyle(fontSize: 10, color: Colors.black87),
       );
       textPainter.text = span;
@@ -384,7 +318,7 @@ class _TimelinePainter extends CustomPainter {
       double x = origin.dx + w * frac;
       canvas.drawLine(Offset(x, origin.dy), Offset(x, origin.dy - h), gridPaint);
       final span = TextSpan(
-        text: '${(msTotal * frac).toStringAsFixed(1)}',
+        text: (msTotal * frac).toStringAsFixed(1),
         style: const TextStyle(fontSize: 10, color: Colors.black87),
       );
       textPainter.text = span;
@@ -392,8 +326,7 @@ class _TimelinePainter extends CustomPainter {
       textPainter.paint(canvas, Offset(x - textPainter.width / 2, origin.dy + 4));
     }
 
-    // Axis labels (no units on ticks; units shown in axis labels)
-    // Y axis label: 'Current (mA)' - draw rotated vertically to the left of the axis
+    // Y 轴标签
     final yLabel = TextSpan(
       text: 'Current (mA)',
       style: const TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w600),
@@ -401,13 +334,12 @@ class _TimelinePainter extends CustomPainter {
     textPainter.text = yLabel;
     textPainter.layout();
     canvas.save();
-    // position roughly centered along Y axis, to the left of origin.dx
     canvas.translate(origin.dx - 28, origin.dy - h / 2 + textPainter.width / 2);
     canvas.rotate(-math.pi / 2);
     textPainter.paint(canvas, Offset(0, -textPainter.height / 2));
     canvas.restore();
 
-    // X axis label: 'Time (ms)' - centered below the X axis
+    // X 轴标签
     final xLabel = TextSpan(
       text: 'Time (ms)',
       style: const TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w600),
@@ -417,7 +349,7 @@ class _TimelinePainter extends CustomPainter {
     final xCenter = origin.dx + w / 2;
     textPainter.paint(canvas, Offset(xCenter - textPainter.width / 2, origin.dy + 20));
 
-    // 事件矩形（不绘制条内文字）
+    // 绘制事件块
     double tAccUs = 0.0;
     for (final e in drawEvents) {
       final startUs = hideLowPowerGaps ? tAccUs : e.startUs;

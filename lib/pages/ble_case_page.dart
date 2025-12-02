@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // 需要引入 provider 来获取数据
+import '../state/app_state.dart';
 import '../widgets/config_panels.dart';
 import '../widgets/kpi_widgets.dart';
 import '../widgets/chart_widgets.dart';
@@ -9,6 +11,9 @@ class BleCasePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // 监听数据源
+    final appState = context.watch<AppState>();
+
     return Row(
       children: [
         SizedBox(
@@ -39,7 +44,14 @@ class BleCasePage extends StatelessWidget {
                     color: theme.colorScheme.surfaceContainer,
                     child: Padding(
                       padding: const EdgeInsets.all(12),
-                      child: ChartWithOptionsApp(),
+                      // 使用统一的图表组件
+                      child: UnifiedPowerChart(
+                        events: appState.events,
+                        periodUs: appState.periodUs,
+                        maxCurrent: appState.maxCurrent_mA,
+                        hideLowPowerGaps: appState.hideLowPowerGaps,
+                        onToggleHideGaps: (val) => appState.setHideLowPowerGaps(val),
+                      ),
                     ),
                   ),
                 ),

@@ -5,6 +5,10 @@ import '../widgets/config_panels.dart';
 import '../widgets/chart_widgets.dart';
 import '../widgets/kpi_widgets.dart';
 
+// 注意：此页面在重构后的结构中可能不再被直接使用，
+// 因为 BTPage 已经内联了 SniffingState 的 Provider。
+// 但为了保持兼容性，这里进行简单适配。
+
 class BTSniffingPage extends StatelessWidget {
   const BTSniffingPage({Key? key}) : super(key: key);
 
@@ -17,7 +21,6 @@ class BTSniffingPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // BT Sniffing 配置面板
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -34,7 +37,6 @@ class BTSniffingPage extends StatelessWidget {
                     const SizedBox(height: 12),
                     const Text('此处为占位设计，可添加 sniffing 相关参数配置'),
                     const SizedBox(height: 8),
-                    // 示例：Sniffing 间隔、超时等
                     Row(
                       children: [
                         Expanded(
@@ -51,7 +53,6 @@ class BTSniffingPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              // 波形图表区（可复用 BLE 的 chart）
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -66,12 +67,20 @@ class BTSniffingPage extends StatelessWidget {
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 12),
-                    const Text('（BT Sniffing 波形占位）'),
+                    SizedBox(
+                      height: 300,
+                      child: UnifiedPowerChart(
+                        events: appState.events,
+                        periodUs: appState.periodUs,
+                        maxCurrent: appState.maxCurrent_mA,
+                        hideLowPowerGaps: appState.hideLowPowerGaps,
+                        onToggleHideGaps: (v) => appState.setHideLowPowerGaps(v),
+                      ),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
-              // KPI 指标
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
