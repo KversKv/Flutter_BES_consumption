@@ -11,6 +11,8 @@ final List<BtChip> defaultBtChips = [
     vbat: 3.8,
     sleepCurrent_uA: 116.5,
     rxCurrent_mA: 5.11,
+    rxCurrent_mA_HDT_2G4: 13.0,
+    rxCurrent_mA_HDT_5G: 18.0,
     rxWindow_us: 184.32,
     tifs_us: 150,
     tifsCurrent_mA: 2.953,

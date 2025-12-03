@@ -44,10 +44,15 @@ class SniffingState extends ChangeNotifier {
   SniffCase caseType = SniffCase.btSniff;
 
   dynamic get chip {
-    try {
-      return bleChips.firstWhere((c) => c.id == selectedChipId);
-    } catch (_) {
-      return btChips.firstWhere((c) => c.id == selectedChipId);
+    final isBtCase = caseType == SniffCase.btSniff || caseType == SniffCase.btPage || caseType == SniffCase.btPagescan || caseType == SniffCase.relay || caseType == SniffCase.hdt;
+    if (isBtCase) {
+      final matches = btChips.where((c) => c.id == selectedChipId);
+      if (matches.isNotEmpty) return matches.first;
+      return btChips.first;
+    } else {
+      final matches = bleChips.where((c) => c.id == selectedChipId);
+      if (matches.isNotEmpty) return matches.first;
+      return bleChips.first;
     }
   }
 
@@ -142,13 +147,18 @@ class SniffingState extends ChangeNotifier {
     periodUs = intervalUs;
     final halfPeriodUs = periodUs/2;
 
-    var rxI = chip.rxCurrent_mA;
-    var txI = chip.txCurrentForPower(txPowerDbm);
-    if(band == "2.4G"){
-       rxI = chip.rxCurrent_mA_HDT_2G4;
-       txI = chip.txCurrentForPower(txPowerDbm, "2.4G");
-    } else if(band == "5G"){
-      rxI = chip.rxCurrent_mA_HDT_5G;
+    // Use chip helpers that handle band fallback to avoid null assignment
+    double rxI;
+    double txI;
+    try {
+      rxI = chip.rxCurrentForBand(band);
+    } catch (_) {
+      rxI = chip.rxCurrent_mA;
+    }
+    try {
+      txI = chip.txCurrentForPower(txPowerDbm, band);
+    } catch (_) {
+      txI = chip.txCurrentForPower(txPowerDbm);
     }
 
     final idleCurrent = chip.hdtIdleCurrent_mA;

@@ -8,6 +8,8 @@ class BtChip {
   final double vbat; // V
   final double sleepCurrent_uA; // 休眠电流
   final double rxCurrent_mA; // 接收电流
+  final double? rxCurrent_mA_HDT_2G4;
+  final double? rxCurrent_mA_HDT_5G;
   // 固定接收窗口（单位：us），现在每个芯片可以配置不同的值
   final double rxWindow_us;
   final double tifs_us; // TIFS，典型 150 us
@@ -70,6 +72,8 @@ class BtChip {
     required this.advGapCurrent_mA,
     required this.description,
     required this.hdtIdleCurrent_mA,
+    this.rxCurrent_mA_HDT_2G4,
+    this.rxCurrent_mA_HDT_5G,
     this.txCurrentByBand,
     this.rxCurrentByBand,
   });
