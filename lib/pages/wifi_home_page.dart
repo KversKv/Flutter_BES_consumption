@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../state/sniffing_state.dart';
+import '../state/wifi_state.dart';
 import '../widgets/config_panels.dart';
 import '../widgets/kpi_widgets.dart';
 import '../widgets/chart_widgets.dart';
@@ -12,9 +12,9 @@ class WifiPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return ChangeNotifierProvider(
-      create: (_) => BTState(),
-      child: Consumer<BTState>( // 使用 Consumer 获取 context 中的 state
-        builder: (context, sniffState, _) {
+      create: (_) => WIFIState(),
+      child: Consumer<WIFIState>( // 使用 Consumer 获取 context 中的 state
+        builder: (context, wifiState, _) {
           return Row(
             children: [
               SizedBox(
@@ -47,11 +47,11 @@ class WifiPage extends StatelessWidget {
                             padding: const EdgeInsets.all(12),
                             // 使用统一的图表组件
                             child: UnifiedPowerChart(
-                              events: sniffState.events,
-                              periodUs: sniffState.periodUs,
-                              maxCurrent: sniffState.maxCurrent_mA,
-                              hideLowPowerGaps: sniffState.hideLowPowerGaps,
-                              onToggleHideGaps: (val) => sniffState .setHideLowPowerGaps(val),
+                              events: wifiState.events,
+                              periodUs: wifiState.periodUs,
+                              maxCurrent: wifiState.maxCurrent_mA,
+                              hideLowPowerGaps: wifiState.hideLowPowerGaps,
+                              onToggleHideGaps: (val) => wifiState .setHideLowPowerGaps(val),
                             ),
                           ),
                         ),

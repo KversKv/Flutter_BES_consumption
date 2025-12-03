@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/app_state.dart';
-import '../state/sniffing_state.dart';
+import '../state/BT_state.dart';
 
 class _KPI extends StatelessWidget {
   final String title;

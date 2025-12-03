@@ -10,7 +10,7 @@ import 'app_state.dart';
 import '../models/profile_params.dart';
 import '../services/power_calculator.dart';
 
-enum BT_Case { btSniff, btPage, btPagescan, hdt, relay }
+enum BTCase { btSniff, btPage, btPagescan, hdt, relay }
 enum HdtModule { source, sink }
 
 class BTState extends ChangeNotifier {
@@ -41,10 +41,10 @@ class BTState extends ChangeNotifier {
   Mode mode = Mode.advertising;
   double connIntervalMs = 200.0;
   double advIntervalMs = 100.0;
-  BT_Case caseType = BT_Case.btSniff;
+  BTCase caseType = BTCase.btSniff;
 
   dynamic get chip {
-    final isBtCase = caseType == BT_Case.btSniff || caseType == BT_Case.btPage || caseType == BT_Case.btPagescan || caseType == BT_Case.relay || caseType == BT_Case.hdt;
+    final isBtCase = caseType == BTCase.btSniff || caseType == BTCase.btPage || caseType == BTCase.btPagescan || caseType == BTCase.relay || caseType == BTCase.hdt;
     if (isBtCase) {
       final matches = btChips.where((c) => c.id == selectedChipId);
       if (matches.isNotEmpty) return matches.first;
@@ -88,9 +88,9 @@ class BTState extends ChangeNotifier {
     recompute();
   }
 
-  void setCase(BT_Case c) {
+  void setCase(BTCase c) {
     caseType = c;
-    if (caseType == BT_Case.btSniff || caseType == BT_Case.btPage || caseType == BT_Case.btPagescan) {
+    if (caseType == BTCase.btSniff || caseType == BTCase.btPage || caseType == BTCase.btPagescan) {
       if (!btChips.any((b) => b.id == selectedChipId)) {
         selectedChipId = btChips.first.id;
       }
@@ -129,11 +129,11 @@ class BTState extends ChangeNotifier {
 
   void recompute() {
     switch (caseType) {
-      case BT_Case.btSniff: _recomputeBtSniff(); break;
-      case BT_Case.btPage: _recomputeBtPage(); break;
-      case BT_Case.btPagescan: _recomputeBtPagescan(); break;
-      case BT_Case.hdt: _recomputeHdt(); break;
-      case BT_Case.relay: _recomputeRelay(); break;
+      case BTCase.btSniff: _recomputeBtSniff(); break;
+      case BTCase.btPage: _recomputeBtPage(); break;
+      case BTCase.btPagescan: _recomputeBtPagescan(); break;
+      case BTCase.hdt: _recomputeHdt(); break;
+      case BTCase.relay: _recomputeRelay(); break;
     }
     averageCurrent_mA = PowerCalculator.computeAverageCurrent(events, periodUs);
     notifyListeners();

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../state/sniffing_state.dart';
+import '../state/BT_state.dart';
 import '../widgets/config_panels.dart';
 import '../widgets/kpi_widgets.dart';
 import '../widgets/chart_widgets.dart';

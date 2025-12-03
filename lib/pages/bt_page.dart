@@ -79,7 +79,7 @@ class _BTPageState extends State<BTPage> {
         return ChangeNotifierProvider(
           create: (_) {
             final s = BTState();
-            s.setCase(SniffCase.btSniff);
+            s.setCase(BT_Case.btSniff);
             return s;
           },
           child: Consumer<BTState>(

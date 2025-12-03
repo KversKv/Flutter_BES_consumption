@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../state/app_state.dart';
-import '../state/sniffing_state.dart';
+import '../state/BT_state.dart';
 import '../models/profile_params.dart';
 
 class ConfigPanel extends StatefulWidget {
@@ -261,9 +261,9 @@ class SniffingConfigPanel extends StatelessWidget {
         Text('芯片'),
         const SizedBox(height: 6),
         Builder(builder: (ctx) {
-          final isBtCase = st.caseType == SniffCase.btSniff ||
-              st.caseType == SniffCase.btPage ||
-              st.caseType == SniffCase.btPagescan;
+          final isBtCase = st.caseType == BTCase.btSniff ||
+              st.caseType == BTCase.btPage ||
+              st.caseType == BTCase.btPagescan;
           final chipsList = isBtCase ? st.btChips : st.bleChips;
           return DropdownButton<String>(
             value: st.selectedChipId,
@@ -285,13 +285,13 @@ class SniffingConfigPanel extends StatelessWidget {
         const SizedBox(height: 6),
         SizedBox(
           width: double.infinity,
-          child: SegmentedButton<SniffCase>(
+          child: SegmentedButton<BTCase>(
             segments: const [
-              ButtonSegment(value: SniffCase.btSniff, label: Text('BT sniff')),
-              ButtonSegment(value: SniffCase.btPage, label: Text('BT page')),
-              ButtonSegment(value: SniffCase.btPagescan, label: Text('BT pagescan')),
-              ButtonSegment(value: SniffCase.hdt, label: Text('HDT')),
-              ButtonSegment(value: SniffCase.relay, label: Text('Relay')),
+              ButtonSegment(value: BTCase.btSniff, label: Text('BT sniff')),
+              ButtonSegment(value: BTCase.btPage, label: Text('BT page')),
+              ButtonSegment(value: BTCase.btPagescan, label: Text('BT pagescan')),
+              ButtonSegment(value: BTCase.hdt, label: Text('HDT')),
+              ButtonSegment(value: BTCase.relay, label: Text('Relay')),
             ],
             selected: {st.caseType},
             onSelectionChanged: (s) => context.read<BTState>().setCase(s.first),
@@ -329,7 +329,7 @@ class SniffingConfigPanel extends StatelessWidget {
         // Case-specific panel
         Builder(builder: (ctx) {
           switch (st.caseType) {
-            case SniffCase.btSniff:
+            case BTCase.btSniff:
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -347,7 +347,7 @@ class SniffingConfigPanel extends StatelessWidget {
                 ],
               );
 
-            case SniffCase.btPage:
+            case BTCase.btPage:
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -371,7 +371,7 @@ class SniffingConfigPanel extends StatelessWidget {
                 ],
               );
 
-            case SniffCase.btPagescan:
+            case BTCase.btPagescan:
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -408,7 +408,7 @@ class SniffingConfigPanel extends StatelessWidget {
                 ],
               );
 
-            case SniffCase.hdt:
+            case BTCase.hdt:
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -465,7 +465,7 @@ class SniffingConfigPanel extends StatelessWidget {
                 ],
               );
 
-            case SniffCase.relay:
+            case BTCase.relay:
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
