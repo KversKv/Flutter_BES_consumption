@@ -304,8 +304,31 @@ class SniffingConfigPanel extends StatelessWidget {
 
         // 新增：发射功率选择（与 BLE 配置面板一致的交互）
         Builder(builder: (ctx) {
-          final levels = st.chip.txPowerLevelsDbm;
-          final currentTx = st.chip.snapTxPower(st.txPowerDbm);
+          final isHdt = st.caseType == BTCase.hdt;
+          final band = isHdt ? st.band : null;
+
+          List<double> levels;
+          double currentTx;
+
+          if (isHdt && band != null && st.chip.txCurrentByBand != null && st.chip.txCurrentByBand!.containsKey(band)) {
+            final Map<double, double> map = st.chip.txCurrentByBand![band]!;
+            levels = map.keys.toList()..sort();
+            // snap to closest available level in this band
+            double closest = levels.first;
+            double minDiff = (st.txPowerDbm - closest).abs();
+            for (final l in levels) {
+              final diff = (st.txPowerDbm - l).abs();
+              if (diff < minDiff) {
+                closest = l;
+                minDiff = diff;
+              }
+            }
+            currentTx = closest;
+          } else {
+            levels = st.chip.txPowerLevelsDbm.cast<double>();
+            currentTx = st.chip.snapTxPower(st.txPowerDbm);
+          }
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -314,9 +337,9 @@ class SniffingConfigPanel extends StatelessWidget {
               DropdownButton<double>(
                 value: currentTx,
                 isExpanded: true,
-                items: (levels as List<dynamic>)
+                items: levels
                     .map<DropdownMenuItem<double>>((lv) => DropdownMenuItem<double>(
-                          value: lv as double,
+                          value: lv,
                           child: Text(lv.toString()),
                         ))
                     .toList(),
