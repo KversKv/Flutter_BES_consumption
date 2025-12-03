@@ -285,16 +285,19 @@ class SniffingConfigPanel extends StatelessWidget {
         const SizedBox(height: 6),
         SizedBox(
           width: double.infinity,
-          child: SegmentedButton<BTCase>(
-            segments: const [
-              ButtonSegment(value: BTCase.btSniff, label: Text('BT sniff')),
-              ButtonSegment(value: BTCase.btPage, label: Text('BT page')),
-              ButtonSegment(value: BTCase.btPagescan, label: Text('BT pagescan')),
-              ButtonSegment(value: BTCase.hdt, label: Text('HDT')),
-              ButtonSegment(value: BTCase.relay, label: Text('Relay')),
+          child: DropdownButton<BTCase>(
+            value: st.caseType,
+            isExpanded: true,
+            items: const [
+              DropdownMenuItem(value: BTCase.btSniff, child: Text('BT sniff')),
+              DropdownMenuItem(value: BTCase.btPage, child: Text('BT page')),
+              DropdownMenuItem(value: BTCase.btPagescan, child: Text('BT pagescan')),
+              DropdownMenuItem(value: BTCase.hdt, child: Text('HDT')),
+              DropdownMenuItem(value: BTCase.relay, child: Text('Relay')),
             ],
-            selected: {st.caseType},
-            onSelectionChanged: (s) => context.read<BTState>().setCase(s.first),
+            onChanged: (v) {
+              if (v != null) context.read<BTState>().setCase(v);
+            },
           ),
         ),
         const SizedBox(height: 12),
