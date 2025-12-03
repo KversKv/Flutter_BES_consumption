@@ -5,15 +5,15 @@ import '../widgets/config_panels.dart';
 import '../widgets/kpi_widgets.dart';
 import '../widgets/chart_widgets.dart';
 
-class SniffingPage extends StatelessWidget {
-  const SniffingPage({super.key});
+class BTPage extends StatelessWidget {
+  const BTPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return ChangeNotifierProvider(
-      create: (_) => SniffingState(),
-      child: Consumer<SniffingState>( // 使用 Consumer 获取 context 中的 state
+      create: (_) => BTState(),
+      child: Consumer<BTState>( // 使用 Consumer 获取 context 中的 state
         builder: (context, sniffState, _) {
           return Row(
             children: [

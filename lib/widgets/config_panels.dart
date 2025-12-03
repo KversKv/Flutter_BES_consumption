@@ -44,16 +44,16 @@ class _ConfigPanelState extends State<ConfigPanel> {
 
   @override
   Widget build(BuildContext context) {
-    // Try to sync SniffingState with AppState if provider is present.
+    // Try to sync BTState with AppState if provider is present.
     final app = context.watch<AppState>();
     try {
-      final sniffState = context.read<SniffingState>();
+      final sniffState = context.read<BTState>();
       sniffState.setMode(app.params.mode);
       sniffState.setConnIntervalMs(app.params.connIntervalMs);
       sniffState.setAdvIntervalMs(app.params.advIntervalMs);
       sniffState.setTxPower(app.params.txPowerDbm);
     } catch (_) {
-      // Provider<SniffingState> not found above this widget; ignore sync.
+      // Provider<BTState> not found above this widget; ignore sync.
     }
     final levels = app.chip.txPowerLevelsDbm;
     final currentTx = app.chip.snapTxPower(app.params.txPowerDbm);
@@ -250,7 +250,7 @@ class SniffingConfigPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final st = context.watch<SniffingState>();
+    final st = context.watch<BTState>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -275,7 +275,7 @@ class SniffingConfigPanel extends StatelessWidget {
                 ))
               .toList(),
             onChanged: (v) {
-              if (v != null) context.read<SniffingState>().setChip(v);
+              if (v != null) context.read<BTState>().setChip(v);
             },
           );
         }),
@@ -294,7 +294,7 @@ class SniffingConfigPanel extends StatelessWidget {
               ButtonSegment(value: SniffCase.relay, label: Text('Relay')),
             ],
             selected: {st.caseType},
-            onSelectionChanged: (s) => context.read<SniffingState>().setCase(s.first),
+            onSelectionChanged: (s) => context.read<BTState>().setCase(s.first),
           ),
         ),
         const SizedBox(height: 12),
@@ -318,7 +318,7 @@ class SniffingConfigPanel extends StatelessWidget {
                         ))
                     .toList(),
                 onChanged: (v) {
-                  if (v != null) context.read<SniffingState>().setTxPower(v);
+                  if (v != null) context.read<BTState>().setTxPower(v);
                 },
               ),
               const SizedBox(height: 12),
@@ -342,7 +342,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     value: st.sniffWindowUs.clamp(50.0, 3000.0),
                     min: 50.0,
                     max: 3000.0,
-                    onChanged: (v) => context.read<SniffingState>().setSniffWindowUs(v),
+                    onChanged: (v) => context.read<BTState>().setSniffWindowUs(v),
                   ),
                 ],
               );
@@ -358,7 +358,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     value: st.sniffIntervalMs,
                     min: 10,
                     max: 5000,
-                    onChanged: (v) => context.read<SniffingState>().setSniffIntervalMs(v),
+                    onChanged: (v) => context.read<BTState>().setSniffIntervalMs(v),
                   ),
                   const SizedBox(height: 12),
                   Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
@@ -366,7 +366,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     value: st.sniffWindowUs.clamp(50.0, 50000.0),
                     min: 50.0,
                     max: 50000.0,
-                    onChanged: (v) => context.read<SniffingState>().setSniffWindowUs(v),
+                    onChanged: (v) => context.read<BTState>().setSniffWindowUs(v),
                   ),
                 ],
               );
@@ -382,7 +382,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     value: st.sniffIntervalMs,
                     min: 10,
                     max: 5000,
-                    onChanged: (v) => context.read<SniffingState>().setSniffIntervalMs(v),
+                    onChanged: (v) => context.read<BTState>().setSniffIntervalMs(v),
                   ),
                   const SizedBox(height: 12),
                   Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
@@ -390,7 +390,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     value: st.sniffWindowUs.clamp(50.0, 50000.0),
                     min: 50.0,
                     max: 50000.0,
-                    onChanged: (v) => context.read<SniffingState>().setSniffWindowUs(v),
+                    onChanged: (v) => context.read<BTState>().setSniffWindowUs(v),
                   ),
                   const SizedBox(height: 12),
                   Text('侦听信道数: ${st.channelsPerCycle}'),
@@ -399,7 +399,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     min: 1,
                     max: 3,
                     divisions: 2,
-                    onChanged: (v) => context.read<SniffingState>().setChannels(v.round()),
+                    onChanged: (v) => context.read<BTState>().setChannels(v.round()),
                   ),
                   const SizedBox(height: 12),
                   Text('信道间隙 (µs): ${st.channelGapUs.toStringAsFixed(0)}'),
@@ -423,7 +423,7 @@ class SniffingConfigPanel extends StatelessWidget {
                         ButtonSegment(value: HdtModule.source, label: Text('Source')),
                       ],
                       selected: {st.hdtModule},
-                      onSelectionChanged: (s) => context.read<SniffingState>().setHdtModule(s.first),
+                      onSelectionChanged: (s) => context.read<BTState>().setHdtModule(s.first),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -437,7 +437,7 @@ class SniffingConfigPanel extends StatelessWidget {
                         ButtonSegment(value: '5G', label: Text('5G')),
                       ],
                       selected: {st.band},
-                      onSelectionChanged: (s) => context.read<SniffingState>().setBand(s.first),
+                      onSelectionChanged: (s) => context.read<BTState>().setBand(s.first),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -450,7 +450,7 @@ class SniffingConfigPanel extends StatelessWidget {
                         .map((v) => DropdownMenuItem(value: v, child: Text('${v.toStringAsFixed(0)}')))
                         .toList(),
                     onChanged: (v) {
-                      if (v != null) context.read<SniffingState>().setHdtPhyRate(v);
+                      if (v != null) context.read<BTState>().setHdtPhyRate(v);
                     },
                   ),
                   const SizedBox(height: 12),
@@ -460,7 +460,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     min: 1,
                     max: 10,
                     divisions: 9,
-                    onChanged: (v) => context.read<SniffingState>().setHdtRepeats(v.round()),
+                    onChanged: (v) => context.read<BTState>().setHdtRepeats(v.round()),
                   ),
                 ],
               );
@@ -476,7 +476,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     value: st.sniffIntervalMs,
                     min: 10,
                     max: 5000,
-                    onChanged: (v) => context.read<SniffingState>().setSniffIntervalMs(v),
+                    onChanged: (v) => context.read<BTState>().setSniffIntervalMs(v),
                   ),
                   const SizedBox(height: 12),
                   Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
@@ -484,7 +484,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     value: st.sniffWindowUs.clamp(50.0, 50000.0),
                     min: 50.0,
                     max: 50000.0,
-                    onChanged: (v) => context.read<SniffingState>().setSniffWindowUs(v),
+                    onChanged: (v) => context.read<BTState>().setSniffWindowUs(v),
                   ),
                   const SizedBox(height: 12),
                   Text('Relay hop gap (µs): ${st.relayHopGapUs.toStringAsFixed(0)}'),
@@ -492,7 +492,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     value: st.relayHopGapUs.clamp(0.0, 100000.0),
                     min: 0.0,
                     max: 100000.0,
-                    onChanged: (v) => context.read<SniffingState>().setRelayHopGapUs(v),
+                    onChanged: (v) => context.read<BTState>().setRelayHopGapUs(v),
                   ),
                 ],
               );
@@ -506,7 +506,7 @@ class SniffingConfigPanel extends StatelessWidget {
           min: 50,
           max: 1200,
           divisions: 115,
-          onChanged: (v) => context.read<SniffingState>().setBatteryCapacity(v),
+          onChanged: (v) => context.read<BTState>().setBatteryCapacity(v),
         ),
         const SizedBox(height: 12),
         ChipInfoCard(chip: st.chip),

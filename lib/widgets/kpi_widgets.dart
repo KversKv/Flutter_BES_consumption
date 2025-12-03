@@ -79,7 +79,7 @@ class KPIRowSniffing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final st = context.watch<SniffingState>();
+    final st = context.watch<BTState>();
     final avg = st.averageCurrent_mA;
     final hours = st.batteryLife_hours;
     final days = hours / 24.0;

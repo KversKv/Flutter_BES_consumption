@@ -13,7 +13,7 @@ import '../services/power_calculator.dart';
 enum SniffCase { btSniff, btPage, btPagescan, hdt, relay }
 enum HdtModule { source, sink }
 
-class SniffingState extends ChangeNotifier {
+class BTState extends ChangeNotifier {
   final List<BleChip> bleChips = AppState().chips;
   final List<BtChip> btChips = defaultBtChips;
 
@@ -62,7 +62,7 @@ class SniffingState extends ChangeNotifier {
   double batteryCapacity_mAh = 220;
   bool hideLowPowerGaps = true;
 
-  SniffingState() {
+  BTState() {
     selectedChipId = bleChips.first.id;
     recompute();
   }

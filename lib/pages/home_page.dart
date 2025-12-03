@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'ble_case_page.dart';
-import 'sniffing_page.dart';
+import 'bt_home_page.dart';
 import 'earbuds_compare_page.dart'; // ✅ 新增导入
+import 'wifi_home_page.dart'; // ✅ 新增导入
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -21,10 +22,13 @@ class _MyHomePageState extends State<MyHomePage> {
         page = const BleCasePage();
         break;
       case 1:
-        page = const SniffingPage();
+        page = const BTPage();
         break;
       case 2:
         page = const EarbudsComparePage(); // ✅ 新增页
+        break;
+      case 3:
+        page = const WifiPage();
         break;
       default:
         page = const BleCasePage();
@@ -53,12 +57,16 @@ class _MyHomePageState extends State<MyHomePage> {
                       label: Text('BLE CASE'),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.wifi_tethering),
+                      icon: Icon(Icons.bluetooth),
                       label: Text('BT CASE'),
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.headphones),
                       label: Text('Earbuds 功耗对比'), // ✅ 新增菜单项
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.wifi),
+                      label: Text('WiFi CASE'), // ✅ 新增菜单项
                     ),
                   ],
                 ),
