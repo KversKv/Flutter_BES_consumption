@@ -63,7 +63,12 @@ class BTState extends ChangeNotifier {
   bool hideLowPowerGaps = true;
 
   BTState() {
-    selectedChipId = bleChips.first.id;
+    final isBtCase = caseType == BTCase.btSniff ||
+        caseType == BTCase.btPage ||
+        caseType == BTCase.btPagescan ||
+        caseType == BTCase.relay ||
+        caseType == BTCase.hdt;
+    selectedChipId = isBtCase ? btChips.first.id : bleChips.first.id;
     recompute();
   }
 
