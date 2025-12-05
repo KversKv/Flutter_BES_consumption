@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../state/app_state.dart';
 import '../state/BT_state.dart';
 import '../models/profile_params.dart';
+import '../l10n/app_localizations.dart';
 
 class ConfigPanel extends StatefulWidget {
   const ConfigPanel({super.key});
@@ -65,10 +66,10 @@ class _ConfigPanelState extends State<ConfigPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('配置', style: Theme.of(context).textTheme.titleLarge),
+        Text(AppLocalizations.of(context).config, style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
 
-        Text('芯片'),
+        Text(AppLocalizations.of(context).chip),
         const SizedBox(height: 6),
         DropdownButton<String>(
           value: app.selectedChipId,
@@ -85,14 +86,14 @@ class _ConfigPanelState extends State<ConfigPanel> {
         ),
         const SizedBox(height: 12),
 
-        Text('模式'),
+        Text(AppLocalizations.of(context).mode),
         const SizedBox(height: 6),
         SizedBox(
           width: double.infinity,
           child: SegmentedButton<Mode>(
-            segments: const [
-              ButtonSegment(value: Mode.connected, label: Text('连接')),
-              ButtonSegment(value: Mode.advertising, label: Text('广播')),
+               segments: [
+              ButtonSegment(value: Mode.connected, label: Text(AppLocalizations.of(context).connected)),
+              ButtonSegment(value: Mode.advertising, label: Text(AppLocalizations.of(context).advertising)),
             ],
             selected: {app.params.mode},
             onSelectionChanged: (s) {
@@ -102,7 +103,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
         ),
         const SizedBox(height: 12),
 
-        Text('PHY'),
+        Text(AppLocalizations.of(context).phy),
         const SizedBox(height: 6),
         SizedBox(
           width: double.infinity,
@@ -120,7 +121,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
         ),
         const SizedBox(height: 12),
 
-        Text('发射功率 (dBm): $currentTx'),
+        Text('${AppLocalizations.of(context).txPowerLabel} $currentTx'),
         const SizedBox(height: 6),
         DropdownButton<double>(
           value: currentTx,
@@ -137,7 +138,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
         ),
         const SizedBox(height: 12),
 
-        Text('负载字节数: ${app.params.payloadBytes}'),
+        Text('${AppLocalizations.of(context).payloadBytesLabel} ${app.params.payloadBytes}'),
         Slider(
           value: app.params.payloadBytes.toDouble(),
           min: 0,
@@ -151,7 +152,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('广播间隔 (ms): ${app.params.advIntervalMs.toStringAsFixed(0)}'),
+              Text('${AppLocalizations.of(context).advIntervalLabel} ${app.params.advIntervalMs.toStringAsFixed(0)}'),
               Slider(
                 value: app.params.advIntervalMs,
                 min: 20,
@@ -167,7 +168,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
             children: [
               Row(
                 children: [
-                  const Text('连接间隔 (ms)'),
+                  Text(AppLocalizations.of(context).connIntervalLabel),
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
@@ -230,7 +231,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
           ),
         const SizedBox(height: 12),
 
-        Text('电池容量 (mAh): ${app.batteryCapacity_mAh.toStringAsFixed(0)}'),
+        Text('${AppLocalizations.of(context).batteryCapacityLabel} ${app.batteryCapacity_mAh.toStringAsFixed(0)}'),
         Slider(
           value: app.batteryCapacity_mAh,
           min: 50,
@@ -255,10 +256,10 @@ class SniffingConfigPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('配置', style: Theme.of(context).textTheme.titleLarge),
+        Text(AppLocalizations.of(context).config, style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
 
-        Text('芯片'),
+        Text(AppLocalizations.of(context).chip),
         const SizedBox(height: 6),
         Builder(builder: (ctx) {
           final isBtCase = st.caseType == BTCase.btSniff ||
@@ -281,19 +282,19 @@ class SniffingConfigPanel extends StatelessWidget {
         }),
         const SizedBox(height: 12),
 
-        Text('侦听用例'),
+        Text(AppLocalizations.of(context).listeningCase),
         const SizedBox(height: 6),
         SizedBox(
           width: double.infinity,
           child: DropdownButton<BTCase>(
             value: st.caseType,
             isExpanded: true,
-            items: const [
-              DropdownMenuItem(value: BTCase.btSniff, child: Text('BT sniff')),
-              DropdownMenuItem(value: BTCase.btPage, child: Text('BT page')),
-              DropdownMenuItem(value: BTCase.btPagescan, child: Text('BT pagescan')),
-              DropdownMenuItem(value: BTCase.hdt, child: Text('HDT')),
-              DropdownMenuItem(value: BTCase.relay, child: Text('Relay')),
+            items: [
+              DropdownMenuItem(value: BTCase.btSniff, child: Text(AppLocalizations.of(context).btSniff)),
+              DropdownMenuItem(value: BTCase.btPage, child: Text(AppLocalizations.of(context).btPage)),
+              DropdownMenuItem(value: BTCase.btPagescan, child: Text(AppLocalizations.of(context).btPagescan)),
+              DropdownMenuItem(value: BTCase.hdt, child: const Text('HDT')),
+              DropdownMenuItem(value: BTCase.relay, child: const Text('Relay')),
             ],
             onChanged: (v) {
               if (v != null) context.read<BTState>().setCase(v);
@@ -332,7 +333,7 @@ class SniffingConfigPanel extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('发射功率 (dBm): $currentTx'),
+              Text('${AppLocalizations.of(context).txPowerLabel} $currentTx'),
               const SizedBox(height: 6),
               DropdownButton<double>(
                 value: currentTx,
@@ -361,9 +362,9 @@ class SniffingConfigPanel extends StatelessWidget {
                 children: [
 
                   const SizedBox(height: 6),
-                  Text('HDT 周期 (µs): ${st.hdtPeriodUs.toStringAsFixed(0)}'),
-                  const SizedBox(height: 6),
-                  Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
+                    Text('${AppLocalizations.of(context).hdtPeriod} ${st.hdtPeriodUs.toStringAsFixed(0)}'),
+                      const SizedBox(height: 6),
+                      Text('${AppLocalizations.of(context).listeningWindow} ${st.sniffWindowUs.toStringAsFixed(0)}'),
                   Slider(
                     value: st.sniffWindowUs.clamp(50.0, 3000.0),
                     min: 50.0,
@@ -377,9 +378,9 @@ class SniffingConfigPanel extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('BT Page'),
+                  Text(AppLocalizations.of(context).btPage),
                   const SizedBox(height: 6),
-                  Text('侦听间隔 (ms): ${st.sniffIntervalMs.toStringAsFixed(2)}'),
+                  Text('${AppLocalizations.of(context).listeningInterval} ${st.sniffIntervalMs.toStringAsFixed(2)}'),
                   Slider(
                     value: st.sniffIntervalMs,
                     min: 10,
@@ -387,7 +388,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     onChanged: (v) => context.read<BTState>().setSniffIntervalMs(v),
                   ),
                   const SizedBox(height: 12),
-                  Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
+                  Text('${AppLocalizations.of(context).listeningWindow} ${st.sniffWindowUs.toStringAsFixed(0)}'),
                   Slider(
                     value: st.sniffWindowUs.clamp(50.0, 50000.0),
                     min: 50.0,
@@ -401,9 +402,9 @@ class SniffingConfigPanel extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('BT PageScan'),
+                  Text(AppLocalizations.of(context).btPagescan),
                   const SizedBox(height: 6),
-                  Text('侦听间隔 (ms): ${st.sniffIntervalMs.toStringAsFixed(2)}'),
+                  Text('${AppLocalizations.of(context).listeningInterval} ${st.sniffIntervalMs.toStringAsFixed(2)}'),
                   Slider(
                     value: st.sniffIntervalMs,
                     min: 10,
@@ -411,7 +412,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     onChanged: (v) => context.read<BTState>().setSniffIntervalMs(v),
                   ),
                   const SizedBox(height: 12),
-                  Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
+                  Text('${AppLocalizations.of(context).listeningWindow} ${st.sniffWindowUs.toStringAsFixed(0)}'),
                   Slider(
                     value: st.sniffWindowUs.clamp(50.0, 50000.0),
                     min: 50.0,
@@ -419,7 +420,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     onChanged: (v) => context.read<BTState>().setSniffWindowUs(v),
                   ),
                   const SizedBox(height: 12),
-                  Text('侦听信道数: ${st.channelsPerCycle}'),
+                  Text('${AppLocalizations.of(context).channelsLabel} ${st.channelsPerCycle}'),
                   Slider(
                     value: st.channelsPerCycle.toDouble(),
                     min: 1,
@@ -428,9 +429,9 @@ class SniffingConfigPanel extends StatelessWidget {
                     onChanged: (v) => context.read<BTState>().setChannels(v.round()),
                   ),
                   const SizedBox(height: 12),
-                  Text('信道间隙 (µs): ${st.channelGapUs.toStringAsFixed(0)}'),
+                  Text('${AppLocalizations.of(context).channelGap} ${st.channelGapUs.toStringAsFixed(0)}'),
                   const SizedBox(height: 6),
-                  Text('（由代码变量指定，默认 150 µs，不可交互修改）', style: Theme.of(context).textTheme.bodySmall),
+                  Text(AppLocalizations.of(context).defaultNote, style: Theme.of(context).textTheme.bodySmall),
                 ],
               );
 
@@ -439,21 +440,21 @@ class SniffingConfigPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 6),
-                  Text('模块角色'),
+                  Text(AppLocalizations.of(context).moduleRole),
                   const SizedBox(height: 6),
                   SizedBox(
                     width: double.infinity,
                     child: SegmentedButton<HdtModule>(
-                      segments: const [
-                        ButtonSegment(value: HdtModule.sink, label: Text('Sink')),
-                        ButtonSegment(value: HdtModule.source, label: Text('Source')),
+                      segments: [
+                        ButtonSegment(value: HdtModule.sink, label: Text(AppLocalizations.of(context).sink)),
+                        ButtonSegment(value: HdtModule.source, label: Text(AppLocalizations.of(context).source)),
                       ],
                       selected: {st.hdtModule},
                       onSelectionChanged: (s) => context.read<BTState>().setHdtModule(s.first),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text('频段'),
+                  Text(AppLocalizations.of(context).frequencyBand),
                   const SizedBox(height: 6),
                   SizedBox(
                     width: double.infinity,
@@ -467,7 +468,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text('HDT PHY 速率 (Mbps): ${st.hdtPhyRateMbps.toStringAsFixed(0)}'),
+                  Text('${AppLocalizations.of(context).hdtPhyRate} ${st.hdtPhyRateMbps.toStringAsFixed(0)}'),
                   const SizedBox(height: 6),
                   DropdownButton<double>(
                     value: st.hdtPhyRateMbps,
@@ -480,7 +481,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: 12),
-                  Text('HDT repeats: ${st.hdtRepeats}'),
+                  Text('${AppLocalizations.of(context).hdtRepeats} ${st.hdtRepeats}'),
                   Slider(
                     value: st.hdtRepeats.toDouble(),
                     min: 1,
@@ -495,9 +496,9 @@ class SniffingConfigPanel extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Relay'),
+                  Text(AppLocalizations.of(context).relay),
                   const SizedBox(height: 6),
-                  Text('侦听间隔 (ms): ${st.sniffIntervalMs.toStringAsFixed(2)}'),
+                  Text('${AppLocalizations.of(context).listeningInterval} ${st.sniffIntervalMs.toStringAsFixed(2)}'),
                   Slider(
                     value: st.sniffIntervalMs,
                     min: 10,
@@ -505,7 +506,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     onChanged: (v) => context.read<BTState>().setSniffIntervalMs(v),
                   ),
                   const SizedBox(height: 12),
-                  Text('侦听窗口 (µs): ${st.sniffWindowUs.toStringAsFixed(0)}'),
+                  Text('${AppLocalizations.of(context).listeningWindow} ${st.sniffWindowUs.toStringAsFixed(0)}'),
                   Slider(
                     value: st.sniffWindowUs.clamp(50.0, 50000.0),
                     min: 50.0,
@@ -513,7 +514,7 @@ class SniffingConfigPanel extends StatelessWidget {
                     onChanged: (v) => context.read<BTState>().setSniffWindowUs(v),
                   ),
                   const SizedBox(height: 12),
-                  Text('Relay hop gap (µs): ${st.relayHopGapUs.toStringAsFixed(0)}'),
+                  Text('${AppLocalizations.of(context).relayHopGap} ${st.relayHopGapUs.toStringAsFixed(0)}'),
                   Slider(
                     value: st.relayHopGapUs.clamp(0.0, 100000.0),
                     min: 0.0,
@@ -556,23 +557,23 @@ class ChipInfoCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('芯片规格与特点', style: theme.textTheme.titleSmall),
+            Text(AppLocalizations.of(context).chipSpecsTitle, style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
             Wrap(
               spacing: 12,
               runSpacing: 8,
               children: [
-                _specItem('型号', chip.name),
-                _specItem('VBAT', '${chip.vbat} V'),
+                _specItem(AppLocalizations.of(context).model, chip.name),
+                _specItem(AppLocalizations.of(context).vbat, '${chip.vbat} V'),
                 // _specItem('Sleep', '${chip.sleepCurrent_uA} µA'),
-                _specItem('RX', '${chip.rxCurrent_mA} mA'),
-                _specItem('TX', '${chip.txCurrent_mA_forDbm[chip.txPowerLevelsDbm.first]} mA'),
-                _specItem('Description', '${chip.description}'),
+                _specItem(AppLocalizations.of(context).rx, '${chip.rxCurrent_mA} mA'),
+                _specItem(AppLocalizations.of(context).tx, '${chip.txCurrent_mA_forDbm[chip.txPowerLevelsDbm.first]} mA'),
+                _specItem(AppLocalizations.of(context).descriptionLabel, '${chip.description}'),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              '说明：显示芯片的关键参数，便于快速比较。',
+              AppLocalizations.of(context).chipSpecsDescription,
               style: theme.textTheme.bodySmall,
             ),
           ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../state/app_state.dart';
 import '../widgets/config_panels.dart';
@@ -27,22 +28,22 @@ class BTSniffingPage extends StatelessWidget {
                   border: Border.all(color: Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Column(
+                    child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'BT Sniffing 配置',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    Text(
+                      AppLocalizations.of(context).btSniffingConfig,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 12),
-                    const Text('此处为占位设计，可添加 sniffing 相关参数配置'),
+                    Text(AppLocalizations.of(context).btSniffingPlaceholder),
                     const SizedBox(height: 8),
                     Row(
                       children: [
                         Expanded(
                           child: TextField(
                             decoration: InputDecoration(
-                              labelText: 'Sniffing 间隔 (ms)',
+                              labelText: AppLocalizations.of(context).sniffingIntervalLabel,
                               border: OutlineInputBorder(),
                             ),
                           ),
@@ -59,12 +60,12 @@ class BTSniffingPage extends StatelessWidget {
                   border: Border.all(color: Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Column(
+                    child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '功耗波形',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    Text(
+                      AppLocalizations.of(context).powerWaveform,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -87,16 +88,16 @@ class BTSniffingPage extends StatelessWidget {
                   border: Border.all(color: Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Column(
+                    child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'KPI 指标',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    Text(
+                      AppLocalizations.of(context).kpiTitle,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 12),
-                    Text('平均电流: ${appState.averageCurrent_mA.toStringAsFixed(2)} mA'),
-                    Text('周期: ${appState.periodUs.toStringAsFixed(2)} µs'),
+                    Text('${AppLocalizations.of(context).avgCurrentLabel} ${appState.averageCurrent_mA.toStringAsFixed(2)} mA'),
+                    Text('${AppLocalizations.of(context).periodLabel} ${appState.periodUs.toStringAsFixed(2)} µs'),
                   ],
                 ),
               ),

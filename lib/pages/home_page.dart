@@ -3,6 +3,7 @@ import 'ble_case_page.dart';
 import 'bt_home_page.dart';
 import 'earbuds_compare_page.dart'; // ✅ 新增导入
 import 'wifi_home_page.dart'; // ✅ 新增导入
+import '../l10n/app_localizations.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -51,22 +52,22 @@ class _MyHomePageState extends State<MyHomePage> {
                       selectedIndex = value;
                     });
                   },
-                  destinations: const [
+                  destinations: [
                     NavigationRailDestination(
-                      icon: Icon(Icons.show_chart),
-                      label: Text('BLE CASE'),
+                      icon: const Icon(Icons.show_chart),
+                      label: Text(AppLocalizations.of(context).navBle),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.bluetooth),
-                      label: Text('BT CASE'),
+                      icon: const Icon(Icons.bluetooth),
+                      label: Text(AppLocalizations.of(context).navBt),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.headphones),
-                      label: Text('Earbuds 功耗对比'), // ✅ 新增菜单项
+                      icon: const Icon(Icons.headphones),
+                      label: Text(AppLocalizations.of(context).navEarbuds),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.wifi),
-                      label: Text('WiFi CASE'), // ✅ 新增菜单项
+                      icon: const Icon(Icons.wifi),
+                      label: Text(AppLocalizations.of(context).navWifi),
                     ),
                   ],
                 ),

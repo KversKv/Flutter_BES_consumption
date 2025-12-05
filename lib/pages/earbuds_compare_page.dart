@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/earbuds.dart';
+import '../l10n/app_localizations.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 /// 耳机场景功耗对比页
@@ -28,7 +29,7 @@ class _EarbudsComparePageState extends State<EarbudsComparePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('耳机场景功耗对比'),
+        title: Text(AppLocalizations.of(context).navEarbuds),
         centerTitle: true,
       ),
       body: Padding(
@@ -54,15 +55,15 @@ class _EarbudsComparePageState extends State<EarbudsComparePage> {
       child: DataTable(
         border: TableBorder.all(color: Colors.grey.shade300),
         headingRowColor: WidgetStateProperty.all(Colors.grey.shade100),
-        columns: const [
-          DataColumn(label: Text('Chip ID')),
-          DataColumn(label: Text('量产配置')),
-          DataColumn(label: Text('Mute (mA)')),
-          DataColumn(label: Text('NoisePink AAC \n 8/15 (mA)')),
-          DataColumn(label: Text('1kHz -6dB \n 15/15 (mA)')),
-          DataColumn(label: Text('Call (mA)')),
-          DataColumn(label: Text('Connect IDLE (mA)')),
-          DataColumn(label: Text('Power Off (mA)')),
+        columns: [
+          DataColumn(label: Text(AppLocalizations.of(context).chipId)),
+          DataColumn(label: Text(AppLocalizations.of(context).massProdConfig)),
+          DataColumn(label: Text('${AppLocalizations.of(context).mute} (mA)')),
+          DataColumn(label: Text('${AppLocalizations.of(context).noisePink} AAC \n 8/15 (mA)')),
+          DataColumn(label: Text('${AppLocalizations.of(context).oneKhz} -6dB \n 15/15 (mA)')),
+          DataColumn(label: Text('${AppLocalizations.of(context).call} (mA)')),
+          DataColumn(label: Text('${AppLocalizations.of(context).idle} (mA)')),
+          DataColumn(label: Text('${AppLocalizations.of(context).powerOff} (mA)')),
         ],
         rows: allChips.map((e) {
           return DataRow(
@@ -104,8 +105,8 @@ class _EarbudsComparePageState extends State<EarbudsComparePage> {
   /// 底部：功耗对比图（柱状）
   Widget _buildCompareChart() {
     if (selectedChips.isEmpty) {
-      return const Center(
-        child: Text('请选择 2~3 款芯片进行对比'),
+      return Center(
+        child: Text(AppLocalizations.of(context).select2to3Chips),
       );
     }
 

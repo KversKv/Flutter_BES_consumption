@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 class BTPageScan extends StatelessWidget {
   const BTPageScan({Key? key}) : super(key: key);
@@ -16,15 +17,15 @@ class BTPageScan extends StatelessWidget {
               border: Border.all(color: Colors.grey.shade300),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Column(
+                child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'BT PageScan 配置',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  AppLocalizations.of(context).btPageScanConfig,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                SizedBox(height: 12),
-                Text('此处为占位设计，后续集成 BT PageScan 专有参数'),
+                const SizedBox(height: 12),
+                Text(AppLocalizations.of(context).btPageScanPlaceholder),
               ],
             ),
           ),
