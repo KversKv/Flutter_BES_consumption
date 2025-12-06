@@ -38,7 +38,7 @@ class BTState extends ChangeNotifier {
   double txPowerDbm = 0.0;
   String band = '2.4G';
   
-  Mode mode = Mode.advertising;
+  Mode mode = Mode.advertisingTxRx;
   double connIntervalMs = 200.0;
   double advIntervalMs = 100.0;
   BT_Case caseType = BT_Case.btSniff;
@@ -236,7 +236,7 @@ class BTState extends ChangeNotifier {
 
   void _recomputeBtPage() {
     events = [];
-    final intervalMs = (mode == Mode.connected) ? connIntervalMs : advIntervalMs;
+    final intervalMs = (mode == Mode.bleConnectionCentral || mode == Mode.bleConnectionPeripheral) ? connIntervalMs : advIntervalMs;
     final intervalUs = intervalMs * 1000.0;
     periodUs = intervalUs;
     final rxI = chip.rxCurrent_mA;

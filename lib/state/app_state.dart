@@ -33,7 +33,7 @@ class AppState extends ChangeNotifier {
       orElse: () => chips.first.txPowerLevelsDbm.first,
     );
     params = ProfileParams(
-      mode: Mode.connected,
+      mode: Mode.bleConnectionPeripheral,
       phy: Phy.le1M,
       txPowerDbm: initialTx,
       advIntervalMs: 100.0,
@@ -127,7 +127,8 @@ class AppState extends ChangeNotifier {
   }
 
   void recompute() {
-    if (params.mode == Mode.advertising) {
+    if (params.mode == Mode.advertisingTxOnly || 
+        params.mode == Mode.advertisingTxRx) {
       final intervalUs = (params.advIntervalMs * 1000).clamp(20000, 3_000_000).toDouble();
       periodUs = intervalUs;
       events = PowerCalculator.generateBleAdvertising(

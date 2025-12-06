@@ -160,6 +160,12 @@ class AppLocalizations {
   String get mode => _t('mode');
   String get connected => _t('connected');
   String get advertising => _t('advertising');
+
+  String get advertisingTxRx => _t('Advertising(TX/RX)');
+  String get advertisingTxOnly => _t('Advertising(TX Only)');
+  String get bleConnectionCentral => _t('Connection(Central)');
+  String get bleConnectionPeripheral => _t('Connection(Peripheral)');
+
   String get phy => _t('phy');
   String get txPowerLabel => _t('tx_power_label');
   String get payloadBytesLabel => _t('payload_bytes_label');

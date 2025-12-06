@@ -59,7 +59,8 @@ class _ConfigPanelState extends State<ConfigPanel> {
     final levels = app.chip.txPowerLevelsDbm;
     final currentTx = app.chip.snapTxPower(app.params.txPowerDbm);
 
-    if (app.params.mode == Mode.connected) {
+    if (app.params.mode == Mode.bleConnectionCentral ||
+        app.params.mode == Mode.bleConnectionPeripheral) {
       _setConnText(app.params.connIntervalMs);
     }
 
@@ -90,14 +91,19 @@ class _ConfigPanelState extends State<ConfigPanel> {
         const SizedBox(height: 6),
         SizedBox(
           width: double.infinity,
-          child: SegmentedButton<Mode>(
-               segments: [
-              ButtonSegment(value: Mode.connected, label: Text(AppLocalizations.of(context).connected)),
-              ButtonSegment(value: Mode.advertising, label: Text(AppLocalizations.of(context).advertising)),
+          child: DropdownButton<Mode>(
+            value: app.params.mode,
+            isExpanded: true,
+            items: [
+
+              DropdownMenuItem(value: Mode.advertisingTxRx, child: Text(AppLocalizations.of(context).advertisingTxRx)),
+              DropdownMenuItem(value: Mode.advertisingTxOnly, child: Text(AppLocalizations.of(context).advertisingTxOnly)),
+              DropdownMenuItem(value: Mode.bleConnectionPeripheral, child: Text(AppLocalizations.of(context).bleConnectionPeripheral)),
+              DropdownMenuItem(value: Mode.bleConnectionCentral, child: Text(AppLocalizations.of(context).bleConnectionCentral)),
+              
             ],
-            selected: {app.params.mode},
-            onSelectionChanged: (s) {
-              context.read<AppState>().setMode(s.first);
+            onChanged: (v) {
+              if (v != null) context.read<AppState>().setMode(v);
             },
           ),
         ),
@@ -148,7 +154,8 @@ class _ConfigPanelState extends State<ConfigPanel> {
         ),
         const SizedBox(height: 12),
 
-        if (app.params.mode == Mode.advertising)
+        if (app.params.mode == Mode.advertisingTxOnly ||
+            app.params.mode == Mode.advertisingTxRx)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -444,13 +451,16 @@ class SniffingConfigPanel extends StatelessWidget {
                   const SizedBox(height: 6),
                   SizedBox(
                     width: double.infinity,
-                    child: SegmentedButton<HdtModule>(
-                      segments: [
-                        ButtonSegment(value: HdtModule.sink, label: Text(AppLocalizations.of(context).sink)),
-                        ButtonSegment(value: HdtModule.source, label: Text(AppLocalizations.of(context).source)),
+                    child: DropdownButton<HdtModule>(
+                      value: st.hdtModule,
+                      isExpanded: true,
+                      items: [
+                        DropdownMenuItem(value: HdtModule.sink, child: Text(AppLocalizations.of(context).sink)),
+                        DropdownMenuItem(value: HdtModule.source, child: Text(AppLocalizations.of(context).source)),
                       ],
-                      selected: {st.hdtModule},
-                      onSelectionChanged: (s) => context.read<BTState>().setHdtModule(s.first),
+                      onChanged: (v) {
+                        if (v != null) context.read<BTState>().setHdtModule(v);
+                      },
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -458,13 +468,16 @@ class SniffingConfigPanel extends StatelessWidget {
                   const SizedBox(height: 6),
                   SizedBox(
                     width: double.infinity,
-                    child: SegmentedButton<String>(
-                      segments: const [
-                        ButtonSegment(value: '2.4G', label: Text('2.4G')),
-                        ButtonSegment(value: '5G', label: Text('5G')),
+                    child: DropdownButton<String>(
+                      value: st.band,
+                      isExpanded: true,
+                      items: const [
+                        DropdownMenuItem(value: '2.4G', child: Text('2.4G')),
+                        DropdownMenuItem(value: '5G', child: Text('5G')),
                       ],
-                      selected: {st.band},
-                      onSelectionChanged: (s) => context.read<BTState>().setBand(s.first),
+                      onChanged: (v) {
+                        if (v != null) context.read<BTState>().setBand(v);
+                      },
                     ),
                   ),
                   const SizedBox(height: 12),

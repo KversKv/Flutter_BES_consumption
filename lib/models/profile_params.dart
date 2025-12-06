@@ -1,4 +1,4 @@
-enum Mode { advertising, connected }
+enum Mode {advertisingTxOnly, advertisingTxRx, bleConnectionCentral, bleConnectionPeripheral }
 enum Phy { le1M, le2M, leCodedS8 }
 
 class ProfileParams {
