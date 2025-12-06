@@ -11,7 +11,6 @@ import '../models/profile_params.dart';
 import '../services/power_calculator.dart';
 
 enum BTCase { btSniff, btPage, btPagescan, hdt, relay }
-enum HdtModule { source, sink }
 
 class BTState extends ChangeNotifier {
   final List<BleChip> bleChips = AppState().chips;

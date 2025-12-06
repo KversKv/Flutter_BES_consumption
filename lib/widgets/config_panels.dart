@@ -77,8 +77,27 @@ class _ConfigPanelState extends State<ConfigPanel> {
     } catch (_) {
       // Provider<BTState> not found above this widget; ignore sync.
     }
-    final levels = app.chip.txPowerLevelsDbm;
-    final currentTx = app.chip.snapTxPower(app.params.txPowerDbm);
+    List<double> levels;
+    double currentTx;
+    if (app.params.mode == Mode.hdt) {
+      // For HDT mode show only specific TX power steps
+      levels = const [0.0, 5.0, 10.0];
+      // snap current requested txPower to nearest available level
+      final desired = app.params.txPowerDbm;
+      double closest = levels.first;
+      double minDiff = (desired - closest).abs();
+      for (final l in levels) {
+        final diff = (desired - l).abs();
+        if (diff < minDiff) {
+          closest = l;
+          minDiff = diff;
+        }
+      }
+      currentTx = closest;
+    } else {
+      levels = app.chip.txPowerLevelsDbm.cast<double>();
+      currentTx = app.chip.snapTxPower(app.params.txPowerDbm);
+    }
 
     if (app.params.mode == Mode.bleConnectionCentral ||
         app.params.mode == Mode.bleConnectionPeripheral) {
@@ -275,8 +294,8 @@ class _ConfigPanelState extends State<ConfigPanel> {
 
         const SizedBox(height: 12),
 
-        // Advanced card (visible only for connection modes)
-        if (app.params.mode == Mode.bleConnectionCentral || app.params.mode == Mode.bleConnectionPeripheral)
+        // Advanced card (visible for connection modes and HDT)
+        if (app.params.mode == Mode.bleConnectionCentral || app.params.mode == Mode.bleConnectionPeripheral || app.params.mode == Mode.hdt)
           sectionCard(
             title: 'Advanced',
             color: theme.colorScheme.secondaryContainer.withOpacity(0.06),
@@ -300,6 +319,57 @@ class _ConfigPanelState extends State<ConfigPanel> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                // When BLE mode is HDT, expose HDT-specific role and band here
+                if (app.params.mode == Mode.hdt)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(AppLocalizations.of(context).moduleRole),
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        width: double.infinity,
+                        child: DropdownButton<HdtModule>(
+                          value: btState?.hdtModule ?? app.hdtModule,
+                          isExpanded: true,
+                          items: [
+                            DropdownMenuItem(value: HdtModule.sink, child: Text(AppLocalizations.of(context).sink)),
+                            DropdownMenuItem(value: HdtModule.source, child: Text(AppLocalizations.of(context).source)),
+                          ],
+                          onChanged: (v) {
+                            if (v == null) return;
+                            if (btState != null) {
+                              context.read<BTState>().setHdtModule(v);
+                            } else {
+                              context.read<AppState>().setHdtModule(v);
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(AppLocalizations.of(context).frequencyBand),
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        width: double.infinity,
+                        child: DropdownButton<String>(
+                          value: btState?.band ?? app.hdtBand,
+                          isExpanded: true,
+                          items: const [
+                            DropdownMenuItem(value: '2.4G', child: Text('2.4G')),
+                            DropdownMenuItem(value: '5G', child: Text('5G')),
+                          ],
+                          onChanged: (v) {
+                            if (v == null) return;
+                            if (btState != null) {
+                              context.read<BTState>().setBand(v);
+                            } else {
+                              context.read<AppState>().setHdtBand(v);
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  ),
               ],
             ),
           ),

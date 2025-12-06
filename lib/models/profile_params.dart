@@ -1,6 +1,8 @@
 enum Mode {advertisingTxOnly, advertisingTxRx, bleConnectionCentral, bleConnectionPeripheral, hdt }
 enum Phy { le1M, le2M, leCodedS8 }
 
+enum HdtModule { source, sink }
+
 class ProfileParams {
   Mode mode;
   Phy phy;

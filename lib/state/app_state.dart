@@ -26,6 +26,10 @@ class AppState extends ChangeNotifier {
 
   bool hideLowPowerGaps = true;
 
+  // HDT specific options (exposed for BLE-mode HDT UI)
+  HdtModule hdtModule = HdtModule.sink;
+  String hdtBand = '2.4G';
+
   AppState() {
     selectedChipId = chips.first.id;
     final initialTx = chips.first.txPowerLevelsDbm.firstWhere(
@@ -86,6 +90,16 @@ class AppState extends ChangeNotifier {
     recompute();
   }
 
+  void setHdtModule(HdtModule m) {
+    hdtModule = m;
+    recompute();
+  }
+
+  void setHdtBand(String b) {
+    hdtBand = b;
+    recompute();
+  }
+
   void setPhy(Phy p) {
     params.phy = p;
     recompute();
@@ -137,16 +151,16 @@ class AppState extends ChangeNotifier {
         periodUs: periodUs,
       );
     } else if (params.mode == Mode.hdt) {
-      // Use a default HDT configuration similar to BTState defaults
+      // Use HDT configuration from AppState HDT fields
       final intervalUs = 500.0; // default HDT period (us)
       periodUs = intervalUs;
       events = PowerCalculator.generateHdt(
         chip: chip,
         periodUs: periodUs,
         txPowerDbm: params.txPowerDbm,
-        band: '2.4G',
+        band: hdtBand,
         repeats: 1,
-        moduleSink: true,
+        moduleSink: (hdtModule == HdtModule.sink),
         hdtPhyRateMbps: 15.0,
         hdtPayloadBytes: 144,
       );
