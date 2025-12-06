@@ -237,4 +237,92 @@ class PowerCalculator {
     }
     return events;
   }
+
+  /// 生成 HDT 模式的事件序列（借鉴 BTState 中的实现）
+  static List<PowerEvent> generateHdt({
+    required BleChip chip,
+    required double periodUs,
+    required double txPowerDbm,
+    String band = '2.4G',
+    int repeats = 1,
+    bool moduleSink = true,
+    double hdtPhyRateMbps = 15.0,
+    int hdtPayloadBytes = 144,
+    int hdtPayloadHeaderBytes = 16,
+    int hdtCrcBits = 32,
+    int hdtMicBits = 64,
+    int hdtZeroPaddingBits = 0,
+  }) {
+    List<PowerEvent> events = [];
+    final double intervalUs = periodUs;
+    final double halfPeriodUs = intervalUs / 2.0;
+
+    double rxI;
+    double txI;
+    try {
+      rxI = chip.rxCurrentForBand(band);
+    } catch (_) {
+      rxI = chip.rxCurrent_mA;
+    }
+    try {
+      txI = chip.txCurrentForPower(txPowerDbm, band);
+    } catch (_) {
+      txI = chip.txCurrentForPower(txPowerDbm);
+    }
+
+    final idleCurrent = chip.hdtIdleCurrent_mA;
+    double t = 0;
+
+    double _fixedOverheadAtRate() {
+      const double fixedAt15 = 44.0;
+      return fixedAt15 * (15.0 / hdtPhyRateMbps);
+    }
+
+    double _pduAirtimeUs() {
+      final int pduBits = (hdtPayloadBytes + hdtPayloadHeaderBytes) * 8 + hdtCrcBits + hdtMicBits + hdtZeroPaddingBits;
+      return pduBits / hdtPhyRateMbps;
+    }
+
+    final double computedActive = _fixedOverheadAtRate() + _pduAirtimeUs();
+    final double preRF_RX_Us = 70.0;
+    final double postRF_RX_Us = 3.0;
+    final double preRF_TX_Us = 40.0;
+    final double postRF_TX_Us = 10.0;
+    final double activeUs = math.min(computedActive, periodUs);
+    final double total_RX_ActiveUs = activeUs + preRF_RX_Us + postRF_RX_Us;
+    final double total_TX_ActiveUs = activeUs + preRF_TX_Us + postRF_TX_Us;
+    final double idle_RX_Us = math.max(0.0, periodUs - total_RX_ActiveUs);
+    final double idle_TX_Us = math.max(0.0, halfPeriodUs - total_TX_ActiveUs);
+
+    for (int i = 0; i < repeats; i++) {
+      if (moduleSink) {
+        events.add(PowerEvent(startUs: t, durationUs: total_RX_ActiveUs, currentMa: rxI, label: 'HDT RX', color: Colors.blue.shade400));
+        t += total_RX_ActiveUs;
+        if (idle_RX_Us > 0.0) {
+          events.add(PowerEvent(startUs: t, durationUs: idle_RX_Us, currentMa: idleCurrent, label: 'Idle', color: Colors.green.shade200));
+          t += idle_RX_Us;
+        }
+      } else {
+        events.add(PowerEvent(startUs: t, durationUs: total_TX_ActiveUs, currentMa: txI, label: 'HDT TX', color: Colors.red.shade400));
+        t += total_RX_ActiveUs;
+        if (idle_TX_Us > 0.0) {
+          events.add(PowerEvent(startUs: t, durationUs: idle_TX_Us, currentMa: idleCurrent, label: 'Idle', color: Colors.green.shade200));
+          t += idle_TX_Us;
+        }
+        events.add(PowerEvent(startUs: t, durationUs: total_TX_ActiveUs, currentMa: txI, label: 'HDT TX', color: Colors.red.shade400));
+        t += total_RX_ActiveUs;
+        if (idle_TX_Us > 0.0) {
+          events.add(PowerEvent(startUs: t, durationUs: idle_TX_Us, currentMa: idleCurrent, label: 'Idle', color: Colors.green.shade200));
+          t += idle_TX_Us;
+        }
+      }
+    }
+
+    final remaining = math.max(0, intervalUs - t);
+    if (remaining > 0) {
+      events.add(PowerEvent(startUs: t, durationUs: remaining.toDouble(), currentMa: idleCurrent, label: 'Idle', color: Colors.green.shade200));
+    }
+
+    return events;
+  }
 }

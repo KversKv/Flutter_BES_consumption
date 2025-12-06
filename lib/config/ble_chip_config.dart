@@ -4,50 +4,77 @@
 import '../models/ble_chip.dart';
 
 final List<BleChip> defaultBleChips = [
-  // BleChip(
-  //   id: 'BES1505',
-  //   name: 'BES1505_ble',
-  //   vbat: 3.8,
-  //   sleepCurrent_uA: 116.5,
-  //   rxCurrent_mA: 13.0,
-  //   rxCurrent_mA_HDT_2G4: 13.0,
-  //   rxCurrent_mA_HDT_5G: 18.0,
-  //   rxWindow_us: 184.32,
-  //   tifs_us: 150,
-  //   tifsCurrent_mA: 2.953,
-  //   // txPowerLevelsDbm: [
-  //   //   0, 5, 10
-  //   // ],
-  //   // txCurrent_mA_forDbm: {
-  //   //   0: 39.2,
-  //   //   5: 41.0,
-  //   //   10: 47.6
-  //   // },
-  //   txPowerLevelsDbm: [
-  //     0, 5, 10
-  //   ],
-  //   txCurrent_mA_forDbm: {
-  //     0: 28.0,
-  //     5: 34.0,
-  //     10: 43.0,
-  //   },
-  //   // Setup拆分（总计约 2744us）
-  //   preProcess_us: 143.36,
-  //   preProcessCurrent_mA: 2.053,
-  //   crystalRampUp_us: 819.2,
-  //   crystalRampUpCurrent_mA: 0.59,
-  //   standby_us: 1188.0,
-  //   standbyCurrent_mA: 1.280,
-  //   startRadio_us: 122.88,
-  //   startRadioCurrent_mA: 1.987,
-  //   postProcess_us: 471.04,
-  //   postCurrent_mA: 1.554,
-  //   // 广播通道间固定 ADV GAP（示例：5ms，电流取近似低功耗）
-  //   advGap_us: 100.0,
-  //   advGapCurrent_mA: 1.5, // 1.5mA
-  //   description: 'BES1505: HDT&HDT+ SOC.',
-  //   hdtIdleCurrent_mA: 2.0,
-  // ),
+  BleChip(
+    id: 'BES1505',
+    name: 'BES1505',
+    vbat: 3.8,
+    sleepCurrent_uA: 116.5,
+    rxCurrent_mA: 5.11,
+    rxCurrent_mA_HDT_2G4: 13.0,
+    rxCurrent_mA_HDT_5G: 18.0,
+    rxWindow_us: 184.32,
+    tifs_us: 150,
+    tifsCurrent_mA: 2.953,
+    txPowerLevelsDbm: [
+      -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+      10, 11, 12, 13, 14, 15
+    ],
+    txCurrent_mA_forDbm: {
+      -10: 15.0,
+      -9: 15.0,
+      -8: 15.0,
+      -7: 16.0,
+      -6: 17.0,
+      -5: 18.0,
+      -4: 19.0,
+      -3: 20.0,
+      -2: 22.0,
+      -1: 22.0,
+      0: 18.282,
+      1: 24.0,
+      2: 25.0,
+      3: 26.0,
+      4: 27.0,
+      5: 28.0,
+      6: 29.0,
+      7: 31.0,
+      8: 32.0,
+      9: 35.0,
+      10: 33.0,
+      11: 37.0,
+      12: 41.0,
+      13: 45.0,
+      14: 49.0,
+      15: 54.0,
+    },
+
+    txCurrentByBand: {
+    '2.4G': {0: 28, 5: 34.0, 10: 43.0},
+    '5G': {0: 39.2, 5: 41.0, 10: 47.6},
+    },
+    rxCurrentByBand: {
+      '2.4G': 13.0,
+      '5G': 18.0,
+    },
+    // Setup拆分（总计约 2744us）
+    preProcess_us: 143.36,
+    preProcessCurrent_mA: 2.053,
+    crystalRampUp_us: 819.2,
+    crystalRampUpCurrent_mA: 0.59,
+    standby_us: 1188.0,
+    standbyCurrent_mA: 1.280,
+    startRadio_us: 122.88,
+    startRadioCurrent_mA: 1.987,
+    postProcess_us: 471.04,
+    postCurrent_mA: 1.554,
+    // 广播通道间固定 ADV GAP（示例：5ms，电流取近似低功耗）
+    advGap_us: 100.0,
+    advGapCurrent_mA: 1.5, // 1.5mA
+    description: 'BES1505: HDT&HDT+ SOC.',
+    hdtIdleCurrent_mA: 2.0,
+    supportsHDT: true,
+  ),
 
   BleChip(
     id: 'BES2720YP_BLE',

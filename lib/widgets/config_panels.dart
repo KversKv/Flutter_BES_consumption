@@ -152,6 +152,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
                     DropdownMenuItem(value: Mode.advertisingTxOnly, child: Text(AppLocalizations.of(context).advertisingTxOnly)),
                     DropdownMenuItem(value: Mode.bleConnectionPeripheral, child: Text(AppLocalizations.of(context).bleConnectionPeripheral)),
                     DropdownMenuItem(value: Mode.bleConnectionCentral, child: Text(AppLocalizations.of(context).bleConnectionCentral)),
+                    if (app.chip.supportsHDT) DropdownMenuItem(value: Mode.hdt, child: const Text('HDT')),
                   ],
                   onChanged: (v) {
                     if (v != null) context.read<AppState>().setMode(v);

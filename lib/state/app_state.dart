@@ -127,7 +127,7 @@ class AppState extends ChangeNotifier {
   }
 
   void recompute() {
-    if (params.mode == Mode.advertisingTxOnly || 
+    if (params.mode == Mode.advertisingTxOnly ||
         params.mode == Mode.advertisingTxRx) {
       final intervalUs = (params.advIntervalMs * 1000).clamp(20000, 3_000_000).toDouble();
       periodUs = intervalUs;
@@ -135,6 +135,20 @@ class AppState extends ChangeNotifier {
         chip: chip,
         params: params,
         periodUs: periodUs,
+      );
+    } else if (params.mode == Mode.hdt) {
+      // Use a default HDT configuration similar to BTState defaults
+      final intervalUs = 500.0; // default HDT period (us)
+      periodUs = intervalUs;
+      events = PowerCalculator.generateHdt(
+        chip: chip,
+        periodUs: periodUs,
+        txPowerDbm: params.txPowerDbm,
+        band: '2.4G',
+        repeats: 1,
+        moduleSink: true,
+        hdtPhyRateMbps: 15.0,
+        hdtPayloadBytes: 144,
       );
     } else {
       final intervalUs = (params.connIntervalMs * 1000).clamp(7500, 4_000_000).toDouble();
