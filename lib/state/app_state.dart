@@ -57,6 +57,12 @@ class AppState extends ChangeNotifier {
   void setChip(String id) {
     selectedChipId = id;
     params.txPowerDbm = chip.snapTxPower(params.txPowerDbm);
+    // If the newly selected chip does not support HDT, ensure the
+    // current mode is valid. This avoids DropdownButton value mismatches
+    // where the UI's `value` (e.g. Mode.hdt) is not present in `items`.
+    if (!chip.supportsHDT && params.mode == Mode.hdt) {
+      params.mode = Mode.bleConnectionPeripheral;
+    }
     // Update RX params when chip changes
     rxWindowConnectedUs = chip.rxWindow_us;
     rxCurrentConnected_mA = chip.rxCurrent_mA;
