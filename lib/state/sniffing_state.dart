@@ -37,8 +37,13 @@ class BTState extends ChangeNotifier {
 
   double txPowerDbm = 0.0;
   String band = '2.4G';
-  
+
+  // --- Chip settings ---
+  double supplyVoltage_V = 3.7; // 新增 Voltage 设置（单位 V）
+
+  // --- BLE settings ---
   Mode mode = Mode.advertisingTxRx;
+  int blePayloadBytes = 20; // 可配置的 BLE payload (字节)
   double connIntervalMs = 200.0;
   double advIntervalMs = 100.0;
   BT_Case caseType = BT_Case.btSniff;
@@ -72,6 +77,8 @@ class BTState extends ChangeNotifier {
   void setTxPower(double dbm) { txPowerDbm = dbm; recompute(); }
   void setBand(String b) { if (b != band) { band = b; recompute(); } }
   void setMode(Mode m) { mode = m; recompute(); }
+  void setBlePayload(int bytes) { blePayloadBytes = bytes.clamp(0, 1024).toInt(); recompute(); }
+  void setSupplyVoltage(double v) { supplyVoltage_V = v.clamp(1.8, 5.5); notifyListeners(); }
   void setConnIntervalMs(double ms) { connIntervalMs = ms; recompute(); }
   void setAdvIntervalMs(double ms) { advIntervalMs = ms; recompute(); }
   void setSniffIntervalMs(double ms) { sniffIntervalMs = ms.clamp(10.0, 5000.0); recompute(); }
@@ -106,6 +113,13 @@ class BTState extends ChangeNotifier {
     hideLowPowerGaps = hide;
     notifyListeners();
   }
+
+  // Advanced visibility: shown only for connection modes
+  Phy phy = Phy.le1M;
+  bool get showAdvanced {
+    return (mode == Mode.bleConnectionCentral || mode == Mode.bleConnectionPeripheral);
+  }
+  void setPhy(Phy p) { phy = p; recompute(); }
 
   // --- Calculation Helpers ---
 
