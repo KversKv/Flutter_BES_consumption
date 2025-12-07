@@ -29,7 +29,7 @@ class _MyHomePageState extends State<MyHomePage> {
         page = const EarbudsComparePage(); // ✅ 新增页
         break;
       case 3:
-        page = const WifiPage();
+        page = const Placeholder();
         break;
       default:
         page = const BleCasePage();
