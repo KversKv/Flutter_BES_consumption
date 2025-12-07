@@ -1,6 +1,6 @@
 {
-    "name": "bes_comsuption",
-    "short_name": "bes_comsuption",
+    "name": "bes_consumption",
+    "short_name": "bes_consumption",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

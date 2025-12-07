@@ -140,9 +140,9 @@ class _ConfigPanelState extends State<ConfigPanel> {
                 },
               ),
               const SizedBox(height: 12),
-              Text('Voltage: ${((btState?.supplyVoltage_V) ?? 3.70).toStringAsFixed(2)} V'),
+              Text('Voltage: ${((btState?.supplyVoltage_V) ?? 3.80).toStringAsFixed(2)} V'),
               Slider(
-                value: (btState?.supplyVoltage_V) ?? 3.7,
+                value: (btState?.supplyVoltage_V) ?? 3.80,
                 min: 1.8,
                 max: 5.5,
                 divisions: 37,

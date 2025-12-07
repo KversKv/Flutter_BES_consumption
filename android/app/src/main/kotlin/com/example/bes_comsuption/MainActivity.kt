@@ -1,4 +1,4 @@
-package com.example.bes_comsuption
+package com.example.bes_consumption
 
 import io.flutter.embedding.android.FlutterActivity
 
