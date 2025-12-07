@@ -8,7 +8,7 @@ final List<BleChip> defaultBleChips = [
     id: 'BES1505',
     name: 'BES1505',
     vbat: 3.8,
-    sleepCurrent_uA: 116.5,
+    sleepCurrent_uA: 20.0,
     rxCurrent_mA: 5.11,
     rxCurrent_mA_HDT_2G4: 13.0,
     rxCurrent_mA_HDT_5G: 18.0,

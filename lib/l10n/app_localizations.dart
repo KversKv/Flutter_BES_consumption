@@ -48,6 +48,7 @@ class AppLocalizations {
       'power_off': 'Power Off',
       'kpi_period': 'Period',
       'kpi_avg_current': 'Average current',
+      'kpi_sleep_current': 'Sleep current',
       'kpi_battery_life_est': 'Battery life (est)',
       'kpi_peak_current': 'Peak current',
       'bt_page_config': 'BT Page configuration',
@@ -115,6 +116,7 @@ class AppLocalizations {
       'power_off': 'Power Off',
       'kpi_period': '周期',
       'kpi_avg_current': '平均电流',
+      'kpi_sleep_current':'睡眠电流',
       'kpi_battery_life_est': '电池寿命(估)',
       'kpi_peak_current': '峰值电流',
       'bt_page_config': 'BT Page 配置',
@@ -219,6 +221,7 @@ class AppLocalizations {
   String get relayHopGap => _t('relay_hop_gap');
   String get kpiPeriod => _t('kpi_period');
   String get kpiAvgCurrent => _t('kpi_avg_current');
+  String get kpiSleepCurrent => _t('kpi_sleep_current');
   String get kpiBatteryLifeEst => _t('kpi_battery_life_est');
   String get kpiPeakCurrent => _t('kpi_peak_current');
 

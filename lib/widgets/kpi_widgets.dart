@@ -67,6 +67,7 @@ class KPIRowAppState extends StatelessWidget {
         children: [
           _KPI(title: AppLocalizations.of(context).kpiPeriod, value: '${app.period_ms.toStringAsFixed(1)} ms', icon: Icons.timelapse),
           _KPI(title: AppLocalizations.of(context).kpiAvgCurrent, value: app.formatCurrentAuto(avg), icon: Icons.bolt),
+          _KPI(title: AppLocalizations.of(context).kpiSleepCurrent, value: '${app.sleepCurrent_uA.toStringAsFixed(2)} uA', icon: Icons.bedtime),
           _KPI(title: AppLocalizations.of(context).kpiBatteryLifeEst, value: '${days.isFinite ? days.toStringAsFixed(1) : '--'} 天', icon: Icons.battery_full),
           _KPI(title: AppLocalizations.of(context).kpiPeakCurrent, value: '${app.maxCurrent_mA.toStringAsFixed(2)} mA', icon: Icons.signal_cellular_alt),
         ],

@@ -212,6 +212,12 @@ class AppState extends ChangeNotifier {
     return PowerCalculator.computeMaxCurrent(events);
   }
 
+  double get sleepCurrent_uA {
+    return chip.sleepCurrent_uA;
+  }
+
+
+
   double get period_ms => periodUs / 1000.0;
 
   String formatCurrentAuto(double currentMa) {
