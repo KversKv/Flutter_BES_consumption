@@ -6,7 +6,6 @@ import 'legend_hover_widgets.dart';
 
 /// ===========================================================================
 /// 统一的图表组件 (Unified Chart Widget)
-/// 不再依赖具体的 Provider，而是通过参数传入数据，实现复用
 /// ===========================================================================
 
 class UnifiedPowerChart extends StatefulWidget {
@@ -37,7 +36,6 @@ class _UnifiedPowerChartState extends State<UnifiedPowerChart> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 顶部选项
         Wrap(
           spacing: 12,
           runSpacing: 8,
@@ -63,7 +61,7 @@ class _UnifiedPowerChartState extends State<UnifiedPowerChart> {
           ],
         ),
         const SizedBox(height: 8),
-        // 模型图（交互）
+
         Expanded(
           child: TimelineChartInteractive(
             events: widget.events,
@@ -73,8 +71,8 @@ class _UnifiedPowerChartState extends State<UnifiedPowerChart> {
             onHoverEvent: (e) => setState(() => hovered = e),
           ),
         ),
+
         const SizedBox(height: 8),
-        // 图下参数区域：事件色块列表
         EventLegendPanel(
           events: widget.hideLowPowerGaps
               ? widget.events.where((e) => !e.isSleepOrGap).toList()
@@ -87,7 +85,9 @@ class _UnifiedPowerChartState extends State<UnifiedPowerChart> {
   }
 }
 
-// ============ 交互式模型图 (保持原逻辑不变) ============
+// ===========================================================================
+//   Interactive Chart
+// ===========================================================================
 
 class TimelineChartInteractive extends StatefulWidget {
   final List<PowerEvent> events;
@@ -106,7 +106,8 @@ class TimelineChartInteractive extends StatefulWidget {
   });
 
   @override
-  State<TimelineChartInteractive> createState() => _TimelineChartInteractiveState();
+  State<TimelineChartInteractive> createState() =>
+      _TimelineChartInteractiveState();
 }
 
 class _TimelineChartInteractiveState extends State<TimelineChartInteractive> {
@@ -180,13 +181,24 @@ class _TimelineChartInteractiveState extends State<TimelineChartInteractive> {
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(hoveredEvent!.label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                        Text(
+                          hoveredEvent!.label,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
                         const SizedBox(height: 4),
-                        Text('Length: ${hoveredEvent!.durationUs.toStringAsFixed(0)} µs', style: Theme.of(context).textTheme.bodySmall),
-                        Text('Current: ${hoveredEvent!.currentMa.toStringAsFixed(3)} mA', style: Theme.of(context).textTheme.bodySmall),
+                        Text(
+                          'Length: ${hoveredEvent!.durationUs.toStringAsFixed(0)} µs',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        Text(
+                          'Current: ${hoveredEvent!.currentMa.toStringAsFixed(3)} mA',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                       ],
                     ),
                   ),
@@ -219,9 +231,8 @@ List<_EventRect> _computeEventRects({
 
   if (w <= 0 || h <= 0 || periodUs <= 0) return [];
 
-  final drawEvents = hideLowPowerGaps
-      ? events.where((e) => !e.isSleepOrGap).toList()
-      : events.toList();
+  final drawEvents =
+      hideLowPowerGaps ? events.where((e) => !e.isSleepOrGap).toList() : events;
 
   if (drawEvents.isEmpty) return [];
 
@@ -242,13 +253,15 @@ List<_EventRect> _computeEventRects({
     final r = Rect.fromLTRB(x1, yTop, x2, origin.dy);
     rects.add(_EventRect(e, r));
 
-    if (hideLowPowerGaps) {
-      tAccUs += e.durationUs;
-    }
+    if (hideLowPowerGaps) tAccUs += e.durationUs;
   }
 
   return rects;
 }
+
+// ===========================================================================
+//   Painter
+// ===========================================================================
 
 class _TimelinePainter extends CustomPainter {
   final List<PowerEvent> events;
@@ -272,9 +285,8 @@ class _TimelinePainter extends CustomPainter {
     final h = size.height - padding * 2;
     if (w <= 0 || h <= 0 || periodUs <= 0) return;
 
-    final drawEvents = hideLowPowerGaps
-        ? events.where((e) => !e.isSleepOrGap).toList()
-        : events.toList();
+    final drawEvents =
+        hideLowPowerGaps ? events.where((e) => !e.isSleepOrGap).toList() : events;
     if (drawEvents.isEmpty) return;
 
     final viewPeriodUs = hideLowPowerGaps
@@ -286,8 +298,8 @@ class _TimelinePainter extends CustomPainter {
       ..color = const Color(0xFF888888)
       ..strokeWidth = 1.0;
 
-    canvas.drawLine(origin, Offset(padding + w, origin.dy), axis); // X
-    canvas.drawLine(origin, Offset(origin.dx, origin.dy - h), axis); // Y
+    canvas.drawLine(origin, Offset(padding + w, origin.dy), axis);
+    canvas.drawLine(origin, Offset(origin.dx, origin.dy - h), axis);
 
     final gridPaint = Paint()
       ..color = const Color(0x22888888)
@@ -295,61 +307,67 @@ class _TimelinePainter extends CustomPainter {
 
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
 
-    // Y 轴刻度
+    // -------------------------------
+    // 修复后的 Y 轴刻度与标题布局
+    // -------------------------------
     int yTicks = 4;
     for (int i = 1; i <= yTicks; i++) {
       double yVal = maxCurrent * i / yTicks;
       double y = origin.dy - (yVal / maxCurrent) * h;
-      canvas.drawLine(Offset(origin.dx, y), Offset(origin.dx + w, y), gridPaint);
-      final span = TextSpan(
+
+      canvas.drawLine(
+          Offset(origin.dx, y), Offset(origin.dx + w, y), gridPaint);
+
+      textPainter.text = TextSpan(
         text: yVal.toStringAsFixed(1),
         style: const TextStyle(fontSize: 10, color: Colors.black87),
       );
-      textPainter.text = span;
       textPainter.layout();
-      textPainter.paint(canvas, Offset(4, y - textPainter.height / 2));
+      textPainter.paint(canvas, Offset(12, y - textPainter.height / 2));
     }
 
-    // X 轴刻度
+    // Y label ———— 往左移以避免重叠
+    textPainter.text = const TextSpan(
+      text: 'Current (mA)',
+      style:
+          TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w600),
+    );
+    textPainter.layout();
+    canvas.save();
+    canvas.translate(origin.dx - 40, origin.dy - h / 2 + textPainter.width / 2);
+    canvas.rotate(-math.pi / 2);
+    textPainter.paint(canvas, Offset(0, -textPainter.height / 2));
+    canvas.restore();
+
+    // X ticks
     final msTotal = viewPeriodUs / 1000.0;
     final xTicks = 6;
     for (int i = 0; i <= xTicks; i++) {
       double frac = i / xTicks;
       double x = origin.dx + w * frac;
-      canvas.drawLine(Offset(x, origin.dy), Offset(x, origin.dy - h), gridPaint);
-      final span = TextSpan(
+
+      canvas.drawLine(
+          Offset(x, origin.dy), Offset(x, origin.dy - h), gridPaint);
+
+      textPainter.text = TextSpan(
         text: (msTotal * frac).toStringAsFixed(1),
         style: const TextStyle(fontSize: 10, color: Colors.black87),
       );
-      textPainter.text = span;
       textPainter.layout();
       textPainter.paint(canvas, Offset(x - textPainter.width / 2, origin.dy + 4));
     }
 
-    // Y 轴标签
-    final yLabel = TextSpan(
-      text: 'Current (mA)',
-      style: const TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w600),
-    );
-    textPainter.text = yLabel;
-    textPainter.layout();
-    canvas.save();
-    canvas.translate(origin.dx - 28, origin.dy - h / 2 + textPainter.width / 2);
-    canvas.rotate(-math.pi / 2);
-    textPainter.paint(canvas, Offset(0, -textPainter.height / 2));
-    canvas.restore();
-
-    // X 轴标签
-    final xLabel = TextSpan(
+    // X label
+    textPainter.text = const TextSpan(
       text: 'Time (ms)',
-      style: const TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w600),
+      style:
+          TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w600),
     );
-    textPainter.text = xLabel;
     textPainter.layout();
-    final xCenter = origin.dx + w / 2;
-    textPainter.paint(canvas, Offset(xCenter - textPainter.width / 2, origin.dy + 20));
+    textPainter.paint(
+        canvas, Offset(origin.dx + w / 2 - textPainter.width / 2, origin.dy + 20));
 
-    // 绘制事件块
+    // Draw events
     double tAccUs = 0.0;
     for (final e in drawEvents) {
       final startUs = hideLowPowerGaps ? tAccUs : e.startUs;
@@ -365,9 +383,7 @@ class _TimelinePainter extends CustomPainter {
       final p = Paint()..color = e.color.withOpacity(0.9);
       canvas.drawRRect(r, p);
 
-      if (hideLowPowerGaps) {
-        tAccUs += e.durationUs;
-      }
+      if (hideLowPowerGaps) tAccUs += e.durationUs;
     }
   }
 
