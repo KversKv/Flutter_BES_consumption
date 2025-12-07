@@ -147,14 +147,42 @@ class AppState extends ChangeNotifier {
   }
 
   void recompute() {
-    if (params.mode == Mode.advertisingTxOnly ||
-        params.mode == Mode.advertisingTxRx) {
+    if (params.mode == Mode.advertisingTxOnly ) {
       final intervalUs = (params.advIntervalMs * 1000).clamp(20000, 3_000_000).toDouble();
       periodUs = intervalUs;
-      events = PowerCalculator.generateBleAdvertising(
+      events = PowerCalculator.generateBleAdvertisingTxOnly(
         chip: chip,
         params: params,
         periodUs: periodUs,
+      );
+    } else if (params.mode == Mode.advertisingTxRx) {
+      final intervalUs = (params.advIntervalMs * 1000).clamp(20000, 3_000_000).toDouble();
+      periodUs = intervalUs;
+      events = PowerCalculator.generateBleAdvertisingTxRx(
+        chip: chip,
+        params: params,
+        periodUs: periodUs,
+        rxCurrentMa: rxCurrentConnected_mA,
+      );
+    } else if (params.mode == Mode.bleConnectionCentral) {
+      final intervalUs = (params.connIntervalMs * 1000).clamp(7500, 4_000_000).toDouble();
+      periodUs = intervalUs;
+      events = PowerCalculator.generateBleConnectedCentral(
+        chip: chip,
+        params: params,
+        periodUs: periodUs,
+        rxWindowUs: rxWindowConnectedUs,
+        rxCurrentMa: rxCurrentConnected_mA,
+      );
+    } else if (params.mode == Mode.bleConnectionPeripheral) {
+      final intervalUs = (params.connIntervalMs * 1000).clamp(7500, 4_000_000).toDouble();
+      periodUs = intervalUs;
+      events = PowerCalculator.generateBleConnectedPeripheral(
+        chip: chip,
+        params: params,
+        periodUs: periodUs,
+        rxWindowUs: rxWindowConnectedUs,
+        rxCurrentMa: rxCurrentConnected_mA,
       );
     } else if (params.mode == Mode.hdt) {
       // Use HDT configuration from AppState HDT fields
@@ -170,18 +198,7 @@ class AppState extends ChangeNotifier {
         hdtPhyRateMbps: 15.0,
         hdtPayloadBytes: 144,
       );
-    } else {
-      final intervalUs = (params.connIntervalMs * 1000).clamp(7500, 4_000_000).toDouble();
-      periodUs = intervalUs;
-      events = PowerCalculator.generateBleConnected(
-        chip: chip,
-        params: params,
-        periodUs: periodUs,
-        rxWindowUs: rxWindowConnectedUs,
-        rxCurrentMa: rxCurrentConnected_mA,
-      );
-    }
-    
+    } 
     averageCurrent_mA = PowerCalculator.computeAverageCurrent(events, periodUs);
     notifyListeners();
   }

@@ -91,7 +91,97 @@ class PowerCalculator {
   }
 
   /// 生成 BLE 广播周期事件
-  static List<PowerEvent> generateBleAdvertising({
+  static List<PowerEvent> generateBleAdvertisingTxRx({
+    required BleChip chip,
+    required ProfileParams params,
+    required double periodUs,
+    required double rxCurrentMa,
+  }) {
+    List<PowerEvent> events = [];
+    final txUs = txTimeUs(params.payloadBytes, params.phy);
+    final rxI = rxCurrentMa > 0 ? rxCurrentMa : chip.rxCurrent_mA;
+    final txI = chip.txCurrentForPower(params.txPowerDbm);
+    final postUs = chip.postProcess_us;
+    final postI = chip.postCurrent_mA;
+    final sleepI = chip.sleepCurrent_uA / 1000.0;
+    final tifs = chip.tifs_us;
+    final finalRxUs = 100.0; // 固定 100us 的 RX 窗口
+
+    double t = 0;
+
+    // 1. Setup
+    addSetupPhases(events, t, chip);
+    t += getSetupTotalUs(chip);
+
+    // 2. 广播三个信道
+    List<String> ch = ['ADV CH37', 'ADV CH38', 'ADV CH39'];
+    for (int i = 0; i < 3; i++) {
+      // TX
+      events.add(PowerEvent(
+        startUs: t,
+        durationUs: txUs,
+        currentMa: txI,
+        label: '${ch[i]} TX',
+        color: Colors.red.shade400,
+      ));
+      t += txUs;
+          // TIFS
+      events.add(PowerEvent(
+        startUs: t,
+        durationUs: tifs,
+        currentMa: chip.tifsCurrent_mA,
+        label: 'TIFS',
+        color: Colors.amber.shade300,
+      ));
+      t += tifs;
+
+      // RX
+      events.add(PowerEvent(
+        startUs: t,
+        durationUs: finalRxUs,
+        currentMa: rxI,
+        label: 'RX',
+        color: Colors.blue.shade400,
+      ));
+    t += finalRxUs;
+      if (i < 2) {
+        // Gap
+        events.add(PowerEvent(
+          startUs: t,
+          durationUs: chip.advGap_us,
+          currentMa: chip.advGapCurrent_mA,
+          label: 'ADV_GAP',
+          color: Colors.green.shade200,
+        ));
+        t += chip.advGap_us;
+      } else {
+        // Post
+        events.add(PowerEvent(
+          startUs: t,
+          durationUs: postUs,
+          currentMa: postI,
+          label: 'Post',
+          color: Colors.purple.shade400,
+        ));
+        t += postUs;
+      }
+    }
+
+    // 3. Sleep
+    final remaining = math.max(0, periodUs - t);
+    if (remaining > 0) {
+      events.add(PowerEvent(
+        startUs: t,
+        durationUs: remaining.toDouble(),
+        currentMa: sleepI,
+        label: 'Sleep',
+        color: Colors.green.shade200,
+      ));
+    }
+    return events;
+  }
+
+  static List<PowerEvent> generateBleAdvertisingTxOnly({
     required BleChip chip,
     required ProfileParams params,
     required double periodUs,
@@ -159,8 +249,9 @@ class PowerCalculator {
     return events;
   }
 
+
   /// 生成 BLE 连接周期事件
-  static List<PowerEvent> generateBleConnected({
+  static List<PowerEvent> generateBleConnectedPeripheral({
     required BleChip chip,
     required ProfileParams params,
     required double periodUs,
@@ -213,6 +304,84 @@ class PowerCalculator {
       color: Colors.red.shade400,
     ));
     t += txUs;
+
+    // Post
+    events.add(PowerEvent(
+      startUs: t,
+      durationUs: postUs,
+      currentMa: postI,
+      label: 'Post',
+      color: Colors.purple.shade400,
+    ));
+    t += postUs;
+
+    // Sleep
+    final remaining = math.max(0, periodUs - t);
+    if (remaining > 0) {
+      events.add(PowerEvent(
+        startUs: t,
+        durationUs: remaining.toDouble(),
+        currentMa: sleepI,
+        label: 'Sleep',
+        color: Colors.green.shade200,
+      ));
+    }
+    return events;
+  }
+
+  static List<PowerEvent> generateBleConnectedCentral({
+    required BleChip chip,
+    required ProfileParams params,
+    required double periodUs,
+    required double rxWindowUs,
+    required double rxCurrentMa,
+  }) {
+    List<PowerEvent> events = [];
+    final rxI = rxCurrentMa > 0 ? rxCurrentMa : chip.rxCurrent_mA;
+    final txI = chip.txCurrentForPower(params.txPowerDbm);
+    final postUs = chip.postProcess_us;
+    final postI = chip.postCurrent_mA;
+    final sleepI = chip.sleepCurrent_uA / 1000.0;
+    
+    final finalRxUs = rxWindowUs > 0 ? rxWindowUs : chip.rxWindow_us;
+    final tifs = chip.tifs_us;
+    final txUs = txTimeUs(params.payloadBytes, params.phy);
+
+    double t = 0;
+
+    // Setup
+    addSetupPhases(events, t, chip);
+    t += getSetupTotalUs(chip);
+
+    // TX
+    events.add(PowerEvent(
+      startUs: t,
+      durationUs: txUs,
+      currentMa: txI,
+      label: 'TX',
+      color: Colors.red.shade400,
+    ));
+    t += txUs;
+
+    // TIFS
+    events.add(PowerEvent(
+      startUs: t,
+      durationUs: tifs,
+      currentMa: chip.tifsCurrent_mA,
+      label: 'TIFS',
+      color: Colors.amber.shade300,
+    ));
+    t += tifs;
+
+    // RX
+    events.add(PowerEvent(
+      startUs: t,
+      durationUs: finalRxUs,
+      currentMa: rxI,
+      label: 'RX',
+      color: Colors.blue.shade400,
+    ));
+    t += finalRxUs;
 
     // Post
     events.add(PowerEvent(
