@@ -150,10 +150,11 @@ final List<BleChip> defaultBleChips = [
     tifs_us: 150,
     tifsCurrent_mA: 2.55,
     txPowerLevelsDbm: [
-      0, 8
+      0, 6, 8
     ],
     txCurrent_mA_forDbm: {
       0: 5.1,
+      6: 9.5,
       8: 12.03,
     },
     postProcess_us: 590.0,
@@ -173,6 +174,45 @@ final List<BleChip> defaultBleChips = [
     description: 'BES2713B: low-power BLE transceiver, demo parameters.',
     hdtIdleCurrent_mA: 0.0035,
   ),
+
+  BleChip(
+    id: 'RM12xx',
+    name: 'RM12xx',
+    vbat: 3.3,
+    sleepCurrent_uA: 1.313,
+    rxCurrent_mA: 5.935,
+    rxCurrent_mA_HDT_2G4: 13.0,
+    rxCurrent_mA_HDT_5G: 18.0,
+    rxWindow_us: 120.0,
+    tifs_us: 150,
+    tifsCurrent_mA: 2.55,
+    txPowerLevelsDbm: [
+      0, 6, 8
+    ],
+    txCurrent_mA_forDbm: {
+      0: 6.04,
+      6: 8.04,
+      8: 12.03,
+    },
+    postProcess_us: 619.52,
+    postCurrent_mA: 1.315,
+    // Setup拆分（总计约 2744us）
+    preProcess_us: 112.64,
+    preProcessCurrent_mA: 1.962,
+    crystalRampUp_us: 450.56,
+    crystalRampUpCurrent_mA: 1.184,
+    standby_us: 1208,
+    standbyCurrent_mA: 1.926,
+    startRadio_us: 30.72,
+    startRadioCurrent_mA: 3.623,
+    // 广播通道间固定 ADV GAP（示例：5ms，电流取近似低功耗）
+    advGap_us: 122.88,
+    advGapCurrent_mA: 2.485, // 1.5mA
+    description: 'RM12xx: low-power BLE transceiver, demo parameters.',
+    hdtIdleCurrent_mA: 0.0035,
+  ),
+
+
 
   BleChip(
     id: 'BES6100HP_SIMU',
@@ -433,6 +473,102 @@ final List<BleChip> defaultBleChips = [
     description: 'BES_2800BP: low-power BLE chip, example parameters.',
     hdtIdleCurrent_mA: 0.04,
   ),
+
+  BleChip(
+    id: 'BES2720ZP_8C',
+    name: 'BES2720ZP_8C',
+    vbat: 3.3,
+    sleepCurrent_uA: 67.5,  //NOBTC: 52.86
+    rxCurrent_mA: 6.0,
+    rxCurrent_mA_HDT_2G4: 13.0,
+    rxCurrent_mA_HDT_5G: 18.0,
+    rxWindow_us: 300.0,
+    tifs_us: 107.52,
+    tifsCurrent_mA: 1.506,
+    txPowerLevelsDbm: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+      10, 11, 12, 13, 14],
+    txCurrent_mA_forDbm: {    
+      14: 40.0,
+      13: 35.0,
+      12: 31.0,
+      11: 27.0,
+      10: 24.0,
+      9:  21.0,
+      8:  18.7,
+      7:  17.6,
+      6:  19.5,   //17.2
+      5:  15.8,
+      4:  11.0,
+      3:  10.7,
+      2:  10.5,
+      1:  10.3,
+      0:  10.1,
+    },
+    postProcess_us: 588.8,
+    postCurrent_mA: 0.918,
+    // Setup拆分（总计约 130us）
+    preProcess_us: 56.2,
+    preProcessCurrent_mA: 1.924,
+    crystalRampUp_us: 824.32,
+    crystalRampUpCurrent_mA: 0.609,
+    standby_us: 727.04,
+    standbyCurrent_mA: 1.171,
+    startRadio_us: 46.08,
+    startRadioCurrent_mA: 5.547,
+    advGap_us: 102.4,
+    advGapCurrent_mA: 1.098, 
+    description: 'BES2720ZP_8C: High performance SOC.',
+    hdtIdleCurrent_mA: 0.04,
+  ),
+
+
+  BleChip(
+    id: 'BES2720ZP_8C_2POINT',
+    name: 'BES2720ZP_8C_2POINT',
+    vbat: 3.8,
+    sleepCurrent_uA: 34.319,  //3.8V: 67.5uA ; 3.3V: 74.304uA
+    rxCurrent_mA: 6.1,
+    rxCurrent_mA_HDT_2G4: 13.0,
+    rxCurrent_mA_HDT_5G: 18.0,
+    rxWindow_us: 300.0,
+    tifs_us: 112.64,
+    tifsCurrent_mA: 1.864,
+    txPowerLevelsDbm: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+      10, 11, 12, 13, 14],
+    txCurrent_mA_forDbm: {    
+      14: 40.0,
+      13: 35.0,
+      12: 31.0,
+      11: 27.0,
+      10: 24.0,
+      9:  21.0,
+      8:  18.7,
+      7:  17.6,
+      6:  9,   //3.3V: 17.35   
+      5:  15.8,
+      4:  11.0,
+      3:  10.7,
+      2:  10.5,
+      1:  10.3,
+      0:  10.1,
+    },
+    postProcess_us: 588.8,
+    postCurrent_mA: 0.826,
+    // Setup拆分（总计约 130us）
+    preProcess_us: 61.44,
+    preProcessCurrent_mA: 9,
+    crystalRampUp_us: 580,
+    crystalRampUpCurrent_mA: 0.84,
+    standby_us: 737.28,
+    standbyCurrent_mA: 1.226,
+    startRadio_us: 46.08,
+    startRadioCurrent_mA: 5.547,
+    advGap_us: 102.4,
+    advGapCurrent_mA: 3.502, 
+    description: 'BES2720ZP_8C_2POINT: High performance SOC.',
+    hdtIdleCurrent_mA: 0.04,
+  ),
+
 
   BleChip(
     id: 'BES2800BP',

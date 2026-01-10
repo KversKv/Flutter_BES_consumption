@@ -36,22 +36,13 @@ class PowerCalculator {
       color: Colors.orange.shade200,
     ));
     t += chip.standby_us;
-
-    list.add(PowerEvent(
-      startUs: t,
-      durationUs: chip.startRadio_us,
-      currentMa: chip.startRadioCurrent_mA,
-      label: 'Start radio',
-      color: Colors.orange.shade600,
-    ));
   }
 
   /// 计算 Setup 总时长
   static double getSetupTotalUs(dynamic chip) {
     return chip.preProcess_us +
         chip.crystalRampUp_us +
-        chip.standby_us +
-        chip.startRadio_us;
+        chip.standby_us ;
   }
 
   /// 计算平均电流
@@ -98,7 +89,8 @@ class PowerCalculator {
     required double rxCurrentMa,
   }) {
     List<PowerEvent> events = [];
-    final txUs = txTimeUs(params.payloadBytes, params.phy);
+    // final txUs = txTimeUs(params.payloadBytes, params.phy);
+    final txUs = 225.28;
     final rxI = rxCurrentMa > 0 ? rxCurrentMa : chip.rxCurrent_mA;
     final txI = chip.txCurrentForPower(params.txPowerDbm);
     final postUs = chip.postProcess_us;
@@ -116,6 +108,14 @@ class PowerCalculator {
     // 2. 广播三个信道
     List<String> ch = ['ADV CH37', 'ADV CH38', 'ADV CH39'];
     for (int i = 0; i < 3; i++) {
+      events.add(PowerEvent(
+        startUs: t,
+        durationUs: chip.startRadio_us,
+        currentMa: chip.startRadioCurrent_mA,
+        label: 'Start radio',
+        color: Colors.orange.shade600,
+      ));
+      t += chip.startRadio_us;
       // TX
       events.add(PowerEvent(
         startUs: t,
