@@ -265,7 +265,7 @@ final List<BleChip> defaultBleChips = [
         0, 9
       ],
       txCurrent_mA_forDbm: {
-        0: 23.4,
+        0: 24,
         9: 38.7,
       },
       // Setup拆分（总计约 2744us）

@@ -42,7 +42,7 @@ class AppState extends ChangeNotifier {
       txPowerDbm: initialTx,
       advIntervalMs: 100.0,
       connIntervalMs: 200.0,
-      payloadBytes: 0,
+      payloadBytes: 3,
     );
     // Initialize mode-specific RX params from the selected chip defaults
     rxWindowConnectedUs = chip.rxWindow_us;
