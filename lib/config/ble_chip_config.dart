@@ -251,6 +251,43 @@ final List<BleChip> defaultBleChips = [
   ),
 
   BleChip(
+      id: 'BES2710CP',
+      name: 'BES2710CP',
+      vbat: 3.8,
+      sleepCurrent_uA: 48.5,
+      rxCurrent_mA: 6.25,
+      rxCurrent_mA_HDT_2G4: 13.0,
+      rxCurrent_mA_HDT_5G: 18.0,
+      rxWindow_us: 409.6,
+      tifs_us: 122.88,
+      tifsCurrent_mA: 2,
+      txPowerLevelsDbm: [
+        0, 9
+      ],
+      txCurrent_mA_forDbm: {
+        0: 23.4,
+        9: 38.7,
+      },
+      // Setup拆分（总计约 2744us）
+      preProcess_us: 163.84,
+      preProcessCurrent_mA: 2.42,
+      crystalRampUp_us: 1126,
+      crystalRampUpCurrent_mA: 0.913,
+      standby_us: 1270,
+      standbyCurrent_mA: 1.233,
+      startRadio_us: 0,
+      startRadioCurrent_mA: 0,
+      // 广播通道间固定 ADV GAP（示例：5ms，电流取近似低功耗）
+      advGap_us: 100.0,
+      advGapCurrent_mA: 1.5, // 1.5mA
+      postProcess_us: 1290,
+      postCurrent_mA: 0.873,
+      description: 'BES2710CP: LTE | BT | BLE High Performance&Low Power SOC.',
+      hdtIdleCurrent_mA: 0.07,
+    ),
+
+
+  BleChip(
     id: 'BES2720IMP',
     name: 'BES2720IMP',
     vbat: 3.8,
