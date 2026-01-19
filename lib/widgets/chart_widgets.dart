@@ -248,7 +248,10 @@ List<_EventRect> _computeEventRects({
     final endUs = startUs + e.durationUs;
     final x1 = origin.dx + (startUs / viewPeriodUs) * w;
     final x2 = origin.dx + (endUs / viewPeriodUs) * w;
-    final yTop = origin.dy - (e.currentMa / maxCurrent) * h;
+    
+    // 对Sleep状态进行高度放大，放大5倍
+    final displayCurrent = e.isSleepOrGap ? e.currentMa * 5.0 : e.currentMa;
+    final yTop = origin.dy - (displayCurrent / maxCurrent) * h;
 
     final r = Rect.fromLTRB(x1, yTop, x2, origin.dy);
     rects.add(_EventRect(e, r));
@@ -374,7 +377,10 @@ class _TimelinePainter extends CustomPainter {
       final endUs = startUs + e.durationUs;
       final x1 = origin.dx + (startUs / viewPeriodUs) * w;
       final x2 = origin.dx + (endUs / viewPeriodUs) * w;
-      final yTop = origin.dy - (e.currentMa / maxCurrent) * h;
+      
+      // 对Sleep状态进行高度放大，放大5倍
+      final displayCurrent = e.isSleepOrGap ? e.currentMa * 5.0 : e.currentMa;
+      final yTop = origin.dy - (displayCurrent / maxCurrent) * h;
 
       final r = RRect.fromRectAndRadius(
         Rect.fromLTRB(x1, yTop, x2, origin.dy),
