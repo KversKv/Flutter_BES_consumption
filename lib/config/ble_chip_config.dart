@@ -376,8 +376,8 @@ final List<BleChip> defaultBleChips = [
 
 
   BleChip(
-    id: 'BES2720ZP_8C_2POINT',
-    name: 'BES2720ZP_8C_2POINT',
+    id: 'BES2720ZP_8C_For_Fitbit',
+    name: 'BES2720ZP_8C_For_Fitbit',
     vbat: 3.8,
     sleepCurrent_uA: 34.319,  //3.8V: 67.5uA ; 3.3V: 74.304uA
     rxCurrent_mA: 6.1,

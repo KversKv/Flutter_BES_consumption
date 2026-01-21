@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'ble_case_page.dart';
-import 'bt_home_page.dart';
+import 'bt_case_page.dart';
 import 'earbuds_compare_page.dart'; // ✅ 新增导入
 import 'wifi_home_page.dart'; // ✅ 新增导入
 import '../l10n/app_localizations.dart';
