@@ -10,7 +10,7 @@ import 'app_state.dart';
 import '../models/profile_params.dart';
 import '../services/power_calculator.dart';
 
-enum BT_Case { btSniff, btPage, btPagescan, hdt, relay }
+enum BT_Case { btSniff, btPage, btPagescan, relay }
 enum HdtModule { source, sink }
 
 class BTState extends ChangeNotifier {
@@ -49,7 +49,7 @@ class BTState extends ChangeNotifier {
   BT_Case caseType = BT_Case.btSniff;
 
   dynamic get chip {
-    final isBtCase = caseType == BT_Case.btSniff || caseType == BT_Case.btPage || caseType == BT_Case.btPagescan || caseType == BT_Case.relay || caseType == BT_Case.hdt;
+    final isBtCase = caseType == BT_Case.btSniff || caseType == BT_Case.btPage || caseType == BT_Case.btPagescan || caseType == BT_Case.relay;
     if (isBtCase) {
       final matches = btChips.where((c) => c.id == selectedChipId);
       if (matches.isNotEmpty) return matches.first;
@@ -146,7 +146,7 @@ class BTState extends ChangeNotifier {
       case BT_Case.btSniff: _recomputeBtSniff(); break;
       case BT_Case.btPage: _recomputeBtPage(); break;
       case BT_Case.btPagescan: _recomputeBtPagescan(); break;
-      case BT_Case.hdt: _recomputeHdt(); break;
+      
       case BT_Case.relay: _recomputeRelay(); break;
     }
     averageCurrent_mA = PowerCalculator.computeAverageCurrent(events, periodUs);

@@ -41,8 +41,6 @@ class BtChip {
   final double advGap_us;
   final double advGapCurrent_mA;
   final String description;
-  // HDT 模式下的 IDLE 电流（mA），由芯片厂商给定
-  final double hdtIdleCurrent_mA;
   // Optional per-band TX current maps and RX currents. Key example: '2.4G', '5G'
   final Map<String, Map<double, double>>? txCurrentByBand;
   final Map<String, double>? rxCurrentByBand;
@@ -71,7 +69,6 @@ class BtChip {
     required this.advGap_us,
     required this.advGapCurrent_mA,
     required this.description,
-    required this.hdtIdleCurrent_mA,
     this.rxCurrent_mA_HDT_2G4,
     this.rxCurrent_mA_HDT_5G,
     this.txCurrentByBand,

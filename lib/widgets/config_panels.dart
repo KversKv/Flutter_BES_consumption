@@ -79,25 +79,8 @@ class _ConfigPanelState extends State<ConfigPanel> {
     }
     List<double> levels;
     double currentTx;
-    if (app.params.mode == Mode.hdt) {
-      // For HDT mode show only specific TX power steps
-      levels = const [0.0, 5.0, 10.0];
-      // snap current requested txPower to nearest available level
-      final desired = app.params.txPowerDbm;
-      double closest = levels.first;
-      double minDiff = (desired - closest).abs();
-      for (final l in levels) {
-        final diff = (desired - l).abs();
-        if (diff < minDiff) {
-          closest = l;
-          minDiff = diff;
-        }
-      }
-      currentTx = closest;
-    } else {
-      levels = app.chip.txPowerLevelsDbm.cast<double>();
-      currentTx = app.chip.snapTxPower(app.params.txPowerDbm);
-    }
+    levels = app.chip.txPowerLevelsDbm.cast<double>();
+    currentTx = app.chip.snapTxPower(app.params.txPowerDbm);
 
     if (app.params.mode == Mode.bleConnectionCentral ||
         app.params.mode == Mode.bleConnectionPeripheral) {
@@ -434,13 +417,12 @@ class SniffingConfigPanel extends StatelessWidget {
           child: DropdownButton<BTCase>(
             value: st.caseType,
             isExpanded: true,
-            items: [
-              DropdownMenuItem(value: BTCase.btSniff, child: Text(AppLocalizations.of(context).btSniff)),
-              DropdownMenuItem(value: BTCase.btPage, child: Text(AppLocalizations.of(context).btPage)),
-              DropdownMenuItem(value: BTCase.btPagescan, child: Text(AppLocalizations.of(context).btPagescan)),
-              DropdownMenuItem(value: BTCase.hdt, child: const Text('HDT')),
-              DropdownMenuItem(value: BTCase.relay, child: const Text('Relay')),
-            ],
+              items: [
+                DropdownMenuItem(value: BTCase.btSniff, child: Text(AppLocalizations.of(context).btSniff)),
+                DropdownMenuItem(value: BTCase.btPage, child: Text(AppLocalizations.of(context).btPage)),
+                DropdownMenuItem(value: BTCase.btPagescan, child: Text(AppLocalizations.of(context).btPagescan)),
+                DropdownMenuItem(value: BTCase.relay, child: const Text('Relay')),
+              ],
             onChanged: (v) {
               if (v != null) context.read<BTState>().setCase(v);
             },
@@ -448,32 +430,10 @@ class SniffingConfigPanel extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // 新增：发射功率选择（与 BLE 配置面板一致的交互）
+        // 发射功率选择（与 BLE 配置面板一致的交互）
         Builder(builder: (ctx) {
-          final isHdt = st.caseType == BTCase.hdt;
-          final band = isHdt ? st.band : null;
-
-          List<double> levels;
-          double currentTx;
-
-          if (isHdt && band != null && st.chip.txCurrentByBand != null && st.chip.txCurrentByBand!.containsKey(band)) {
-            final Map<double, double> map = st.chip.txCurrentByBand![band]!;
-            levels = map.keys.toList()..sort();
-            // snap to closest available level in this band
-            double closest = levels.first;
-            double minDiff = (st.txPowerDbm - closest).abs();
-            for (final l in levels) {
-              final diff = (st.txPowerDbm - l).abs();
-              if (diff < minDiff) {
-                closest = l;
-                minDiff = diff;
-              }
-            }
-            currentTx = closest;
-          } else {
-            levels = st.chip.txPowerLevelsDbm.cast<double>();
-            currentTx = st.chip.snapTxPower(st.txPowerDbm);
-          }
+          final List<double> levels = st.chip.txPowerLevelsDbm.cast<double>();
+          final double currentTx = st.chip.snapTxPower(st.txPowerDbm);
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -580,68 +540,6 @@ class SniffingConfigPanel extends StatelessWidget {
                 ],
               );
 
-            case BTCase.hdt:
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 6),
-                  Text(AppLocalizations.of(context).moduleRole),
-                  const SizedBox(height: 6),
-                  SizedBox(
-                    width: double.infinity,
-                    child: DropdownButton<HdtModule>(
-                      value: st.hdtModule,
-                      isExpanded: true,
-                      items: [
-                        DropdownMenuItem(value: HdtModule.sink, child: Text(AppLocalizations.of(context).sink)),
-                        DropdownMenuItem(value: HdtModule.source, child: Text(AppLocalizations.of(context).source)),
-                      ],
-                      onChanged: (v) {
-                        if (v != null) context.read<BTState>().setHdtModule(v);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(AppLocalizations.of(context).frequencyBand),
-                  const SizedBox(height: 6),
-                  SizedBox(
-                    width: double.infinity,
-                    child: DropdownButton<String>(
-                      value: st.band,
-                      isExpanded: true,
-                      items: const [
-                        DropdownMenuItem(value: '2.4G', child: Text('2.4G')),
-                        DropdownMenuItem(value: '5G', child: Text('5G')),
-                      ],
-                      onChanged: (v) {
-                        if (v != null) context.read<BTState>().setBand(v);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text('${AppLocalizations.of(context).hdtPhyRate} ${st.hdtPhyRateMbps.toStringAsFixed(0)}'),
-                  const SizedBox(height: 6),
-                  DropdownButton<double>(
-                    value: st.hdtPhyRateMbps,
-                    isExpanded: true,
-                    items: List.generate(14, (i) => (i + 2).toDouble())
-                        .map((v) => DropdownMenuItem(value: v, child: Text('${v.toStringAsFixed(0)}')))
-                        .toList(),
-                    onChanged: (v) {
-                      if (v != null) context.read<BTState>().setHdtPhyRate(v);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  Text('${AppLocalizations.of(context).hdtRepeats} ${st.hdtRepeats}'),
-                  Slider(
-                    value: st.hdtRepeats.toDouble(),
-                    min: 1,
-                    max: 10,
-                    divisions: 9,
-                    onChanged: (v) => context.read<BTState>().setHdtRepeats(v.round()),
-                  ),
-                ],
-              );
 
             case BTCase.relay:
               return Column(
