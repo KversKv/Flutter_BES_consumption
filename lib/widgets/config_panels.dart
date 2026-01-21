@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../state/app_state.dart';
-import '../state/BT_state.dart';
+import '../state/bt_state.dart';
 import '../models/profile_params.dart';
 import '../l10n/app_localizations.dart';
 
@@ -55,7 +55,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: theme.colorScheme.outline.withOpacity(0.6)),
+          border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.6)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,7 +103,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
         // Chip settings card (single bordered section)
         sectionCard(
           title: 'Chip settings',
-          color: theme.colorScheme.surfaceVariant.withOpacity(0.06),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.06),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -138,7 +138,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
         // BLE settings card (single bordered section)
         sectionCard(
           title: 'BLE settings',
-          color: theme.colorScheme.primaryContainer.withOpacity(0.04),
+          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.04),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -281,7 +281,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
         if (app.params.mode == Mode.bleConnectionCentral || app.params.mode == Mode.bleConnectionPeripheral || app.params.mode == Mode.hdt)
           sectionCard(
             title: 'Advanced',
-            color: theme.colorScheme.secondaryContainer.withOpacity(0.06),
+            color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.06),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

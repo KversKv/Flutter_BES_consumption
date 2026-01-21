@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_declarations
+
 import 'package:flutter/material.dart';
 import '../models/earbuds.dart';
 import '../l10n/app_localizations.dart';

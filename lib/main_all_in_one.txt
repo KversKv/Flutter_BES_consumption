@@ -1227,7 +1227,7 @@ class EventLegendPanel extends StatelessWidget {
               boxShadow: [
                 if (isHovered)
                   BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.15),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -1320,7 +1320,7 @@ class _KPI extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.05),
+            color: theme.colorScheme.primary.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -1589,7 +1589,7 @@ class _TimelinePainter extends CustomPainter {
         Rect.fromLTRB(x1, yTop, x2, origin.dy),
         const Radius.circular(2),
       );
-      final p = Paint()..color = e.color.withOpacity(0.9);
+      final p = Paint()..color = e.color.withValues(alpha: 0.9);
       canvas.drawRRect(r, p);
 
       if (hideLowPowerGaps) {

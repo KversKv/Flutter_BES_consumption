@@ -10,7 +10,7 @@ import 'pages/home_page.dart';
 const bool useChinese = false;
 
 void main() {
-  final appLocale = useChinese ? const Locale('zh') : const Locale('en');
+  const appLocale = useChinese ?  Locale('zh') :  Locale('en');
   runApp(MyApp(locale: appLocale));
 }
 

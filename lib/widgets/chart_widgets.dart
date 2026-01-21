@@ -224,7 +224,7 @@ List<_EventRect> _computeEventRects({
   required bool hideLowPowerGaps,
   required double maxCurrent,
 }) {
-  final padding = 40.0;
+  const padding = 40.0;
   final w = size.width - padding * 2;
   final h = size.height - padding * 2;
   final origin = Offset(padding, size.height - padding);
@@ -283,6 +283,7 @@ class _TimelinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // ignore: prefer_const_declarations
     final padding = 40.0;
     final w = size.width - padding * 2;
     final h = size.height - padding * 2;
@@ -344,7 +345,7 @@ class _TimelinePainter extends CustomPainter {
 
     // X ticks
     final msTotal = viewPeriodUs / 1000.0;
-    final xTicks = 6;
+    const xTicks = 6;
     for (int i = 0; i <= xTicks; i++) {
       double frac = i / xTicks;
       double x = origin.dx + w * frac;
@@ -386,7 +387,7 @@ class _TimelinePainter extends CustomPainter {
         Rect.fromLTRB(x1, yTop, x2, origin.dy),
         const Radius.circular(2),
       );
-      final p = Paint()..color = e.color.withOpacity(0.9);
+      final p = Paint()..color = e.color.withValues(alpha: 0.9);
       canvas.drawRRect(r, p);
 
       if (hideLowPowerGaps) tAccUs += e.durationUs;

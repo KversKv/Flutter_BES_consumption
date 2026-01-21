@@ -1,3 +1,6 @@
+analyzer:
+  errors:
+    file_names: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:

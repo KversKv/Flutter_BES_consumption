@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_declarations, no_leading_underscores_for_local_identifiers
+
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/ble_chip.dart';
@@ -453,36 +455,36 @@ class PowerCalculator {
     }
 
     final double computedActive = _fixedOverheadAtRate() + _pduAirtimeUs();
-    final double preRF_RX_Us = 70.0;
-    final double postRF_RX_Us = 3.0;
-    final double preRF_TX_Us = 40.0;
-    final double postRF_TX_Us = 10.0;
+    final double prerfRxUs = 70.0;
+    final double postrfRxUs = 3.0;
+    final double prerfTxUs = 40.0;
+    final double postrfTxUs = 10.0;
     final double activeUs = math.min(computedActive, periodUs);
-    final double total_RX_ActiveUs = activeUs + preRF_RX_Us + postRF_RX_Us;
-    final double total_TX_ActiveUs = activeUs + preRF_TX_Us + postRF_TX_Us;
-    final double idle_RX_Us = math.max(0.0, periodUs - total_RX_ActiveUs);
-    final double idle_TX_Us = math.max(0.0, halfPeriodUs - total_TX_ActiveUs);
+    final double totalRxActiveus = activeUs + prerfRxUs + postrfRxUs;
+    final double totalTxActiveus = activeUs + prerfTxUs + postrfTxUs;
+    final double idleRxUs = math.max(0.0, periodUs - totalRxActiveus);
+    final double idleTxUs = math.max(0.0, halfPeriodUs - totalTxActiveus);
 
     for (int i = 0; i < repeats; i++) {
       if (moduleSink) {
-        events.add(PowerEvent(startUs: t, durationUs: total_RX_ActiveUs, currentMa: rxI, label: 'HDT RX', color: Colors.blue.shade400));
-        t += total_RX_ActiveUs;
-        if (idle_RX_Us > 0.0) {
-          events.add(PowerEvent(startUs: t, durationUs: idle_RX_Us, currentMa: idleCurrent, label: 'Idle', color: Colors.green.shade200));
-          t += idle_RX_Us;
+        events.add(PowerEvent(startUs: t, durationUs: totalRxActiveus, currentMa: rxI, label: 'HDT RX', color: Colors.blue.shade400));
+        t += totalRxActiveus;
+        if (idleRxUs > 0.0) {
+          events.add(PowerEvent(startUs: t, durationUs: idleRxUs, currentMa: idleCurrent, label: 'Idle', color: Colors.green.shade200));
+          t += idleRxUs;
         }
       } else {
-        events.add(PowerEvent(startUs: t, durationUs: total_TX_ActiveUs, currentMa: txI, label: 'HDT TX', color: Colors.red.shade400));
-        t += total_RX_ActiveUs;
-        if (idle_TX_Us > 0.0) {
-          events.add(PowerEvent(startUs: t, durationUs: idle_TX_Us, currentMa: idleCurrent, label: 'Idle', color: Colors.green.shade200));
-          t += idle_TX_Us;
+        events.add(PowerEvent(startUs: t, durationUs: totalTxActiveus, currentMa: txI, label: 'HDT TX', color: Colors.red.shade400));
+        t += totalRxActiveus;
+        if (idleTxUs > 0.0) {
+          events.add(PowerEvent(startUs: t, durationUs: idleTxUs, currentMa: idleCurrent, label: 'Idle', color: Colors.green.shade200));
+          t += idleTxUs;
         }
-        events.add(PowerEvent(startUs: t, durationUs: total_TX_ActiveUs, currentMa: txI, label: 'HDT TX', color: Colors.red.shade400));
-        t += total_RX_ActiveUs;
-        if (idle_TX_Us > 0.0) {
-          events.add(PowerEvent(startUs: t, durationUs: idle_TX_Us, currentMa: idleCurrent, label: 'Idle', color: Colors.green.shade200));
-          t += idle_TX_Us;
+        events.add(PowerEvent(startUs: t, durationUs: totalTxActiveus, currentMa: txI, label: 'HDT TX', color: Colors.red.shade400));
+        t += totalRxActiveus;
+        if (idleTxUs > 0.0) {
+          events.add(PowerEvent(startUs: t, durationUs: idleTxUs, currentMa: idleCurrent, label: 'Idle', color: Colors.green.shade200));
+          t += idleTxUs;
         }
       }
     }

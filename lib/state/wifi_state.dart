@@ -165,13 +165,13 @@ class WIFIState extends ChangeNotifier {
     double t = 0;
     
     final double computedActive = computeHdtActiveUs();
-    final double preRF_RX_Us = 70.0;
-    final double postRF_RX_Us = 3.0;
-    final double preRF_TX_Us = 40.0;
-    final double postRF_TX_Us = 10.0;
+    const double prerfRxUs = 70.0;
+    const double postrfRxUs = 3.0;
+    const double prerfTxUs = 40.0;
+    const double postrfTxUs = 10.0;
     final double activeUs = math.min(computedActive, hdtPeriodUs);
-    final double total_RX_ActiveUs = activeUs + preRF_RX_Us + postRF_RX_Us;
-    final double total_TX_ActiveUs = activeUs + preRF_TX_Us + postRF_TX_Us;
+    final double total_RX_ActiveUs = activeUs + prerfRxUs + postrfRxUs;
+    final double total_TX_ActiveUs = activeUs + prerfTxUs + postrfTxUs;
     final double idle_RX_Us = math.max(0.0, hdtPeriodUs - total_RX_ActiveUs);
     final double idle_TX_Us = math.max(0.0, halfPeriodUs - total_TX_ActiveUs);
 

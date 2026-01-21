@@ -1,5 +1,7 @@
 
 
+// ignore_for_file: non_constant_identifier_names
+
 /// 耳机场景功耗模型
 class Earbuds {
   final String chipId;
