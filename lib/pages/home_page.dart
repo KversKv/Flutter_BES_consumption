@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'ble_case_page.dart';
 import 'bt_case_page.dart';
-import 'earbuds_compare_page.dart'; // ✅ 新增导入
-import 'wifi_home_page.dart'; // ✅ 新增导入
+import 'wifi_case_page.dart'; 
 import '../l10n/app_localizations.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -26,7 +25,7 @@ class _MyHomePageState extends State<MyHomePage> {
         page = const BTPage();
         break;
       case 2:
-        page = const EarbudsComparePage(); // ✅ 新增页
+        page = const WifiPage(); // ✅ 新增页
         break;
       case 3:
         page = const Placeholder();

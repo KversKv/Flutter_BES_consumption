@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../state/app_state.dart'; // 如果需要用到通用类型
 import '../state/sniffing_state.dart';
 import '../widgets/config_panels.dart';
 import '../widgets/kpi_widgets.dart';
