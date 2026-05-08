@@ -5,18 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "bes_comsuption",
+            "name": "bes_consumption",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "bes_comsuption (profile mode)",
+            "name": "bes_consumption (profile mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
-            "name": "bes_comsuption (release mode)",
+            "name": "bes_consumption (release mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"

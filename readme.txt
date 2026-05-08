@@ -1,4 +1,4 @@
-d:\CodeProject\FlutterProjects\bes_comsuption\
+d:\CodeProject\FlutterProjects\bes_consumption\
 ├── .dart_tool\                # Dart 工具链缓存和配置文件
 ├── .gitignore                 # Git 忽略文件配置
 ├── .metadata                  # Flutter 项目元数据
