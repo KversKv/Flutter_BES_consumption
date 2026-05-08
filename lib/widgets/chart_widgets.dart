@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import '../models/power_event.dart';
+import '../theme/app_colors.dart';
 import 'legend_hover_widgets.dart';
 
 /// ===========================================================================
@@ -167,6 +168,7 @@ class _TimelineChartInteractiveState extends State<TimelineChartInteractive> {
                 maxCurrent: widget.maxCurrent,
                 hideLowPowerGaps: widget.hideLowPowerGaps,
                 hovered: hoveredEvent,
+                palette: AppPalette.of(context),
               ),
               size: Size.infinite,
             ),
@@ -272,12 +274,14 @@ class _TimelinePainter extends CustomPainter {
   final double maxCurrent;
   final bool hideLowPowerGaps;
   final PowerEvent? hovered;
+  final AppPalette palette;
 
   _TimelinePainter({
     required this.events,
     required this.periodUs,
     required this.maxCurrent,
     required this.hideLowPowerGaps,
+    required this.palette,
     this.hovered,
   });
 
@@ -299,14 +303,14 @@ class _TimelinePainter extends CustomPainter {
 
     final origin = Offset(padding, size.height - padding);
     final Paint axis = Paint()
-      ..color = const Color(0xFF888888)
+      ..color = palette.chartAxis
       ..strokeWidth = 1.0;
 
     canvas.drawLine(origin, Offset(padding + w, origin.dy), axis);
     canvas.drawLine(origin, Offset(origin.dx, origin.dy - h), axis);
 
     final gridPaint = Paint()
-      ..color = const Color(0x22888888)
+      ..color = palette.chartGrid
       ..strokeWidth = 1.0;
 
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
@@ -324,17 +328,25 @@ class _TimelinePainter extends CustomPainter {
 
       textPainter.text = TextSpan(
         text: yVal.toStringAsFixed(1),
-        style: const TextStyle(fontSize: 10, color: Colors.black87),
+        style: TextStyle(
+          fontSize: 10,
+          color: palette.textSecondary,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
       );
       textPainter.layout();
       textPainter.paint(canvas, Offset(12, y - textPainter.height / 2));
     }
 
     // Y label ———— 往左移以避免重叠
-    textPainter.text = const TextSpan(
+    textPainter.text = TextSpan(
       text: 'Current (mA)',
-      style:
-          TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w600),
+      style: TextStyle(
+        fontSize: 12,
+        color: palette.textPrimary,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.3,
+      ),
     );
     textPainter.layout();
     canvas.save();
@@ -355,17 +367,25 @@ class _TimelinePainter extends CustomPainter {
 
       textPainter.text = TextSpan(
         text: (msTotal * frac).toStringAsFixed(1),
-        style: const TextStyle(fontSize: 10, color: Colors.black87),
+        style: TextStyle(
+          fontSize: 10,
+          color: palette.textSecondary,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
       );
       textPainter.layout();
       textPainter.paint(canvas, Offset(x - textPainter.width / 2, origin.dy + 4));
     }
 
     // X label
-    textPainter.text = const TextSpan(
+    textPainter.text = TextSpan(
       text: 'Time (ms)',
-      style:
-          TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w600),
+      style: TextStyle(
+        fontSize: 12,
+        color: palette.textPrimary,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.3,
+      ),
     );
     textPainter.layout();
     textPainter.paint(
@@ -399,6 +419,7 @@ class _TimelinePainter extends CustomPainter {
     return oldDelegate.events != events ||
         oldDelegate.periodUs != periodUs ||
         oldDelegate.maxCurrent != maxCurrent ||
-        oldDelegate.hideLowPowerGaps != hideLowPowerGaps;
+        oldDelegate.hideLowPowerGaps != hideLowPowerGaps ||
+        oldDelegate.palette.brightness != palette.brightness;
   }
 }

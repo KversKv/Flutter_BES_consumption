@@ -76,6 +76,9 @@ class AppLocalizations {
       'hdt_repeats': 'HDT repeats:',
       'relay': 'Relay',
       'relay_hop_gap': 'Relay hop gap (µs):',
+      'theme_toggle_system': 'Theme: Follow system (click to switch)',
+      'theme_toggle_dark': 'Theme: Dark (click to switch)',
+      'theme_toggle_light': 'Theme: Light (click to switch)',
     },
     'zh': {
       'appTitle': 'BES 功耗 (演示)',
@@ -144,6 +147,9 @@ class AppLocalizations {
       'hdt_repeats': 'HDT repeats:',
       'relay': 'Relay',
       'relay_hop_gap': 'Relay hop gap (µs):',
+      'theme_toggle_system': '主题：跟随系统（点击切换）',
+      'theme_toggle_dark': '主题：深色（点击切换）',
+      'theme_toggle_light': '主题：浅色（点击切换）',
     },
   };
 
@@ -222,6 +228,9 @@ class AppLocalizations {
   String get kpiPeriod => _t('kpi_period');
   String get kpiAvgCurrent => _t('kpi_avg_current');
   String get kpiSleepCurrent => _t('kpi_sleep_current');
+  String get themeToggleSystem => _t('theme_toggle_system');
+  String get themeToggleDark => _t('theme_toggle_dark');
+  String get themeToggleLight => _t('theme_toggle_light');
   String get kpiBatteryLifeEst => _t('kpi_battery_life_est');
   String get kpiPeakCurrent => _t('kpi_peak_current');
 
