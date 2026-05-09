@@ -1,0 +1,71 @@
+import '../../../models/earbuds.dart';
+
+const EarbudsChip kChip1700 = EarbudsChip(
+  id: '1700',
+  process: null,
+  core: null,
+  fullRamKb: null,
+  massProduction: true,
+  sleep: SleepCurrent(
+    vcoreM: null,
+    vcoreL: null,
+    vana: null,
+    vhppa: null,
+    pdSleep256: null,
+    pdSleepFull: null,
+    deepSleep: null,
+  ),
+  mcuRun: [
+    RunCurrent(
+      label: 'M55',
+      wfi24M: 0.92,
+      cm24M: 1.03,
+      cm48M: 1.23,
+      cm96M: 1.61,
+      cm192M: 3.28,
+    ),
+    RunCurrent(
+      label: 'M33',
+      wfi24M: 0.82,
+      cm24M: 0.92,
+      cm48M: 1.08,
+      cm96M: 1.37,
+      cm192M: 3.03,
+    ),
+  ],
+  scene: EarbudsScene(
+    mute: 3.39,
+    noisePink: 3.47,
+    k1Hz: 16.9,
+    call: 4.8,
+    sniffPage: 0.34,
+    powerOff: 0.004,
+  ),
+  bt: BtScene(
+    btBase: null,
+    bleAdv500_9: null,
+    bleConn200_0: null,
+    bleConn500_0: null,
+    btPagescan9: null,
+    btSniff200_0: null,
+    btSniff500_0: null,
+  ),
+  txSweep: [
+    TxSweepVariant(
+      label: 'VPA=1.7V',
+      values: {-10: 13.0, -9: 14.0, -8: 14.0, -7: 17.0, -6: 18.0, -5: 18.0, -4: 18.0, -3: 18.0, -2: 19.0, -1: 19.0, 0: 20.0, 1: 21.0, 2: 21.0, 3: 22.0, 4: 24.0, 5: 25.0, 6: 27.0, 7: 28.0, 8: 31.0, 9: 34.0, 10: 37.0, 11: 39.0, 12: 43.0, 13: 49.0, 14: 52.0, 15: 56.0},
+    ),
+  ],
+  rxVana: RxSweep(
+    values: {0: 23.0, 1: 18.3, 2: 17.5, 3: 17.5, 4: 17.5, 5: 17.5, 6: 17.5, 7: 17.5},
+    vana: null,
+  ),
+  rxVsys: RxSweep(
+    values: {1: 5.37, 2: 5.07, 3: 5.06, 4: 4.73, 5: 4.73, 6: 4.74, 7: 4.74},
+  ),
+  pa: AudioPa(
+    db0: null,
+    dbNeg20: null,
+    dbNegInf: null,
+  ),
+);
