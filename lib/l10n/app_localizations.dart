@@ -89,6 +89,9 @@ class AppLocalizations {
       'eb_tab_tx': 'TX Sweep',
       'eb_tab_rx': 'RX Sweep',
       'eb_tab_pa': 'Audio PA',
+      'eb_config': 'Config',
+      'eb_content': 'Content',
+      'eb_view_mode': 'View Mode',
       'eb_filter_mass_only': 'Mass-production only',
       'eb_filter_sort_asc': 'Sort ↑',
       'eb_filter_sort_desc': 'Sort ↓',
@@ -181,6 +184,16 @@ class AppLocalizations {
       'eb_shutdown': 'Shutdown',
       'eb_connect_no_behavior': 'connect and no behavior',
       'eb_single_dac': 'Single DAC',
+      'eb_summary': 'Summary',
+      'eb_best': 'Best',
+      'eb_worst': 'Worst',
+      'eb_avg': 'Avg',
+      'eb_radar_title': 'Multi-dimension Radar',
+      'eb_delta_vs_best': 'Δ vs Best',
+      'eb_baseline': 'Baseline',
+      'eb_search_chip': 'Search chip...',
+      'eb_chip_info': 'Chip Info',
+      'eb_no_data': 'No Data',
     },
     'zh': {
       'appTitle': 'BES 功耗 (演示)',
@@ -262,6 +275,9 @@ class AppLocalizations {
       'eb_tab_tx': 'TX 扫描',
       'eb_tab_rx': 'RX 扫描',
       'eb_tab_pa': '音频 PA',
+      'eb_config': '配置',
+      'eb_content': '内容',
+      'eb_view_mode': '视图模式',
       'eb_filter_mass_only': '仅量产配置',
       'eb_filter_sort_asc': '升序 ↑',
       'eb_filter_sort_desc': '降序 ↓',
@@ -354,6 +370,16 @@ class AppLocalizations {
       'eb_shutdown': 'Shutdown',
       'eb_connect_no_behavior': 'connect and no behavior',
       'eb_single_dac': '单DAC',
+      'eb_summary': '汇总',
+      'eb_best': '最优',
+      'eb_worst': '最差',
+      'eb_avg': '均值',
+      'eb_radar_title': '多维雷达图',
+      'eb_delta_vs_best': 'Δ vs 最优',
+      'eb_baseline': '基线',
+      'eb_search_chip': '搜索芯片...',
+      'eb_chip_info': '芯片信息',
+      'eb_no_data': '无数据',
     },
   };
 
@@ -447,6 +473,9 @@ class AppLocalizations {
   String get ebTabTx => _t('eb_tab_tx');
   String get ebTabRx => _t('eb_tab_rx');
   String get ebTabPa => _t('eb_tab_pa');
+  String get ebConfig => _t('eb_config');
+  String get ebContent => _t('eb_content');
+  String get ebViewMode => _t('eb_view_mode');
   String get ebFilterMassOnly => _t('eb_filter_mass_only');
   String get ebFilterSortAsc => _t('eb_filter_sort_asc');
   String get ebFilterSortDesc => _t('eb_filter_sort_desc');
@@ -539,6 +568,16 @@ class AppLocalizations {
   String get ebShutdown => _t('eb_shutdown');
   String get ebConnectNoBehavior => _t('eb_connect_no_behavior');
   String get ebSingleDac => _t('eb_single_dac');
+  String get ebSummary => _t('eb_summary');
+  String get ebBest => _t('eb_best');
+  String get ebWorst => _t('eb_worst');
+  String get ebAvg => _t('eb_avg');
+  String get ebRadarTitle => _t('eb_radar_title');
+  String get ebDeltaVsBest => _t('eb_delta_vs_best');
+  String get ebBaseline => _t('eb_baseline');
+  String get ebSearchChip => _t('eb_search_chip');
+  String get ebChipInfo => _t('eb_chip_info');
+  String get ebNoData => _t('eb_no_data');
 
   static AppLocalizations of(BuildContext context) {
     final instance = Localizations.of<AppLocalizations>(context, AppLocalizations);

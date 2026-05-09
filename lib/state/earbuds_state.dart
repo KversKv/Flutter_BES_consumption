@@ -113,6 +113,28 @@ class EarbudsState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // --- Tab 索引 (左侧面板控制) -----------------------------------------------
+
+  int _tabIndex = 0;
+  int get tabIndex => _tabIndex;
+  void setTabIndex(int idx) {
+    if (idx < 0 || idx > 6) return;
+    if (_tabIndex == idx) return;
+    _tabIndex = idx;
+    const groups = [
+      MetricGroup.scene,
+      MetricGroup.bt,
+      MetricGroup.sleep,
+      MetricGroup.mcuRun,
+      null,
+      null,
+      MetricGroup.pa,
+    ];
+    final g = groups[idx];
+    if (g != null) _group = g;
+    notifyListeners();
+  }
+
   String? _focusedChipId;
   String? get focusedChipId => _focusedChipId;
   EarbudsChip? get focusedChip {
