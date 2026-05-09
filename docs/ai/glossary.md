@@ -13,4 +13,4 @@
 | KPI | 本项目指：平均电流(mA) / 平均功耗(mW) / 续航(h/day) |
 | ChangeNotifier | `provider` 推荐的可观察状态基类 |
 | AppLocalizations | 本项目自建 i18n 入口，位于 `lib/l10n/app_localizations.dart` |
-| Chip Registry | `lib/config/earbuds/earbuds_chip_registry.dart`，集中注册所有芯片型号 |
+| Chip Registry | `assets/data/earbuds_chips.json`，集中存放所有芯片型号；运行期由 `EarbudsRepository` 经 `EarbudsChipLoader` 装载 |

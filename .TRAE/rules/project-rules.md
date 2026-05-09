@@ -14,7 +14,7 @@ models → config → services → state → widgets → pages；models 不依�
 - **数据源（种子）**：`assets/data/earbuds_chips.json`，由 `services/earbuds_chip_loader.dart` 装载；新增 / 修改芯片数据请直接改此 JSON。
 - **持久化（用户改动）**：`shared_preferences`，整库以单 JSON 字符串落键 `earbuds_db_v1`。
 - Schema 版本：`{ version, chips:[...] }`；版本号变更必须写迁移分支，禁止悄改字段。
-- `lib/config/earbuds/` 下的 `kAllChips` 已 `@Deprecated`，**仅供 `tool/dump_chips_json.dart` 重新导出 JSON 时使用**，业务代码禁止 import。
+- 历史 `lib/config/earbuds/chips/*.dart` + `earbuds_chip_registry.dart` + `tool/dump_chips_json.dart` 已全部删除；JSON 资源是唯一真相源。
 - 写操作必须经 `commit/add/duplicate/delete/resetToSeed`，并触发持久化与 `notifyListeners`。
 - `models/` 提供 `toJson/fromJson`；UI 永远读 `repo.chips` 不可变快照。
 

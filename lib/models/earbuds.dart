@@ -310,8 +310,7 @@ class AudioPa {
 /// 芯片综合功耗档案。
 ///
 /// 运行期数据从 `assets/data/earbuds_chips.json` 装载（见 `services/earbuds_chip_loader.dart`）。
-/// 历史 const 定义仍在 `lib/config/earbuds/chips/`，但已 `@Deprecated`，
-/// 仅供 `tool/dump_chips_json.dart` 重新导出 JSON 时使用。
+/// 新增 / 修改芯片请直接编辑该 JSON 文件。
 class EarbudsChip {
   final String id; // e.g. '1607'
   final String? process; // e.g. 'SS_N14' / 'tsmc6n'

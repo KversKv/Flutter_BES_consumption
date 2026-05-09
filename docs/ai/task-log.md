@@ -16,6 +16,24 @@
 
 ---
 
+## 2026-05-09 · 删除历史 const 芯片数据（`lib/config/earbuds/chips/` + 反向导出脚本）
+- **类型**：refactor / decision
+- **范围**：删除 `lib/config/earbuds/chips/*.dart`（16 文件）、`lib/config/earbuds/earbuds_chip_registry.dart`、`tool/dump_chips_json.dart`；同步更新 `lib/models/earbuds.dart` 注释、`.trae/rules/project-rules.md`、`docs/ai/{project-overview,glossary,tech-context}.md`、`CLAUDE.md`、`.ai/memory.md`
+- **动因**：用户确认"彻底删除"。`@Deprecated` const + 反向导出脚本属于过渡期技术债，留着会让"改数据到底动哪里"的语义模糊。
+- **变更**：
+  1. 删除 18 个文件（16 个 chip_xxxx.dart + registry + tool 脚本）
+  2. 所有文档 / 规则 / 注释里的 `kAllChips` / `earbuds_chip_registry.dart` / `dump_chips_json.dart` / `lib/config/earbuds/chips` 字眼全部更新为 `assets/data/earbuds_chips.json`（唯一真相源）
+  3. `.ai/memory.md` §3 "芯片参数建模" 决策改写为"数据存为 JSON 资源"，"运行时数据可变性"理由改写（不再提"保留 kAllChips 作种子"）
+- **影响**：
+  - **改芯片数据 = 改 JSON**，零歧义
+  - lib/ 减少 ~3000 行 const 模板代码；`flutter build` 不再编译这些 const
+  - 不可逆（git 可恢复）；未来若想重新引入"在 Dart 写然后导出 JSON"通道需手写新脚本
+- **校验**：`flutter analyze` → No issues found
+- **后续**：无
+
+---
+
+
 ## 2026-05-09 · 芯片数据从 Dart 常量迁移到 JSON 资源
 - **类型**：refactor / decision / docs
 - **范围**：新增 `assets/data/earbuds_chips.json`、`lib/services/earbuds_chip_loader.dart`、`tool/dump_chips_json.dart`；`pubspec.yaml`、`lib/services/earbuds_repository.dart`、`lib/config/earbuds/earbuds_chip_registry.dart`、`.trae/rules/project-rules.md`、`.ai/memory.md`

@@ -115,7 +115,7 @@
 - 入口：[lib/main.dart](./lib/main.dart)
 - 主页：[lib/pages/home_page.dart](./lib/pages/home_page.dart)
 - 功耗算法：[lib/services/power_calculator.dart](./lib/services/power_calculator.dart)
-- 芯片注册表：[lib/config/earbuds/earbuds_chip_registry.dart](./lib/config/earbuds/earbuds_chip_registry.dart)
+- 芯片数据：[assets/data/earbuds_chips.json](./assets/data/earbuds_chips.json) · [lib/services/earbuds_chip_loader.dart](./lib/services/earbuds_chip_loader.dart) · [lib/services/earbuds_repository.dart](./lib/services/earbuds_repository.dart)
 - i18n：[lib/l10n/app_localizations.dart](./lib/l10n/app_localizations.dart)
 - 主题：[lib/theme/app_theme.dart](./lib/theme/app_theme.dart)
 - Lint：[analysis_options.yaml](./analysis_options.yaml)

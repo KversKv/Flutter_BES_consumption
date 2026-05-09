@@ -8,7 +8,7 @@
 - 主页：`lib/pages/home_page.dart`
 - 场景页：`ble_case_page.dart` / `bt_case_page.dart` / `wifi_case_page.dart` / `earbuds_compare_page.dart` / `bt_sniffing.dart`
 - 核心算法：`lib/services/power_calculator.dart` · `lib/services/earbuds_query.dart`
-- 芯片库：`lib/config/earbuds/chips/*.dart`（1306~1702 共 16 型号）+ `earbuds_chip_registry.dart`
+- 芯片数据：`assets/data/earbuds_chips.json`（16 型号 1306~1702）；装载器 `lib/services/earbuds_chip_loader.dart`；仓储 `lib/services/earbuds_repository.dart`
 - 主题：`lib/theme/app_theme.dart` + `app_colors.dart` + `app_spacing.dart`
 - i18n：`lib/l10n/app_localizations.dart`（zh / en）
 
