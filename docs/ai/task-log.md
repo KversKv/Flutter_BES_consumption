@@ -57,3 +57,38 @@
 - **后续**：
   - [ ] 后续如 memory 单文件超过 ~1000 行，再评估是否重新拆分
   - [ ] 核对其它 docs/ai/ 文档是否还有 `.ai/memory/` 旧引用
+
+## 2026-05-09 · earbuds_compare_page 拆分为 part 文件
+- **类型**：refactor
+- **范围**：`lib/pages/earbuds_compare_page.dart`、新增 `lib/pages/earbuds_pages/` 目录（5 份 part 文件）
+- **动因**：单文件 2352 行已超出可维护阈值，按职能拆分便于检索与协作。
+- **变更**：
+  1. 主文件改为 `library;` + `part 'earbuds_pages/...dart'`，仅保留 `EarbudsComparePage` 与 `_EarbudsComparePageState`
+  2. 新建 `earbuds_pages/earbuds_compare_shared.dart`：`_MetricStat` / `_computeMetricStats` / `_EmptyHint` / `_KeepAliveWrapper`
+  3. 新建 `earbuds_pages/earbuds_left_sidebar.dart`：左侧栏（侧边栏 / 筛选 / 概览卡 / 芯片列表 / 视图模式）
+  4. 新建 `earbuds_pages/earbuds_scene_tab.dart`：场景对比 + 单芯片场景视图（含雷达 / 洞察面板 / 数据表）
+  5. 新建 `earbuds_pages/earbuds_metric_table_tab.dart`：度量表格仪表盘（KPI / 热力单元 / 工具栏 / 排序）
+  6. 新建 `earbuds_pages/earbuds_sweep_tabs.dart`：`_TxSweepTab` / `_RxSweepTab` 占位
+- **影响**：
+  - 外部 API（`EarbudsComparePage`）保持不变；`home_page.dart`、`wifi_case_page.dart` 不需调整
+  - 私有 `_` 前缀类型在 `part` 库内可继续共享，无需改成公开
+  - `flutter analyze` 全工程通过
+- **后续**：
+  - [ ] 若后续 part 文件再变长，可考虑把 `_MetricStat` 提升为 services 层公开类型
+
+## 2026-05-09 · earbuds Tab 进一步细化为「一 Tab 一文件」
+- **类型**：refactor
+- **范围**：`lib/pages/earbuds_compare_page.dart`、`lib/pages/earbuds_pages/`
+- **动因**：上一次拆分仍把 4 个度量 Tab 合在 `earbuds_metric_table_tab.dart`、Tx/Rx 合在 `earbuds_sweep_tabs.dart`；用户要求"7 个 Tab → 7 个 dart"。
+- **变更**：
+  1. 新增 6 个 Tab 入口薄包装文件：`earbuds_bt_tab.dart` / `earbuds_sleep_tab.dart` / `earbuds_mcu_run_tab.dart` / `earbuds_pa_tab.dart` / `earbuds_tx_sweep_tab.dart` / `earbuds_rx_sweep_tab.dart`
+  2. `earbuds_metric_table_tab.dart` 重命名为 `earbuds_metric_table_view.dart`，作为 4 个度量 Tab 的共享底层视图（KPI / 热力 / 工具栏 / 排序）
+  3. 删除 `earbuds_sweep_tabs.dart`（已被 Tx/Rx 两个独立文件取代）
+  4. 主文件 `part` 列表显式分组：3 个基础设施（shared / left_sidebar / metric_table_view）+ 7 个 Tab
+  5. `TabBarView.children` 改为各 Tab 入口 widget（`_BtTab` / `_SleepTab` / ...），不再直接构造 `_MetricTableView(group: ...)`
+- **影响**：
+  - 外部 API 保持不变；只有内部文件物理布局调整
+  - 度量表底层组件（`_MetricTableView` 等）保留为私有 part 类型，4 个 Tab 入口仅做 `MetricGroup` 绑定
+  - `flutter analyze` 全工程通过
+- **后续**：
+  - [ ] 若 Tx/Rx Sweep 后续有真实实现，可在自己的 dart 文件内独立扩展，不影响其它 Tab
