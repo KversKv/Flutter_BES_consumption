@@ -1,68 +1,34 @@
-# Project Memory
+# Memory 导航索引
 
-> 长期记忆文件。**只记沉淀后的结论**，不记流水；有状态变化时**原地更新**而非追加。
-> 标注体系：`[事实]` 仓库可直接验证 / `[决策]` 主动选择 / `[约束]` 外部限制 / `[坑]` 已踩过 / `[待验证]` 暂定。
+> 真正的长期记忆位于项目根目录 [`.ai/memory.md`](../../.ai/memory.md)（**单文件、按章节组织**）。本文件仅作**跳转导航**；**请勿**再向本文件追加事实 / 决策。
+>
+> 迁移说明：
+> - 2026-05-09 v1：从 `docs/ai/memory/` → `.ai/memory/`（多文件）。
+> - 2026-05-09 v2：从 `.ai/memory/`（多文件） → `.ai/memory.md`（单文件按章节），便于整体复制到其他项目。
 
----
+## 章节速查（单文件锚点）
 
-## 1. 稳定事实（Facts）
-- [事实] 工程名为 `bes_consumption`；历史目录名 `bes_comsuption` 为拼写错误待修正。
-- [事实] 包名 / AppId：`com.example.bes_consumption`。
-- [事实] 六端工程齐全：Android / iOS / Windows / macOS / Linux / Web。
-- [事实] 状态注入点仅在 `lib/main.dart` 顶层 `MultiProvider`，当前注入 `AppState / EarbudsState / ThemeController`。
-- [事实] 芯片预置 16 个：`lib/config/earbuds/chips/chip_*.dart`，通过 `earbuds_chip_registry.dart` 统一注册。
-- [事实] 未使用 `freezed` / `json_serializable` / 网络库 / 数据库。
+| 章节 | 内容 | 何时读 |
+|---|---|---|
+| [§1 Overview](../../.ai/memory.md#1-overview--目的与维护原则) | 目的 / 范围 / 维护原则 / 跨项目迁移 | 第一次接手本项目 |
+| [§2 Facts](../../.ai/memory.md#2-facts--长期稳定事实) | 稳定事实：技术栈 / 目录 / 模块 / 依赖 | 任何任务开始前 |
+| [§3 Decisions](../../.ai/memory.md#3-decisions--关键决策) | 关键决策及理由 / 被放弃的替代 | 涉及架构或选型时 |
+| [§4 Constraints](../../.ai/memory.md#4-constraints--硬约束) | 硬约束：SDK / Lint / 平台 / 命名 | 改基础设施或跨平台代码时 |
+| [§5 Pitfalls](../../.ai/memory.md#5-pitfalls--坑与禁区) | 已踩过的坑与禁区 | 改代码前必读 |
+| [§6 Progress](../../.ai/memory.md#6-progress--高价值里程碑) | 高价值里程碑 | 回顾 / 汇报 |
+| [§7 Open Questions](../../.ai/memory.md#7-open-questions--未决--待验证) | 未决 / 待验证 | 接手不确定任务时 |
 
-## 2. 关键决策（Decisions）
-- [决策] 状态管理选 `provider + ChangeNotifier`，不引入 Riverpod/Bloc —— 理由：Demo 规模小、学习成本低、现有代码已成体系。
-- [决策] 自建轻量 `AppLocalizations`，不使用 `intl` 代码生成 —— 理由：仅 zh/en 两种、文案量有限。
-- [决策] 主题系统拆成 `app_theme / app_colors / app_spacing`，禁止各页面重复定义颜色/间距常量。
-- [决策] 芯片参数用"静态 config 对象"模式，不引入 JSON/配置文件 —— 理由：类型安全 + IDE 跳转友好。
+## 标注体系（全项目通用）
 
-## 3. 已知约束（Constraints）
-- [约束] Dart SDK `>=3.6.0 <4.0.0`。
-- [约束] Flutter Lints 版本为 `^2.0.0`（较旧），升级需同步处理新增规则。
-- [约束] `analysis_options.yaml` 已关闭多条 const/key 相关规则，不得反开。
+- `[事实]` 仓库可直接验证
+- `[决策]` 人为主动选择
+- `[约束]` 外部或不可轻改的限制
+- `[坑]` 已踩过 / 已修复
+- `[待验证]` 暂定结论，等待证据
 
-## 4. 常见坑 / 禁区（Pitfalls）
-- [坑] 在 `build()` 内调用 `setXxx()` 触发 `notifyListeners()` 会导致循环重建。
-- [坑] 直接在 `pages` / `widgets` 硬编码中文会破坏 zh/en 同步，必须走 `AppLocalizations`。
-- [坑] 平台工程里散布 `bes_comsuption` 拼写，重命名时必须全量搜索 6 端 + `pubspec.yaml` + `.vscode/`。
-- [禁区] 不要为了"看起来统一"批量替换已存在的合理风格（例如既有引号/注释）。
+## 更新要求（摘要）
 
-## 5. 已完成的重要任务（Milestones）
-- [事实] 已搭建六端工程 + M3 亮暗主题切换（`ThemeController`）。
-- [事实] 已完成 BLE/BT/Wi-Fi 场景页 + 耳机对比页 + Sniff 专页。
-- [事实] 已内置 16 款 BES 芯片参数。
-
-## 6. 暂定结论 / 待验证（Tentative）
-- [待验证] 是否需要 CSV/截图导出功能。
-- [待验证] Web 端 `fl_chart` 性能在大量数据点下的表现。
-- [待验证] 是否需要从 `bes_comsuption` → `bes_consumption` 做一次性跨平台重命名审计。
-
----
-
-## 维护说明
-
-### ✅ 应写入 memory
-- 长期有效的事实（工程名、包名、架构决策）
-- 已经做出的技术选型与其**理由**
-- 踩过并修复的坑（防止重犯）
-- 影响跨任务的约束（SDK 版本、lint 策略）
-
-### ❌ 不应写入 memory
-- 单次任务过程细节（放 `task-log.md`）
-- 临时 TODO / bug 跟踪（放 Issue 或 `current-focus.md`）
-- 代码片段 / 实现细节（代码本身即事实源）
-- 尚未验证的想法（最多放入"待验证"区并标注）
-
-### 🕒 更新时机
-- 任务结束且产生了**新的稳定结论**时
-- 决策被推翻时（**原地改写 + 在 task-log 记录变更日期**）
-- 发现新坑 / 新约束时
-
-### 🧹 防止流水账
-- 每条目单行为主，超过 2 行必须提炼要点
-- 每季度 review 一次，合并/删除过期条目
-- 同类事项合并成分类列表，不按时间堆叠
-- 时间/过程性叙述一律下沉到 `task-log.md`
+- 只记"对未来任务仍有价值"的结论；过程细节进 `task-log.md`
+- 决策被推翻 → **原地改写**原条目，并在 `task-log.md` 记录日期与原因
+- 每条尽量单行；按章节下沉，不要混放
+- 详细规则见 [.ai/memory.md §1 Overview](../../.ai/memory.md#1-overview--目的与维护原则)
