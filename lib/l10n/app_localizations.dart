@@ -86,6 +86,7 @@ class AppLocalizations {
       'eb_tab_bt': 'BT & BLE',
       'eb_tab_sleep': 'Sleep',
       'eb_tab_run': 'MCU Run',
+      'eb_tab_cpu_consumption': 'CPU Consumption',
       'eb_tab_tx': 'TX Sweep',
       'eb_tab_rx': 'RX Sweep',
       'eb_tab_pa': 'Audio PA',
@@ -272,6 +273,7 @@ class AppLocalizations {
       'eb_tab_bt': 'BT & BLE',
       'eb_tab_sleep': '睡眠电流',
       'eb_tab_run': 'MCU 运行',
+      'eb_tab_cpu_consumption': 'CPU 功耗',
       'eb_tab_tx': 'TX 扫描',
       'eb_tab_rx': 'RX 扫描',
       'eb_tab_pa': '音频 PA',
@@ -470,6 +472,7 @@ class AppLocalizations {
   String get ebTabBt => _t('eb_tab_bt');
   String get ebTabSleep => _t('eb_tab_sleep');
   String get ebTabRun => _t('eb_tab_run');
+  String get ebTabCpuConsumption => _t('eb_tab_cpu_consumption');
   String get ebTabTx => _t('eb_tab_tx');
   String get ebTabRx => _t('eb_tab_rx');
   String get ebTabPa => _t('eb_tab_pa');

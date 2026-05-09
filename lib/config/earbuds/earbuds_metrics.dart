@@ -2,7 +2,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/earbuds.dart';
 
 /// 指标分组（与页面 Tab 对应，TxSweep / RxSweep 因为是曲线图另行处理）。
-enum MetricGroup { scene, bt, sleep, mcuRun, pa }
+enum MetricGroup { scene, bt, cpuConsumption, pa }
 
 /// 单位标签（仅用于坐标轴和表格列头）。
 enum MetricUnit { mA, uA, volt }
@@ -123,21 +123,31 @@ String _labelBtSniff200(AppLocalizations s) => s.ebMetricBtSniff200;
 double? _readBtSniff500(EarbudsChip c) => c.bt.btSniff500_0;
 String _labelBtSniff500(AppLocalizations s) => s.ebMetricBtSniff500;
 
-const List<EarbudsMetric> _sleepMetrics = [
-  EarbudsMetric(key: 'pd256', group: MetricGroup.sleep, unit: MetricUnit.uA,
+const List<EarbudsMetric> _cpuConsumptionMetrics = [
+  EarbudsMetric(key: 'pd256', group: MetricGroup.cpuConsumption, unit: MetricUnit.uA,
     read: _readPd256, label: _labelPd256),
-  EarbudsMetric(key: 'pdfull', group: MetricGroup.sleep, unit: MetricUnit.uA,
+  EarbudsMetric(key: 'pdfull', group: MetricGroup.cpuConsumption, unit: MetricUnit.uA,
     read: _readPdFull, label: _labelPdFull),
-  EarbudsMetric(key: 'deepsleep', group: MetricGroup.sleep, unit: MetricUnit.uA,
+  EarbudsMetric(key: 'deepsleep', group: MetricGroup.cpuConsumption, unit: MetricUnit.uA,
     read: _readDeep, label: _labelDeep),
-  EarbudsMetric(key: 'vcorem', group: MetricGroup.sleep, unit: MetricUnit.volt,
+  EarbudsMetric(key: 'vcorem', group: MetricGroup.cpuConsumption, unit: MetricUnit.volt,
     read: _readVcoreM, label: _labelVcoreM),
-  EarbudsMetric(key: 'vcorel', group: MetricGroup.sleep, unit: MetricUnit.volt,
+  EarbudsMetric(key: 'vcorel', group: MetricGroup.cpuConsumption, unit: MetricUnit.volt,
     read: _readVcoreL, label: _labelVcoreL),
-  EarbudsMetric(key: 'vana', group: MetricGroup.sleep, unit: MetricUnit.volt,
+  EarbudsMetric(key: 'vana', group: MetricGroup.cpuConsumption, unit: MetricUnit.volt,
     read: _readVana, label: _labelVana),
-  EarbudsMetric(key: 'vhppa', group: MetricGroup.sleep, unit: MetricUnit.volt,
+  EarbudsMetric(key: 'vhppa', group: MetricGroup.cpuConsumption, unit: MetricUnit.volt,
     read: _readVhppa, label: _labelVhppa),
+  EarbudsMetric(key: 'wfi24', group: MetricGroup.cpuConsumption, unit: MetricUnit.mA,
+    read: _readWfi24, label: _labelWfi24),
+  EarbudsMetric(key: 'cm24', group: MetricGroup.cpuConsumption, unit: MetricUnit.mA,
+    read: _readCm24, label: _labelCm24),
+  EarbudsMetric(key: 'cm48', group: MetricGroup.cpuConsumption, unit: MetricUnit.mA,
+    read: _readCm48, label: _labelCm48),
+  EarbudsMetric(key: 'cm96', group: MetricGroup.cpuConsumption, unit: MetricUnit.mA,
+    read: _readCm96, label: _labelCm96),
+  EarbudsMetric(key: 'cm192', group: MetricGroup.cpuConsumption, unit: MetricUnit.mA,
+    read: _readCm192, label: _labelCm192),
 ];
 
 double? _readPd256(EarbudsChip c) => c.sleep.pdSleep256;
@@ -154,19 +164,6 @@ double? _readVana(EarbudsChip c) => c.sleep.vana;
 String _labelVana(AppLocalizations s) => s.ebMetricVana;
 double? _readVhppa(EarbudsChip c) => c.sleep.vhppa;
 String _labelVhppa(AppLocalizations s) => s.ebMetricVhppa;
-
-const List<EarbudsMetric> _runMetrics = [
-  EarbudsMetric(key: 'wfi24', group: MetricGroup.mcuRun, unit: MetricUnit.mA,
-    read: _readWfi24, label: _labelWfi24),
-  EarbudsMetric(key: 'cm24', group: MetricGroup.mcuRun, unit: MetricUnit.mA,
-    read: _readCm24, label: _labelCm24),
-  EarbudsMetric(key: 'cm48', group: MetricGroup.mcuRun, unit: MetricUnit.mA,
-    read: _readCm48, label: _labelCm48),
-  EarbudsMetric(key: 'cm96', group: MetricGroup.mcuRun, unit: MetricUnit.mA,
-    read: _readCm96, label: _labelCm96),
-  EarbudsMetric(key: 'cm192', group: MetricGroup.mcuRun, unit: MetricUnit.mA,
-    read: _readCm192, label: _labelCm192),
-];
 
 double? _readWfi24(EarbudsChip c) => _firstRun(c, (r) => r.wfi24M);
 String _labelWfi24(AppLocalizations s) => s.ebMetricWfi24;
@@ -200,8 +197,7 @@ List<EarbudsMetric> metricsOf(MetricGroup g) {
   switch (g) {
     case MetricGroup.scene: return _sceneMetrics;
     case MetricGroup.bt: return _btMetrics;
-    case MetricGroup.sleep: return _sleepMetrics;
-    case MetricGroup.mcuRun: return _runMetrics;
+    case MetricGroup.cpuConsumption: return _cpuConsumptionMetrics;
     case MetricGroup.pa: return _paMetrics;
   }
 }

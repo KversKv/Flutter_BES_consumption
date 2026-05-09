@@ -310,8 +310,7 @@ class _EarbudsNavItemState extends State<_EarbudsNavItem> {
     final tabLabels = [
       l10n.ebTabScene,
       l10n.ebTabBt,
-      l10n.ebTabSleep,
-      l10n.ebTabRun,
+      l10n.ebTabCpuConsumption,
       l10n.ebTabTx,
       l10n.ebTabRx,
       l10n.ebTabPa,
@@ -319,7 +318,6 @@ class _EarbudsNavItemState extends State<_EarbudsNavItem> {
     final tabIcons = [
       Icons.dashboard_outlined,
       Icons.bluetooth,
-      Icons.bedtime_outlined,
       Icons.memory_rounded,
       Icons.upload_rounded,
       Icons.download_rounded,

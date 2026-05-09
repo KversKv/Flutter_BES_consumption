@@ -118,14 +118,13 @@ class EarbudsState extends ChangeNotifier {
   int _tabIndex = 0;
   int get tabIndex => _tabIndex;
   void setTabIndex(int idx) {
-    if (idx < 0 || idx > 6) return;
+    if (idx < 0 || idx > 5) return;
     if (_tabIndex == idx) return;
     _tabIndex = idx;
     const groups = [
       MetricGroup.scene,
       MetricGroup.bt,
-      MetricGroup.sleep,
-      MetricGroup.mcuRun,
+      MetricGroup.cpuConsumption,
       null,
       null,
       MetricGroup.pa,
