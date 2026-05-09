@@ -482,38 +482,50 @@ class _FocusedChipDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = AppLocalizations.of(context);
     final es = context.watch<EarbudsState>();
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
 
     final current = es.focusedChipId ?? (chips.isNotEmpty ? chips.first.id : null);
 
     return SizedBox(
       height: 36,
-      child: DropdownButtonFormField<String>(
-        initialValue: current,
-        isExpanded: true,
-        decoration: InputDecoration(
-          labelText: s.ebTestObject,
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.x2,
-            vertical: AppSpacing.x1,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            'Chip: ',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: cs.onSurfaceVariant,
+            ),
           ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          Expanded(
+            child: DropdownButtonFormField<String>(
+              initialValue: current,
+              isExpanded: true,
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.x2,
+                  vertical: AppSpacing.x1,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                ),
+              ),
+              style: theme.textTheme.bodySmall,
+              items: chips.map((c) {
+                return DropdownMenuItem(
+                  value: c.id,
+                  child: Text('BES${c.id}'),
+                );
+              }).toList(),
+              onChanged: (id) {
+                if (id != null) es.setFocusedChip(id);
+              },
+            ),
           ),
-        ),
-        style: theme.textTheme.bodySmall,
-        items: chips.map((c) {
-          return DropdownMenuItem(
-            value: c.id,
-            child: Text('BES${c.id}'),
-          );
-        }).toList(),
-        onChanged: (id) {
-          if (id != null) es.setFocusedChip(id);
-        },
+        ],
       ),
     );
   }
