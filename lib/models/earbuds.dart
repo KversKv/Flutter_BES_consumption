@@ -48,22 +48,65 @@ class RunCurrent {
   });
 }
 
+/// 单芯片场景测试配置元信息
+class SceneTestConfig {
+  final String? testPhone;
+  final String? testDate;
+  final double? vbat;
+  final String? audioEncoder;
+  final String? outputLoad;
+  final String? audioOutputPower;
+  final String? softwareVersion;
+  final String? moduleVoltageDetail;
+
+  const SceneTestConfig({
+    this.testPhone,
+    this.testDate,
+    this.vbat,
+    this.audioEncoder,
+    this.outputLoad,
+    this.audioOutputPower,
+    this.softwareVersion,
+    this.moduleVoltageDetail,
+  });
+}
+
 /// Earbuds 真机使用场景电流（mA, VSYS=3.8V）
 class EarbudsScene {
+  final double? hotelCal;
   final double? mute;
-  final double? noisePink; // NoisePink 8/15 AAC
-  final double? k1Hz; // 1kHz -6dB 15/15 AAC
-  final double? call; // Call 8/15
-  final double? sniffPage; // 500ms sniff & 1.28s Page
+  final double? noisePink;
+  final double? k1Hz;
+  final double? call;
+  final double? sniffPage;
   final double? powerOff;
 
+  final double? hotelCalAncOn;
+  final double? muteAncOn;
+  final double? noisePinkAncOn;
+  final double? k1HzAncOn;
+  final double? callAncOn;
+  final double? sniffPageAncOn;
+  final double? powerOffAncOn;
+
+  final SceneTestConfig? testConfig;
+
   const EarbudsScene({
+    this.hotelCal,
     this.mute,
     this.noisePink,
     this.k1Hz,
     this.call,
     this.sniffPage,
     this.powerOff,
+    this.hotelCalAncOn,
+    this.muteAncOn,
+    this.noisePinkAncOn,
+    this.k1HzAncOn,
+    this.callAncOn,
+    this.sniffPageAncOn,
+    this.powerOffAncOn,
+    this.testConfig,
   });
 }
 

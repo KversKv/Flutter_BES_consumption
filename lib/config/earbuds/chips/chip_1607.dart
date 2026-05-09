@@ -17,12 +17,22 @@ const EarbudsChip kChip1607 = EarbudsChip(
   ),
   mcuRun: [],
   scene: EarbudsScene(
+    hotelCal: 4.5,
     mute: 4.5,
     noisePink: 4.57,
     k1Hz: 19.227,
     call: 6.94,
     sniffPage: 0.3,
     powerOff: 0.002,
+    testConfig: SceneTestConfig(
+      testPhone: 'Pixel 3(Android 9)',
+      testDate: '2025.06.20',
+      vbat: 3.8,
+      audioEncoder: 'SBC Audio sampling rate: 44.1 kHz Audio bits per sample: 16',
+      outputLoad: '32 ohm audio output',
+      audioOutputPower: '0dbfs 1KHz sinewave in, output 850mVrms',
+      softwareVersion: 'BES1607',
+    ),
   ),
   bt: BtScene(
     btBase: null,

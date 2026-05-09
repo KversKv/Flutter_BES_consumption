@@ -146,6 +146,41 @@ class AppLocalizations {
       'eb_yes': 'Y',
       'eb_no': 'N',
       'eb_selection_full': 'Already selected 6 chips',
+
+      // === Earbuds Single Chip View ===
+      'eb_view_single': 'Single Chip',
+      'eb_view_compare': 'Comparison',
+      'eb_test_object': 'Test object',
+      'eb_software_version': 'Software Version',
+      'eb_module_voltage': 'Module voltage',
+      'eb_output_load': 'Output load',
+      'eb_audio_output_power': 'Audio output power',
+      'eb_audio_encoder': 'Audio encoder',
+      'eb_test_phone': 'Test phone',
+      'eb_test_date': 'Test date',
+      'eb_measurement': 'FREEMAN (mA)',
+      'eb_project': 'Project',
+      'eb_test_music': 'Test music',
+      'eb_volume_req': 'Volume requirement',
+      'eb_anc_off': 'ANC OFF',
+      'eb_anc_on': 'ANC ON',
+      'eb_test_case_1': 'Test case 1',
+      'eb_test_case_2': 'Test case 2',
+      'eb_test_case_3': 'Test case 3',
+      'eb_hotel_cal': "play 'hotel califonia'",
+      'eb_play_1khz': "play '1kHz'",
+      'eb_mute_current': 'mute current',
+      'eb_pink_noise': "-6dB pink noise'",
+      'eb_phone_call': 'phone call',
+      'eb_power_off_current': 'power off current',
+      'eb_standby': 'Standby',
+      'eb_vol_13_25': 'Volume: 13/25',
+      'eb_vol_25_25': 'Volume: 25/25',
+      'eb_vol_0_25': 'Volume: 0/25',
+      'eb_vol_10086': '10086 VOL:13/25',
+      'eb_shutdown': 'Shutdown',
+      'eb_connect_no_behavior': 'connect and no behavior',
+      'eb_single_dac': 'Single DAC',
     },
     'zh': {
       'appTitle': 'BES 功耗 (演示)',
@@ -284,6 +319,41 @@ class AppLocalizations {
       'eb_yes': '是',
       'eb_no': '否',
       'eb_selection_full': '已选满 6 颗芯片',
+
+      // === Earbuds Single Chip View ===
+      'eb_view_single': '单芯片',
+      'eb_view_compare': '对比',
+      'eb_test_object': '测试对象',
+      'eb_software_version': '软件版本',
+      'eb_module_voltage': '模块电压',
+      'eb_output_load': '输出负载',
+      'eb_audio_output_power': '音频输出功率',
+      'eb_audio_encoder': '音频编码器',
+      'eb_test_phone': '测试手机',
+      'eb_test_date': '测试日期',
+      'eb_measurement': 'FREEMAN (mA)',
+      'eb_project': '项目',
+      'eb_test_music': '测试音乐',
+      'eb_volume_req': '音量要求',
+      'eb_anc_off': 'ANC OFF',
+      'eb_anc_on': 'ANC ON',
+      'eb_test_case_1': 'Test case 1',
+      'eb_test_case_2': 'Test case 2',
+      'eb_test_case_3': 'Test case 3',
+      'eb_hotel_cal': "play 'hotel califonia'",
+      'eb_play_1khz': "play '1kHz'",
+      'eb_mute_current': 'mute current',
+      'eb_pink_noise': "-6dB pink noise'",
+      'eb_phone_call': 'phone call',
+      'eb_power_off_current': 'power off current',
+      'eb_standby': '待机',
+      'eb_vol_13_25': 'Volume: 13/25',
+      'eb_vol_25_25': 'Volume: 25/25',
+      'eb_vol_0_25': 'Volume: 0/25',
+      'eb_vol_10086': '10086 VOL:13/25',
+      'eb_shutdown': 'Shutdown',
+      'eb_connect_no_behavior': 'connect and no behavior',
+      'eb_single_dac': '单DAC',
     },
   };
 
@@ -434,6 +504,41 @@ class AppLocalizations {
   String get ebYes => _t('eb_yes');
   String get ebNo => _t('eb_no');
   String get ebSelectionFull => _t('eb_selection_full');
+
+  // ===== Earbuds Single Chip View =====
+  String get ebViewSingle => _t('eb_view_single');
+  String get ebViewCompare => _t('eb_view_compare');
+  String get ebTestObject => _t('eb_test_object');
+  String get ebSoftwareVersion => _t('eb_software_version');
+  String get ebModuleVoltage => _t('eb_module_voltage');
+  String get ebOutputLoad => _t('eb_output_load');
+  String get ebAudioOutputPower => _t('eb_audio_output_power');
+  String get ebAudioEncoder => _t('eb_audio_encoder');
+  String get ebTestPhone => _t('eb_test_phone');
+  String get ebTestDate => _t('eb_test_date');
+  String get ebMeasurement => _t('eb_measurement');
+  String get ebProject => _t('eb_project');
+  String get ebTestMusic => _t('eb_test_music');
+  String get ebVolumeReq => _t('eb_volume_req');
+  String get ebAncOff => _t('eb_anc_off');
+  String get ebAncOn => _t('eb_anc_on');
+  String get ebTestCase1 => _t('eb_test_case_1');
+  String get ebTestCase2 => _t('eb_test_case_2');
+  String get ebTestCase3 => _t('eb_test_case_3');
+  String get ebHotelCal => _t('eb_hotel_cal');
+  String get ebPlay1Khz => _t('eb_play_1khz');
+  String get ebMuteCurrent => _t('eb_mute_current');
+  String get ebPinkNoise => _t('eb_pink_noise');
+  String get ebPhoneCall => _t('eb_phone_call');
+  String get ebPowerOffCurrent => _t('eb_power_off_current');
+  String get ebStandby => _t('eb_standby');
+  String get ebVol1325 => _t('eb_vol_13_25');
+  String get ebVol2525 => _t('eb_vol_25_25');
+  String get ebVol025 => _t('eb_vol_0_25');
+  String get ebVol10086 => _t('eb_vol_10086');
+  String get ebShutdown => _t('eb_shutdown');
+  String get ebConnectNoBehavior => _t('eb_connect_no_behavior');
+  String get ebSingleDac => _t('eb_single_dac');
 
   static AppLocalizations of(BuildContext context) {
     final instance = Localizations.of<AppLocalizations>(context, AppLocalizations);

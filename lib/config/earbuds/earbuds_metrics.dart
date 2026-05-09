@@ -42,6 +42,10 @@ double? _firstRun(EarbudsChip c, double? Function(RunCurrent r) get) {
 
 const List<EarbudsMetric> _sceneMetrics = [
   EarbudsMetric(
+    key: 'hotelcal', group: MetricGroup.scene, unit: MetricUnit.mA,
+    read: _readHotelCal, label: _labelHotelCal,
+  ),
+  EarbudsMetric(
     key: 'mute', group: MetricGroup.scene, unit: MetricUnit.mA,
     read: _readMute, label: _labelMute,
   ),
@@ -66,6 +70,9 @@ const List<EarbudsMetric> _sceneMetrics = [
     read: _readPowerOff, label: _labelPowerOff,
   ),
 ];
+
+double? _readHotelCal(EarbudsChip c) => c.scene.hotelCal;
+String _labelHotelCal(AppLocalizations s) => s.ebHotelCal;
 
 double? _readMute(EarbudsChip c) => c.scene.mute;
 String _labelMute(AppLocalizations s) => s.ebMetricMute;

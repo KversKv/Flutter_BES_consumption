@@ -7,6 +7,9 @@ import '../models/earbuds.dart';
 /// 排序方向
 enum EarbudsSortDir { original, asc, desc }
 
+/// Earbuds Scene 视图模式
+enum EarbudsSceneViewMode { singleChip, comparison }
+
 /// Earbuds 对比页面的交互状态。
 class EarbudsState extends ChangeNotifier {
   /// 全部已建模芯片（数据源），页面只读。
@@ -100,6 +103,30 @@ class EarbudsState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // --- Scene 视图模式 --------------------------------------------------------
+
+  EarbudsSceneViewMode _sceneViewMode = EarbudsSceneViewMode.singleChip;
+  EarbudsSceneViewMode get sceneViewMode => _sceneViewMode;
+  void setSceneViewMode(EarbudsSceneViewMode mode) {
+    if (_sceneViewMode == mode) return;
+    _sceneViewMode = mode;
+    notifyListeners();
+  }
+
+  String? _focusedChipId;
+  String? get focusedChipId => _focusedChipId;
+  EarbudsChip? get focusedChip {
+    final id = _focusedChipId;
+    if (id == null) return null;
+    return _chipById(id);
+  }
+
+  void setFocusedChip(String id) {
+    if (_focusedChipId == id) return;
+    _focusedChipId = id;
+    notifyListeners();
+  }
+
   // --- Derived helpers ------------------------------------------------------
 
   EarbudsChip? _chipById(String id) {
@@ -126,10 +153,12 @@ class EarbudsState extends ChangeNotifier {
   }
 
   EarbudsState() {
-    // 默认预选前 3 颗量产芯片，方便首次进入页面即可看到对比。
     final defaults = kAllChips.where((c) => c.massProduction).take(3);
     for (final c in defaults) {
       _selected.add(c.id);
+    }
+    if (kAllChips.isNotEmpty) {
+      _focusedChipId = kAllChips.first.id;
     }
   }
 }
