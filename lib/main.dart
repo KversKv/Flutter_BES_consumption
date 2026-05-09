@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
+import 'services/earbuds_repository.dart';
 import 'state/app_state.dart';
 import 'state/bt_state.dart';
 import 'state/earbuds_state.dart';
 import 'state/theme_controller.dart';
+import 'pages/admin_page.dart';
 import 'pages/home_page.dart';
 import 'theme/app_theme.dart';
 
@@ -13,7 +17,12 @@ import 'theme/app_theme.dart';
 // Set to `true` to force Chinese (Simplified), `false` for English.
 const bool useChinese = false;
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (kIsWeb) {
+    usePathUrlStrategy();
+  }
+  await EarbudsRepository.instance.load();
   const appLocale = useChinese ?  Locale('zh') :  Locale('en');
   runApp(MyApp(locale: appLocale));
 }
@@ -50,7 +59,11 @@ class MyApp extends StatelessWidget {
           theme: AppTheme.buildLight(),
           darkTheme: AppTheme.buildDark(),
           themeMode: themeCtrl.mode,
-          home: const MyHomePage(),
+          initialRoute: '/',
+          routes: {
+            '/': (_) => const MyHomePage(),
+            '/admin': (_) => const AdminPage(),
+          },
         ),
       ),
     );

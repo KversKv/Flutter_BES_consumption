@@ -1,0 +1,541 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/earbuds.dart';
+import 'earbuds_chip_loader.dart';
+
+/// 可变芯片副本（CRUD 友好）。
+///
+/// [事实] 现有 `EarbudsChip` 全部 `final`，运行期不可修改。本仓储在启动时
+/// 把 JSON 资源（或用户存档）一次性「种子化」为可变记录（行为类似数据库表），
+/// 提供 list/get/update/add/delete 接口。
+///
+/// [决策] 数据源（种子）= `assets/data/earbuds_chips.json`（由
+/// `EarbudsChipLoader` 装载）；用户编辑落盘到 `shared_preferences` 单键
+/// `earbuds_db_v1`，整库以单 JSON 字符串存放，Schema = `{ version, chips:[...] }`，
+/// 版本变更需写迁移。六端原生通过；唯一写入入口；UI 永远读 `chips` 不可变快照。
+class MutableSleepCurrent {
+  double? vcoreM;
+  double? vcoreL;
+  double? vana;
+  double? vhppa;
+  double? pdSleep256;
+  double? pdSleepFull;
+  double? deepSleep;
+
+  MutableSleepCurrent({
+    this.vcoreM,
+    this.vcoreL,
+    this.vana,
+    this.vhppa,
+    this.pdSleep256,
+    this.pdSleepFull,
+    this.deepSleep,
+  });
+
+  factory MutableSleepCurrent.from(SleepCurrent s) => MutableSleepCurrent(
+        vcoreM: s.vcoreM,
+        vcoreL: s.vcoreL,
+        vana: s.vana,
+        vhppa: s.vhppa,
+        pdSleep256: s.pdSleep256,
+        pdSleepFull: s.pdSleepFull,
+        deepSleep: s.deepSleep,
+      );
+
+  SleepCurrent toImmutable() => SleepCurrent(
+        vcoreM: vcoreM,
+        vcoreL: vcoreL,
+        vana: vana,
+        vhppa: vhppa,
+        pdSleep256: pdSleep256,
+        pdSleepFull: pdSleepFull,
+        deepSleep: deepSleep,
+      );
+}
+
+class MutableRunCurrent {
+  String label;
+  double? wfi24M;
+  double? cm24M;
+  double? cm48M;
+  double? cm96M;
+  double? cm192M;
+
+  MutableRunCurrent({
+    required this.label,
+    this.wfi24M,
+    this.cm24M,
+    this.cm48M,
+    this.cm96M,
+    this.cm192M,
+  });
+
+  factory MutableRunCurrent.from(RunCurrent r) => MutableRunCurrent(
+        label: r.label,
+        wfi24M: r.wfi24M,
+        cm24M: r.cm24M,
+        cm48M: r.cm48M,
+        cm96M: r.cm96M,
+        cm192M: r.cm192M,
+      );
+
+  RunCurrent toImmutable() => RunCurrent(
+        label: label,
+        wfi24M: wfi24M,
+        cm24M: cm24M,
+        cm48M: cm48M,
+        cm96M: cm96M,
+        cm192M: cm192M,
+      );
+}
+
+class MutableSceneTestConfig {
+  String? testPhone;
+  String? testDate;
+  double? vbat;
+  String? audioEncoder;
+  String? outputLoad;
+  String? audioOutputPower;
+  String? softwareVersion;
+  String? moduleVoltageDetail;
+
+  MutableSceneTestConfig({
+    this.testPhone,
+    this.testDate,
+    this.vbat,
+    this.audioEncoder,
+    this.outputLoad,
+    this.audioOutputPower,
+    this.softwareVersion,
+    this.moduleVoltageDetail,
+  });
+
+  factory MutableSceneTestConfig.from(SceneTestConfig? c) =>
+      MutableSceneTestConfig(
+        testPhone: c?.testPhone,
+        testDate: c?.testDate,
+        vbat: c?.vbat,
+        audioEncoder: c?.audioEncoder,
+        outputLoad: c?.outputLoad,
+        audioOutputPower: c?.audioOutputPower,
+        softwareVersion: c?.softwareVersion,
+        moduleVoltageDetail: c?.moduleVoltageDetail,
+      );
+
+  SceneTestConfig toImmutable() => SceneTestConfig(
+        testPhone: testPhone,
+        testDate: testDate,
+        vbat: vbat,
+        audioEncoder: audioEncoder,
+        outputLoad: outputLoad,
+        audioOutputPower: audioOutputPower,
+        softwareVersion: softwareVersion,
+        moduleVoltageDetail: moduleVoltageDetail,
+      );
+}
+
+class MutableEarbudsScene {
+  double? hotelCal;
+  double? mute;
+  double? noisePink;
+  double? k1Hz;
+  double? call;
+  double? sniffPage;
+  double? powerOff;
+  double? hotelCalAncOn;
+  double? muteAncOn;
+  double? noisePinkAncOn;
+  double? k1HzAncOn;
+  double? callAncOn;
+  double? sniffPageAncOn;
+  double? powerOffAncOn;
+  MutableSceneTestConfig testConfig;
+
+  MutableEarbudsScene({
+    this.hotelCal,
+    this.mute,
+    this.noisePink,
+    this.k1Hz,
+    this.call,
+    this.sniffPage,
+    this.powerOff,
+    this.hotelCalAncOn,
+    this.muteAncOn,
+    this.noisePinkAncOn,
+    this.k1HzAncOn,
+    this.callAncOn,
+    this.sniffPageAncOn,
+    this.powerOffAncOn,
+    MutableSceneTestConfig? testConfig,
+  }) : testConfig = testConfig ?? MutableSceneTestConfig();
+
+  factory MutableEarbudsScene.from(EarbudsScene s) => MutableEarbudsScene(
+        hotelCal: s.hotelCal,
+        mute: s.mute,
+        noisePink: s.noisePink,
+        k1Hz: s.k1Hz,
+        call: s.call,
+        sniffPage: s.sniffPage,
+        powerOff: s.powerOff,
+        hotelCalAncOn: s.hotelCalAncOn,
+        muteAncOn: s.muteAncOn,
+        noisePinkAncOn: s.noisePinkAncOn,
+        k1HzAncOn: s.k1HzAncOn,
+        callAncOn: s.callAncOn,
+        sniffPageAncOn: s.sniffPageAncOn,
+        powerOffAncOn: s.powerOffAncOn,
+        testConfig: MutableSceneTestConfig.from(s.testConfig),
+      );
+
+  EarbudsScene toImmutable() => EarbudsScene(
+        hotelCal: hotelCal,
+        mute: mute,
+        noisePink: noisePink,
+        k1Hz: k1Hz,
+        call: call,
+        sniffPage: sniffPage,
+        powerOff: powerOff,
+        hotelCalAncOn: hotelCalAncOn,
+        muteAncOn: muteAncOn,
+        noisePinkAncOn: noisePinkAncOn,
+        k1HzAncOn: k1HzAncOn,
+        callAncOn: callAncOn,
+        sniffPageAncOn: sniffPageAncOn,
+        powerOffAncOn: powerOffAncOn,
+        testConfig: testConfig.toImmutable(),
+      );
+}
+
+class MutableBtScene {
+  double? btBase;
+  double? bleAdv500_9;
+  double? bleConn200_0;
+  double? bleConn500_0;
+  double? btPagescan9;
+  double? btSniff200_0;
+  double? btSniff500_0;
+
+  MutableBtScene({
+    this.btBase,
+    this.bleAdv500_9,
+    this.bleConn200_0,
+    this.bleConn500_0,
+    this.btPagescan9,
+    this.btSniff200_0,
+    this.btSniff500_0,
+  });
+
+  factory MutableBtScene.from(BtScene b) => MutableBtScene(
+        btBase: b.btBase,
+        bleAdv500_9: b.bleAdv500_9,
+        bleConn200_0: b.bleConn200_0,
+        bleConn500_0: b.bleConn500_0,
+        btPagescan9: b.btPagescan9,
+        btSniff200_0: b.btSniff200_0,
+        btSniff500_0: b.btSniff500_0,
+      );
+
+  BtScene toImmutable() => BtScene(
+        btBase: btBase,
+        bleAdv500_9: bleAdv500_9,
+        bleConn200_0: bleConn200_0,
+        bleConn500_0: bleConn500_0,
+        btPagescan9: btPagescan9,
+        btSniff200_0: btSniff200_0,
+        btSniff500_0: btSniff500_0,
+      );
+}
+
+class MutableTxSweepVariant {
+  String label;
+  Map<int, double> values;
+
+  MutableTxSweepVariant({required this.label, required this.values});
+
+  factory MutableTxSweepVariant.from(TxSweepVariant t) => MutableTxSweepVariant(
+        label: t.label,
+        values: Map<int, double>.from(t.values),
+      );
+
+  TxSweepVariant toImmutable() =>
+      TxSweepVariant(label: label, values: Map<int, double>.from(values));
+}
+
+class MutableRxSweep {
+  Map<int, double> values;
+  double? vana;
+
+  MutableRxSweep({required this.values, this.vana});
+
+  factory MutableRxSweep.from(RxSweep? r) => r == null
+      ? MutableRxSweep(values: <int, double>{})
+      : MutableRxSweep(
+          values: Map<int, double>.from(r.values),
+          vana: r.vana,
+        );
+
+  RxSweep toImmutable() =>
+      RxSweep(values: Map<int, double>.from(values), vana: vana);
+}
+
+class MutableAudioPa {
+  double? db0;
+  double? dbNeg20;
+  double? dbNegInf;
+
+  MutableAudioPa({this.db0, this.dbNeg20, this.dbNegInf});
+
+  factory MutableAudioPa.from(AudioPa p) =>
+      MutableAudioPa(db0: p.db0, dbNeg20: p.dbNeg20, dbNegInf: p.dbNegInf);
+
+  AudioPa toImmutable() =>
+      AudioPa(db0: db0, dbNeg20: dbNeg20, dbNegInf: dbNegInf);
+}
+
+/// 可变芯片记录（一行）。
+class MutableEarbudsChip {
+  String id;
+  String? process;
+  String? core;
+  double? fullRamKb;
+  bool massProduction;
+  MutableSleepCurrent sleep;
+  List<MutableRunCurrent> mcuRun;
+  MutableEarbudsScene scene;
+  MutableBtScene bt;
+  List<MutableTxSweepVariant> txSweep;
+  MutableRxSweep rxVana;
+  MutableRxSweep rxVsys;
+  MutableAudioPa pa;
+
+  MutableEarbudsChip({
+    required this.id,
+    this.process,
+    this.core,
+    this.fullRamKb,
+    this.massProduction = false,
+    MutableSleepCurrent? sleep,
+    List<MutableRunCurrent>? mcuRun,
+    MutableEarbudsScene? scene,
+    MutableBtScene? bt,
+    List<MutableTxSweepVariant>? txSweep,
+    MutableRxSweep? rxVana,
+    MutableRxSweep? rxVsys,
+    MutableAudioPa? pa,
+  })  : sleep = sleep ?? MutableSleepCurrent(),
+        mcuRun = mcuRun ?? <MutableRunCurrent>[],
+        scene = scene ?? MutableEarbudsScene(),
+        bt = bt ?? MutableBtScene(),
+        txSweep = txSweep ?? <MutableTxSweepVariant>[],
+        rxVana = rxVana ?? MutableRxSweep(values: <int, double>{}),
+        rxVsys = rxVsys ?? MutableRxSweep(values: <int, double>{}),
+        pa = pa ?? MutableAudioPa();
+
+  factory MutableEarbudsChip.from(EarbudsChip c) => MutableEarbudsChip(
+        id: c.id,
+        process: c.process,
+        core: c.core,
+        fullRamKb: c.fullRamKb,
+        massProduction: c.massProduction,
+        sleep: MutableSleepCurrent.from(c.sleep),
+        mcuRun: c.mcuRun.map(MutableRunCurrent.from).toList(),
+        scene: MutableEarbudsScene.from(c.scene),
+        bt: MutableBtScene.from(c.bt),
+        txSweep: c.txSweep.map(MutableTxSweepVariant.from).toList(),
+        rxVana: MutableRxSweep.from(c.rxVana),
+        rxVsys: MutableRxSweep.from(c.rxVsys),
+        pa: MutableAudioPa.from(c.pa),
+      );
+
+  EarbudsChip toImmutable() => EarbudsChip(
+        id: id,
+        process: process,
+        core: core,
+        fullRamKb: fullRamKb,
+        massProduction: massProduction,
+        sleep: sleep.toImmutable(),
+        mcuRun: mcuRun.map((e) => e.toImmutable()).toList(),
+        scene: scene.toImmutable(),
+        bt: bt.toImmutable(),
+        txSweep: txSweep.map((e) => e.toImmutable()).toList(),
+        rxVana: rxVana.toImmutable(),
+        rxVsys: rxVsys.toImmutable(),
+        pa: pa.toImmutable(),
+      );
+}
+
+/// 全局耳机芯片仓储（运行期可变「数据库」）。
+///
+/// - 数据源（种子）：`assets/data/earbuds_chips.json`，由 [EarbudsChipLoader] 装载
+/// - 持久化（用户改动）：`shared_preferences` 键 `earbuds_db_v1`
+/// - Schema：`{ version: 1, chips: [EarbudsChip.toJson(), ...] }`
+/// - 启动流程：`await load()`：优先用户存档；缺省读 JSON 资源 → 落盘
+/// - 写操作：`commit / add / duplicate / delete / resetToSeed` 均触发 `_persist()` 与 `notifyListeners()`
+class EarbudsRepository extends ChangeNotifier {
+  EarbudsRepository._();
+
+  static final EarbudsRepository instance = EarbudsRepository._();
+
+  static const String _storageKey = 'earbuds_db_v1';
+  static const int _schemaVersion = 1;
+
+  final List<MutableEarbudsChip> _records = [];
+  List<EarbudsChip> _snapshot = const [];
+  bool _loaded = false;
+
+  bool get isLoaded => _loaded;
+
+  /// 启动时调用一次：
+  /// 1. 读 SharedPreferences 存档；命中则直接用
+  /// 2. 否则读 `assets/data/earbuds_chips.json` 作为种子，并落盘
+  /// 3. 任何环节异常 → 退化为空仓库（不再有 const 兜底，避免数据二源不一致）
+  Future<void> load() async {
+    if (_loaded) return;
+    try {
+      final sp = await SharedPreferences.getInstance();
+      final raw = sp.getString(_storageKey);
+      if (raw != null && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map && decoded['chips'] is List) {
+          final chips = (decoded['chips'] as List)
+              .whereType<Map>()
+              .map((m) =>
+                  EarbudsChip.fromJson(Map<String, dynamic>.from(m)))
+              .where((c) => c.id.isNotEmpty)
+              .toList();
+          _records
+            ..clear()
+            ..addAll(chips.map(MutableEarbudsChip.from));
+          _rebuildSnapshot();
+          _loaded = true;
+          notifyListeners();
+          return;
+        }
+      }
+      // 无存档或存档损坏：从 JSON 资源种子化
+      await _seedFromAsset();
+      await _persist();
+    } catch (e, st) {
+      debugPrint('[EarbudsRepository] load failed: $e\n$st');
+      try {
+        await _seedFromAsset();
+      } catch (e2, st2) {
+        debugPrint('[EarbudsRepository] seed asset also failed: $e2\n$st2');
+        _records.clear();
+        _rebuildSnapshot();
+      }
+    }
+    _loaded = true;
+    notifyListeners();
+  }
+
+  Future<void> _seedFromAsset() async {
+    final chips = await EarbudsChipLoader.loadFromAsset();
+    _records
+      ..clear()
+      ..addAll(chips.map(MutableEarbudsChip.from));
+    _rebuildSnapshot();
+  }
+
+  void _rebuildSnapshot() {
+    _snapshot = List<EarbudsChip>.unmodifiable(
+      _records.map((e) => e.toImmutable()),
+    );
+  }
+
+  Future<void> _persist() async {
+    try {
+      final sp = await SharedPreferences.getInstance();
+      final payload = <String, dynamic>{
+        'version': _schemaVersion,
+        'chips': _snapshot.map((c) => c.toJson()).toList(),
+      };
+      await sp.setString(_storageKey, jsonEncode(payload));
+    } catch (e, st) {
+      debugPrint('[EarbudsRepository] persist failed: $e\n$st');
+    }
+  }
+
+  /// 当前不可变快照（供原有 UI 使用，签名保持 `List<EarbudsChip>`）。
+  List<EarbudsChip> get chips => _snapshot;
+
+  /// 编辑用：返回内部可变记录（仅供 admin 页使用）。
+  List<MutableEarbudsChip> get records => List.unmodifiable(_records);
+
+  MutableEarbudsChip? recordById(String id) {
+    for (final r in _records) {
+      if (r.id == id) return r;
+    }
+    return null;
+  }
+
+  /// 提交对某条记录的修改，刷新快照、持久化并通知。
+  void commit() {
+    _rebuildSnapshot();
+    notifyListeners();
+    unawaited(_persist());
+  }
+
+  /// 新增一条空白记录。
+  MutableEarbudsChip add({String? id}) {
+    final newId = _generateId(id);
+    final rec = MutableEarbudsChip(id: newId);
+    _records.add(rec);
+    _rebuildSnapshot();
+    notifyListeners();
+    unawaited(_persist());
+    return rec;
+  }
+
+  /// 复制现有记录。
+  MutableEarbudsChip duplicate(String id) {
+    final src = recordById(id);
+    if (src == null) {
+      return add();
+    }
+    final cloned = MutableEarbudsChip.from(src.toImmutable());
+    cloned.id = _generateId('${src.id}_copy');
+    _records.add(cloned);
+    _rebuildSnapshot();
+    notifyListeners();
+    unawaited(_persist());
+    return cloned;
+  }
+
+  bool delete(String id) {
+    final before = _records.length;
+    _records.removeWhere((r) => r.id == id);
+    if (_records.length == before) return false;
+    _rebuildSnapshot();
+    notifyListeners();
+    unawaited(_persist());
+    return true;
+  }
+
+  /// 重置为 JSON 资源里的出厂种子（同时清掉用户编辑落盘）。
+  Future<void> resetToSeed() async {
+    try {
+      await _seedFromAsset();
+    } catch (e, st) {
+      debugPrint('[EarbudsRepository] resetToSeed: seed asset failed: $e\n$st');
+      _records.clear();
+      _rebuildSnapshot();
+    }
+    notifyListeners();
+    await _persist();
+  }
+
+  String _generateId(String? hint) {
+    final base = (hint == null || hint.trim().isEmpty) ? 'chip_new' : hint.trim();
+    if (recordById(base) == null) return base;
+    var i = 2;
+    while (recordById('${base}_$i') != null) {
+      i++;
+    }
+    return '${base}_$i';
+  }
+}

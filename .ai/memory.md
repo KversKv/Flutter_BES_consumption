@@ -61,9 +61,9 @@
 - [事实] Android Kotlin 源码路径：`android/app/src/main/kotlin/com/example/bes_consumption/MainActivity.kt`
 
 ### 依赖
-- [事实] 运行时：`flutter`、`flutter_localizations`、`provider ^6.0.0`、`fl_chart ^1.1.1`、`english_words ^4.0.0`
+- [事实] 运行时：`flutter`、`flutter_localizations`、`flutter_web_plugins`、`provider ^6.0.0`、`fl_chart ^1.1.1`、`shared_preferences ^2.2.0`、`english_words ^4.0.0`
 - [事实] 开发：`flutter_test`、`flutter_lints ^2.0.0`
-- [事实] 未使用：HTTP 库 / 数据库 / `freezed` / `json_serializable` / Riverpod / Bloc
+- [事实] 未使用：HTTP 库 / SQL 数据库 / `freezed` / `json_serializable` / Riverpod / Bloc
 
 ### 代码结构
 - [事实] 分层：`lib/{models,config,services,state,widgets,pages,theme,l10n}`
@@ -71,7 +71,11 @@
 - [事实] 功耗计算：`lib/services/power_calculator.dart` + `lib/services/earbuds_query.dart`（纯函数）
 - [事实] 芯片注册表：`lib/config/earbuds/earbuds_chip_registry.dart`；预置 16 款（chip_1306 ~ chip_1702）
 - [事实] 状态类：`app_state / bt_state / wifi_state / sniffing_state / earbuds_state / theme_controller`
-- [事实] 页面：`home_page / ble_case_page / bt_case_page / bt_page / bt_page_main / bt_pagescan / bt_sniffing / wifi_case_page / earbuds_compare_page`
+- [事实] 页面：`home_page / ble_case_page / bt_case_page / bt_page / bt_page_main / bt_pagescan / bt_sniffing / wifi_case_page / earbuds_compare_page / admin_page`
+- [事实] 路由：`/` → `MyHomePage`；`/admin` → `AdminPage`（Web 启用 `usePathUrlStrategy`）
+- [事实] 运行时可变芯片仓储：`lib/services/earbuds_repository.dart`，`EarbudsRepository.instance` 单例 + `MutableXxx` 包装；`EarbudsState.allChips` 经此读取
+- [事实] **芯片数据源（种子）**：`assets/data/earbuds_chips.json`，由 `lib/services/earbuds_chip_loader.dart` 通过 `rootBundle` 装载；`lib/config/earbuds/kAllChips` 已 `@Deprecated`，仅 `tool/dump_chips_json.dart` 用
+- [事实] 数据持久化：`shared_preferences` 单键 `earbuds_db_v1`；Schema `{ version:1, chips:[EarbudsChip.toJson()...] }`；`main()` 启动时 `await EarbudsRepository.instance.load()`
 - [事实] 主题：`lib/theme/{app_theme,app_colors,app_spacing}.dart`
 - [事实] i18n：自建 `lib/l10n/app_localizations.dart`，仅 zh / en
 
@@ -110,6 +114,25 @@
 - [决策] "静态 config 对象"模式：每颗芯片一个 dart 文件，通过 `earbuds_chip_registry.dart` 注册
   - 理由：类型安全 + IDE 跳转友好 + 易于查 diff
   - 放弃：JSON / YAML 配置（缺类型、加载开销）
+
+### 运行时数据可变性 / Admin（2026-05-09）
+- [决策] 在 `services/` 增加 `EarbudsRepository`（`ChangeNotifier` 单例）+ `MutableXxx` 包装类，作为 CRUD 入口；UI 仍消费不可变 `EarbudsChip` 快照
+  - 理由：保留 `kAllChips` 作为种子且不破坏分层；用户要求"数据库格式 + 全部字段可改"
+  - 放弃：直接修改 `models/` 改 `final → mutable`（破坏现有不可变契约）/ 引入 `freezed copyWith`（增加构建步骤）
+- [决策] `/admin` 路由通过 `MaterialApp.routes` 注册；Web 启用 `flutter_web_plugins/usePathUrlStrategy` 以支持纯路径 URL 后缀
+  - 理由：用户明确要求"网址后面后缀 /admin"
+  - 放弃：`go_router`（增加依赖体量，Demo 仅两条路由）
+
+### 数据库格式 / 持久化（2026-05-09）
+- [决策] **芯片数据从 Dart const 迁到 JSON 资源**：`assets/data/earbuds_chips.json`（schema `{version:1, chips:[...]}`），由 `EarbudsChipLoader` 通过 `rootBundle` 装载
+  - 理由：用户要求"通用格式 + 从那里取数据"，JSON 是最通用、人类可读、IDE 友好（VSCode/JetBrains 都有自动格式化与折叠）
+  - 放弃：YAML（多一个解析依赖、缩进敏感）/ TOML（同上）/ CSV（嵌套表达力差，scene、txSweep 是嵌套结构）/ SQLite（Web 麻烦、过度工程）
+- [决策] 运行时数据落盘仍走 `shared_preferences ^2.2.0`，整库以单 JSON 字符串落键 `earbuds_db_v1`；Schema 与 asset 共用
+  - 理由：六端原生通过、零原生依赖、读写性能足够、与 asset 同 schema 便于互转
+- [决策] `kAllChips` 保留为 `@Deprecated`，仅服务于 `tool/dump_chips_json.dart`（const → JSON 一次性导出）
+  - 理由：保留可逆通道；以后业务确认稳定后可彻底删除 lib/config/earbuds/chips/
+- [决策] 持久化唯一入口为 `EarbudsRepository`；`models/` 提供 `toJson/fromJson`；写操作（`commit/add/duplicate/delete/resetToSeed`）触发 `_persist()`；`main()` 启动 `await load()`；`load()` 优先 SP 存档 → 否则读 JSON 资源 → 失败退化空仓
+  - 理由：写入收口、UI 永远拿不可变快照、JSON 资源不可写决定数据源单向性
 
 ### 分层架构
 - [决策] 严格向下依赖：`models → config → services → state → widgets → pages`

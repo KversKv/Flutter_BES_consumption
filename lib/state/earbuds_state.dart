@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 
-import '../config/earbuds/earbuds_chip_registry.dart';
 import '../config/earbuds/earbuds_metrics.dart';
 import '../models/earbuds.dart';
+import '../services/earbuds_repository.dart';
 
 /// 排序方向
 enum EarbudsSortDir { original, asc, desc }
@@ -12,8 +12,37 @@ enum EarbudsSceneViewMode { singleChip, comparison }
 
 /// Earbuds 对比页面的交互状态。
 class EarbudsState extends ChangeNotifier {
+  EarbudsState() {
+    EarbudsRepository.instance.addListener(_onRepoChanged);
+    final defaults =
+        EarbudsRepository.instance.chips.where((c) => c.massProduction).take(3);
+    for (final c in defaults) {
+      _selected.add(c.id);
+    }
+    final all = EarbudsRepository.instance.chips;
+    if (all.isNotEmpty) {
+      _focusedChipId = all.first.id;
+    }
+  }
+
+  @override
+  void dispose() {
+    EarbudsRepository.instance.removeListener(_onRepoChanged);
+    super.dispose();
+  }
+
+  void _onRepoChanged() {
+    final all = EarbudsRepository.instance.chips;
+    final ids = all.map((c) => c.id).toSet();
+    _selected.removeWhere((id) => !ids.contains(id));
+    if (_focusedChipId != null && !ids.contains(_focusedChipId)) {
+      _focusedChipId = all.isNotEmpty ? all.first.id : null;
+    }
+    notifyListeners();
+  }
+
   /// 全部已建模芯片（数据源），页面只读。
-  List<EarbudsChip> get allChips => kAllChips;
+  List<EarbudsChip> get allChips => EarbudsRepository.instance.chips;
 
   /// 最多同时对比的芯片数。
   static const int kMaxSelected = 6;
@@ -197,7 +226,7 @@ class EarbudsState extends ChangeNotifier {
   // --- Derived helpers ------------------------------------------------------
 
   EarbudsChip? _chipById(String id) {
-    for (final c in kAllChips) {
+    for (final c in allChips) {
       if (c.id == id) return c;
     }
     return null;
@@ -205,8 +234,8 @@ class EarbudsState extends ChangeNotifier {
 
   /// 当前（应用筛选后的）可选芯片池。
   List<EarbudsChip> get visibleChips {
-    if (!_massProductionOnly) return kAllChips;
-    return kAllChips.where((c) => c.massProduction).toList(growable: false);
+    if (!_massProductionOnly) return allChips;
+    return allChips.where((c) => c.massProduction).toList(growable: false);
   }
 
   /// 当前选中的芯片对象列表（保留点击顺序）。
@@ -217,15 +246,5 @@ class EarbudsState extends ChangeNotifier {
       if (c != null) out.add(c);
     }
     return out;
-  }
-
-  EarbudsState() {
-    final defaults = kAllChips.where((c) => c.massProduction).take(3);
-    for (final c in defaults) {
-      _selected.add(c.id);
-    }
-    if (kAllChips.isNotEmpty) {
-      _focusedChipId = kAllChips.first.id;
-    }
   }
 }

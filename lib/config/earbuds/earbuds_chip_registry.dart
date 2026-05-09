@@ -17,7 +17,13 @@ import 'chips/chip_1501.dart';
 import 'chips/chip_1306.dart';
 
 /// 所有已建模的耳机芯片，按数据表顺序。
-/// 新增芯片：在 `chips/` 下新建 `chip_xxx.dart`，然后在此处 import + 追加到列表。
+///
+/// [废弃] 运行时数据源已迁移到 `assets/data/earbuds_chips.json`
+/// （由 `services/earbuds_chip_loader.dart` 装载）。本 const 数组现在
+/// 仅用于一次性导出脚本 `tool/dump_chips_json.dart`，请勿在 lib/ 业务
+/// 代码里 import / 引用，新增或修改芯片数据请直接编辑 JSON 文件。
+@Deprecated('Use assets/data/earbuds_chips.json via EarbudsChipLoader instead. '
+    'Kept only for tool/dump_chips_json.dart.')
 const List<EarbudsChip> kAllChips = [
   kChip1607,
   kChip1503p,

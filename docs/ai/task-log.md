@@ -16,6 +16,64 @@
 
 ---
 
+## 2026-05-09 · 芯片数据从 Dart 常量迁移到 JSON 资源
+- **类型**：refactor / decision / docs
+- **范围**：新增 `assets/data/earbuds_chips.json`、`lib/services/earbuds_chip_loader.dart`、`tool/dump_chips_json.dart`；`pubspec.yaml`、`lib/services/earbuds_repository.dart`、`lib/config/earbuds/earbuds_chip_registry.dart`、`.trae/rules/project-rules.md`、`.ai/memory.md`
+- **动因**：用户澄清"数据库格式"指"芯片数据从 Dart 转为更通用格式（JSON）然后从那里读"。前一轮只做了 SharedPreferences 落盘缓存，数据源仍是 const，不符合需求。
+- **变更**：
+  1. `tool/dump_chips_json.dart`：一次性脚本，把 `kAllChips` + `EarbudsChip.toJson()` 序列化到 `assets/data/earbuds_chips.json`（schema `{version:1, chips:[...]}`，2 空格缩进）
+  2. 跑脚本生成 16 颗芯片的 JSON（33991 字节）
+  3. `pubspec.yaml` 注册 `assets:` → `assets/data/earbuds_chips.json`
+  4. 新增 `services/earbuds_chip_loader.dart`：`rootBundle.loadString` 读 asset → `EarbudsChip.fromJson`，校验 schema version
+  5. `EarbudsRepository`：移除对 `kAllChips` 的 import，构造函数不再同步种子；`load()` 改为 SP 命中直接用 → 否则 `_seedFromAsset()`（异步读 JSON）→ 落盘；`resetToSeed()` 同样改读 asset
+  6. `kAllChips` 标 `@Deprecated`，注释明确"仅供 tool/ 脚本使用，业务代码禁止 import"；当前 lib/ 业务运行时已无引用
+  7. 规则同步：种子来源改写为 JSON asset；`kAllChips` 转为脚本专用
+- **影响**：
+  - **改芯片数据 = 改 JSON 文件**，不必动 Dart；改完重新运行即可（用户存档存在时需先点 `/admin` 重置）
+  - 启动时多一次 `rootBundle.loadString`（仅在首启 / 重置路径），数据量小，无感
+  - lib/ 业务 0 处依赖 `kAllChips`；脚本用 `package:bes_consumption/...` 显式 import 以避开 `avoid_relative_lib_imports` lint
+- **校验**：`flutter analyze` → No issues found
+- **后续**：
+  - [ ] 大幅修改 JSON 后若想同步刷新 const，可再改 chip_xxxx.dart 然后跑 `dart run tool/dump_chips_json.dart`（双向暂时只支持 const → JSON 一个方向）
+  - [ ] 若引入 hot reload 数据热更新，可在 admin 页加"导入 / 导出 JSON"按钮，文件名约定 `earbuds_chips.json`
+
+## 2026-05-09 · 切换为「数据库格式」：SharedPreferences 持久化 + 规则更新
+- **类型**：feature / decision / docs
+- **范围**：`.trae/rules/project-rules.md`、`pubspec.yaml`、`lib/models/earbuds.dart`、`lib/services/earbuds_repository.dart`、`lib/main.dart`、`lib/pages/admin_page.dart`、`.ai/memory.md`
+- **动因**：用户要求「更改项目规则为使用数据库格式，并且实现」。原仓储为内存态，刷新即丢失。
+- **变更**：
+  1. `project-rules.md` 新增「数据持久化（数据库格式）」章节：唯一入口 `EarbudsRepository`、`shared_preferences` 后端、单键 `earbuds_db_v1`、Schema 版本化（`{version, chips:[...]}`）、`kAllChips` 仅作种子、写入只走仓储
+  2. `pubspec.yaml` 引入 `shared_preferences ^2.2.0`（六端原生通过，最轻量持久化）
+  3. `models/earbuds.dart` 为全部 9 个数据类（`SleepCurrent / RunCurrent / SceneTestConfig / EarbudsScene / BtScene / TxSweepVariant / RxSweep / AudioPa / EarbudsChip`）增加 `toJson` / `fromJson`，并附私有 `_d` / `_intDoubleMap` 辅助
+  4. `EarbudsRepository` 新增 `Future<void> load()`（启动装载 / 缺省种子并落盘 / 解析失败 fallback 种子）、`Future<void> _persist()`（每次写操作触发）；`commit/add/duplicate/delete` 后 `unawaited(_persist())`；`resetToSeed` 改为 async 并清掉用户存档（写回种子）
+  5. `main.dart` 改为 `Future<void> main() async`，调 `WidgetsFlutterBinding.ensureInitialized()` + `await EarbudsRepository.instance.load()`
+  6. `admin_page.dart` 重置确认改为 `await resetToSeed()`
+- **影响**：
+  - 编辑数据现在跨刷新 / 跨进程持久化；首次启动行为与之前一致（看到 16 颗预置芯片）
+  - 旧的「non-goal: 持久化」已经撤销
+  - 现有计算 / 比较 UI 因消费 `repo.chips` 不可变快照，无需调整
+- **后续**：
+  - [ ] 若未来字段不兼容升级，需在 `_storageKey` 用 `earbuds_db_v2` 并写迁移
+  - [ ] 预存 `test/widget_test.dart` 默认 counter 模板测试为历史遗留，未触碰
+
+## 2026-05-09 · 新增 `/admin` 路由与运行时可编辑芯片仓储
+- **类型**：feature / decision
+- **范围**：`lib/main.dart`、`lib/services/earbuds_repository.dart`（新）、`lib/state/earbuds_state.dart`、`lib/pages/admin_page.dart`（新）、`lib/l10n/app_localizations.dart`、`pubspec.yaml`
+- **动因**：用户要求通过 `/admin` URL 后缀进入管理界面，可显示并修改全部芯片数据字段并保存；进一步要求把现有数据"一步到位变为数据库格式"，便于后续 CRUD。
+- **变更**：
+  1. 新增 `EarbudsRepository`（`ChangeNotifier` 单例）+ `MutableEarbudsChip` 等 `MutableXxx` 包装类，从 `kAllChips` 种子化，提供 `records / commit / add / duplicate / delete / resetToSeed` 等 CRUD API；UI 层仍读取 `chips` 不可变快照
+  2. `EarbudsState` 改为从仓储获取 `allChips`，并监听仓储变化以自动清理失效选中、触发 UI 刷新
+  3. 新增 `AdminPage`（左侧列表 + 右侧编辑器）：基础字段、Scene/Scene-ANC、Test Config、BT、Sleep、MCU Run、TX Sweep（dBm→mA Map 编辑器）、RX VANA / RX VSYS、PA；支持新增 / 复制 / 删除 / 保存 / 还原 / 全部重置
+  4. `AppLocalizations` 增补 `admin_*` 文案（zh+en 同步）
+  5. `lib/main.dart` 启用 `usePathUrlStrategy`（Web）+ `routes` 注册 `/` 与 `/admin`
+  6. `pubspec.yaml` 引入 `flutter_web_plugins`（来自 Flutter SDK，非第三方包）以支持 path URL strategy
+- **影响**：
+  - 数据访问入口由 `kAllChips` 常量切换为仓储快照；现有计算 / 比较页面无需改动
+  - 数据为内存态，刷新页面将回到初始 `kAllChips`（项目 non-goal: 持久化）
+- **后续**：
+  - [ ] 如需跨刷新保留编辑，再评估持久化方案（与项目 non-goal 冲突，需用户决策）
+  - [ ] 预存 `test/widget_test.dart` 默认 counter 模板测试失败为历史遗留，本次未触碰
+
 ## 2026-05-09 · 初始化 AI 协作文档体系
 - **类型**：docs / infra
 - **范围**：`.trae/rules/project-rules.md`、`docs/ai/*`

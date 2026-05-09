@@ -195,6 +195,48 @@ class AppLocalizations {
       'eb_search_chip': 'Search chip...',
       'eb_chip_info': 'Chip Info',
       'eb_no_data': 'No Data',
+
+      // === Admin Page ===
+      'admin_title': 'Admin · Earbuds Data Editor',
+      'admin_back_home': 'Back to Home',
+      'admin_search_chip': 'Search by Chip ID...',
+      'admin_add_chip': 'Add Chip',
+      'admin_duplicate': 'Duplicate',
+      'admin_delete': 'Delete',
+      'admin_save': 'Save',
+      'admin_revert': 'Revert',
+      'admin_reset_all': 'Reset all to seed',
+      'admin_unsaved_changes': 'Unsaved changes',
+      'admin_saved': 'Saved (in-memory).',
+      'admin_reset_confirm_title': 'Reset all data?',
+      'admin_reset_confirm_body':
+          'This restores every chip record to the original seed (const) data. Your in-memory edits will be lost.',
+      'admin_delete_confirm_title': 'Delete chip?',
+      'admin_delete_confirm_body':
+          'Chip "{id}" will be removed from the in-memory store. Continue?',
+      'admin_cancel': 'Cancel',
+      'admin_confirm': 'OK',
+      'admin_field_id': 'ID',
+      'admin_field_process': 'Process',
+      'admin_field_core': 'Core',
+      'admin_field_full_ram_kb': 'Full RAM (KB)',
+      'admin_field_mass_production': 'Mass Production',
+      'admin_section_basic': 'Basic',
+      'admin_section_scene': 'Earbuds Scene (mA)',
+      'admin_section_scene_anc_on': 'Earbuds Scene · ANC ON (mA)',
+      'admin_section_bt': 'BT & BLE Scene (mA)',
+      'admin_section_sleep': 'Sleep Current (µA / V)',
+      'admin_section_mcu_run': 'MCU Run Current (mA)',
+      'admin_section_tx_sweep': 'TX Sweep (dBm → mA)',
+      'admin_section_rx_vana': 'RX Sweep · VANA (gain → mA)',
+      'admin_section_rx_vsys': 'RX Sweep · VSYS (gain → mA)',
+      'admin_section_pa': 'Audio PA (mA)',
+      'admin_section_test_config': 'Scene Test Config',
+      'admin_add_row': 'Add row',
+      'admin_remove_row': 'Remove',
+      'admin_no_chip_selected': 'Select a chip on the left to edit.',
+      'admin_total_chips': 'Total: {n}',
+      'admin_invalid_id': 'ID cannot be empty or duplicated.',
     },
     'zh': {
       'appTitle': 'BES 功耗 (演示)',
@@ -382,6 +424,46 @@ class AppLocalizations {
       'eb_search_chip': '搜索芯片...',
       'eb_chip_info': '芯片信息',
       'eb_no_data': '无数据',
+
+      // === Admin Page ===
+      'admin_title': '管理员 · 耳机数据编辑',
+      'admin_back_home': '返回主页',
+      'admin_search_chip': '按 Chip ID 搜索...',
+      'admin_add_chip': '新增芯片',
+      'admin_duplicate': '复制',
+      'admin_delete': '删除',
+      'admin_save': '保存',
+      'admin_revert': '撤销',
+      'admin_reset_all': '全部还原到种子数据',
+      'admin_unsaved_changes': '有未保存改动',
+      'admin_saved': '已保存（内存中）。',
+      'admin_reset_confirm_title': '确认还原全部数据？',
+      'admin_reset_confirm_body': '所有芯片记录将还原为源代码（const）中的初始数据，内存中的编辑会丢失。',
+      'admin_delete_confirm_title': '确认删除？',
+      'admin_delete_confirm_body': '芯片 "{id}" 将从内存仓储中移除，是否继续？',
+      'admin_cancel': '取消',
+      'admin_confirm': '确定',
+      'admin_field_id': 'ID',
+      'admin_field_process': '工艺',
+      'admin_field_core': 'Core',
+      'admin_field_full_ram_kb': 'Full RAM (KB)',
+      'admin_field_mass_production': '是否量产',
+      'admin_section_basic': '基础信息',
+      'admin_section_scene': '耳机场景 (mA)',
+      'admin_section_scene_anc_on': '耳机场景 · ANC ON (mA)',
+      'admin_section_bt': 'BT & BLE 场景 (mA)',
+      'admin_section_sleep': '睡眠电流 (µA / V)',
+      'admin_section_mcu_run': 'MCU 运行电流 (mA)',
+      'admin_section_tx_sweep': 'TX 扫描 (dBm → mA)',
+      'admin_section_rx_vana': 'RX 扫描 · VANA (gain → mA)',
+      'admin_section_rx_vsys': 'RX 扫描 · VSYS (gain → mA)',
+      'admin_section_pa': '音频 PA (mA)',
+      'admin_section_test_config': '场景测试配置',
+      'admin_add_row': '新增一行',
+      'admin_remove_row': '删除',
+      'admin_no_chip_selected': '请在左侧选择一个芯片进行编辑。',
+      'admin_total_chips': '共 {n} 颗',
+      'admin_invalid_id': 'ID 不能为空或与已有 ID 重复。',
     },
   };
 
@@ -581,6 +663,48 @@ class AppLocalizations {
   String get ebSearchChip => _t('eb_search_chip');
   String get ebChipInfo => _t('eb_chip_info');
   String get ebNoData => _t('eb_no_data');
+
+  // ===== Admin =====
+  String get adminTitle => _t('admin_title');
+  String get adminBackHome => _t('admin_back_home');
+  String get adminSearchChip => _t('admin_search_chip');
+  String get adminAddChip => _t('admin_add_chip');
+  String get adminDuplicate => _t('admin_duplicate');
+  String get adminDelete => _t('admin_delete');
+  String get adminSave => _t('admin_save');
+  String get adminRevert => _t('admin_revert');
+  String get adminResetAll => _t('admin_reset_all');
+  String get adminUnsavedChanges => _t('admin_unsaved_changes');
+  String get adminSaved => _t('admin_saved');
+  String get adminResetConfirmTitle => _t('admin_reset_confirm_title');
+  String get adminResetConfirmBody => _t('admin_reset_confirm_body');
+  String get adminDeleteConfirmTitle => _t('admin_delete_confirm_title');
+  String adminDeleteConfirmBody(String id) =>
+      _t('admin_delete_confirm_body').replaceFirst('{id}', id);
+  String get adminCancel => _t('admin_cancel');
+  String get adminConfirm => _t('admin_confirm');
+  String get adminFieldId => _t('admin_field_id');
+  String get adminFieldProcess => _t('admin_field_process');
+  String get adminFieldCore => _t('admin_field_core');
+  String get adminFieldFullRamKb => _t('admin_field_full_ram_kb');
+  String get adminFieldMassProduction => _t('admin_field_mass_production');
+  String get adminSectionBasic => _t('admin_section_basic');
+  String get adminSectionScene => _t('admin_section_scene');
+  String get adminSectionSceneAncOn => _t('admin_section_scene_anc_on');
+  String get adminSectionBt => _t('admin_section_bt');
+  String get adminSectionSleep => _t('admin_section_sleep');
+  String get adminSectionMcuRun => _t('admin_section_mcu_run');
+  String get adminSectionTxSweep => _t('admin_section_tx_sweep');
+  String get adminSectionRxVana => _t('admin_section_rx_vana');
+  String get adminSectionRxVsys => _t('admin_section_rx_vsys');
+  String get adminSectionPa => _t('admin_section_pa');
+  String get adminSectionTestConfig => _t('admin_section_test_config');
+  String get adminAddRow => _t('admin_add_row');
+  String get adminRemoveRow => _t('admin_remove_row');
+  String get adminNoChipSelected => _t('admin_no_chip_selected');
+  String adminTotalChips(int n) =>
+      _t('admin_total_chips').replaceFirst('{n}', '$n');
+  String get adminInvalidId => _t('admin_invalid_id');
 
   static AppLocalizations of(BuildContext context) {
     final instance = Localizations.of<AppLocalizations>(context, AppLocalizations);
