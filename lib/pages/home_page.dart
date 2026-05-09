@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'ble_case_page.dart';
 import 'bt_case_page.dart';
+import 'earbuds_compare_page.dart';
 import 'wifi_case_page.dart';
 import '../l10n/app_localizations.dart';
+import '../state/earbuds_state.dart';
 import '../state/theme_controller.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -20,8 +24,8 @@ class _MyHomePageState extends State<MyHomePage> {
   static const _pages = <Widget>[
     BleCasePage(),
     BTPage(),
+    EarbudsComparePage(),
     WifiPage(),
-    Placeholder(),
   ];
 
   @override
@@ -77,7 +81,6 @@ class _SideNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final palette = AppPalette.of(context);
     final double railWidth = isWide ? 240 : 72;
 
@@ -95,42 +98,442 @@ class _SideNav extends StatelessWidget {
           _BrandHeader(isWide: isWide),
           const Divider(height: 1),
           Expanded(
-            child: NavigationRail(
-              backgroundColor: Colors.transparent,
-              extended: isWide,
-              minExtendedWidth: railWidth,
+            child: _NavList(
+              isWide: isWide,
               selectedIndex: selectedIndex,
-              onDestinationSelected: onSelect,
-              labelType: isWide
-                  ? NavigationRailLabelType.none
-                  : NavigationRailLabelType.all,
-              destinations: [
-                NavigationRailDestination(
-                  icon: const Icon(Icons.show_chart),
-                  selectedIcon: Icon(Icons.show_chart, color: palette.accent),
-                  label: Text(l10n.navBle),
-                ),
-                NavigationRailDestination(
-                  icon: const Icon(Icons.bluetooth),
-                  selectedIcon: Icon(Icons.bluetooth, color: palette.accent),
-                  label: Text(l10n.navBt),
-                ),
-                NavigationRailDestination(
-                  icon: const Icon(Icons.headphones),
-                  selectedIcon: Icon(Icons.headphones, color: palette.accent),
-                  label: Text(l10n.navEarbuds),
-                ),
-                NavigationRailDestination(
-                  icon: const Icon(Icons.wifi),
-                  selectedIcon: Icon(Icons.wifi, color: palette.accent),
-                  label: Text(l10n.navWifi),
-                ),
-              ],
+              onSelect: onSelect,
             ),
           ),
           const Divider(height: 1),
           _VersionFooter(isWide: isWide),
         ],
+      ),
+    );
+  }
+}
+
+/// 自定义垂直导航列表;Earbuds Compare 项支持鼠标悬浮弹出二级菜单。
+class _NavList extends StatelessWidget {
+  final bool isWide;
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
+
+  const _NavList({
+    required this.isWide,
+    required this.selectedIndex,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final items = <_NavItemData>[
+      _NavItemData(icon: Icons.show_chart, label: l10n.navBle),
+      _NavItemData(icon: Icons.bluetooth, label: l10n.navBt),
+      _NavItemData(
+        icon: Icons.headphones,
+        label: l10n.navEarbuds,
+        hasSubMenu: true,
+      ),
+      _NavItemData(icon: Icons.wifi, label: l10n.navWifi),
+    ];
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x2),
+      itemCount: items.length,
+      itemBuilder: (context, i) {
+        final item = items[i];
+        if (item.hasSubMenu) {
+          return _EarbudsNavItem(
+            isWide: isWide,
+            item: item,
+            selected: selectedIndex == i,
+            onSelect: () => onSelect(i),
+          );
+        }
+        return _NavItem(
+          isWide: isWide,
+          item: item,
+          selected: selectedIndex == i,
+          onTap: () => onSelect(i),
+        );
+      },
+    );
+  }
+}
+
+class _NavItemData {
+  final IconData icon;
+  final String label;
+  final bool hasSubMenu;
+  const _NavItemData({
+    required this.icon,
+    required this.label,
+    this.hasSubMenu = false,
+  });
+}
+
+class _NavItem extends StatelessWidget {
+  final bool isWide;
+  final _NavItemData item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _NavItem({
+    required this.isWide,
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    final color = selected ? palette.accent : palette.textSecondary;
+    final bg = selected
+        ? palette.accent.withValues(alpha: 0.10)
+        : Colors.transparent;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: isWide ? AppSpacing.x2 : AppSpacing.x1,
+        vertical: 2,
+      ),
+      child: Material(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isWide ? AppSpacing.x3 : AppSpacing.x2,
+              vertical: AppSpacing.x2,
+            ),
+            child: isWide
+                ? Row(
+                    children: [
+                      Icon(item.icon, size: 20, color: color),
+                      const SizedBox(width: AppSpacing.x3),
+                      Expanded(
+                        child: Text(
+                          item.label,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight:
+                                selected ? FontWeight.w600 : FontWeight.w400,
+                            color: color,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(item.icon, size: 22, color: color),
+                      const SizedBox(height: 2),
+                      Text(
+                        item.label,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: color,
+                          fontWeight:
+                              selected ? FontWeight.w600 : FontWeight.w400,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Earbuds Compare 导航项:鼠标悬浮弹出二级菜单。
+class _EarbudsNavItem extends StatefulWidget {
+  final bool isWide;
+  final _NavItemData item;
+  final bool selected;
+  final VoidCallback onSelect;
+
+  const _EarbudsNavItem({
+    required this.isWide,
+    required this.item,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  @override
+  State<_EarbudsNavItem> createState() => _EarbudsNavItemState();
+}
+
+class _EarbudsNavItemState extends State<_EarbudsNavItem> {
+  final MenuController _menuCtrl = MenuController();
+  Timer? _closeTimer;
+
+  static const Duration _closeDelay = Duration(milliseconds: 220);
+
+  @override
+  void dispose() {
+    _closeTimer?.cancel();
+    super.dispose();
+  }
+
+  void _cancelClose() {
+    _closeTimer?.cancel();
+    _closeTimer = null;
+  }
+
+  void _scheduleClose() {
+    _closeTimer?.cancel();
+    _closeTimer = Timer(_closeDelay, () {
+      if (mounted && _menuCtrl.isOpen) _menuCtrl.close();
+    });
+  }
+
+  void _openNow() {
+    _cancelClose();
+    if (!_menuCtrl.isOpen) _menuCtrl.open();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final palette = AppPalette.of(context);
+    final theme = Theme.of(context);
+
+    final tabLabels = [
+      l10n.ebTabScene,
+      l10n.ebTabBt,
+      l10n.ebTabSleep,
+      l10n.ebTabRun,
+      l10n.ebTabTx,
+      l10n.ebTabRx,
+      l10n.ebTabPa,
+    ];
+    final tabIcons = [
+      Icons.dashboard_outlined,
+      Icons.bluetooth,
+      Icons.bedtime_outlined,
+      Icons.memory_rounded,
+      Icons.upload_rounded,
+      Icons.download_rounded,
+      Icons.power_rounded,
+    ];
+
+    return MouseRegion(
+      onEnter: (_) => _openNow(),
+      onExit: (_) => _scheduleClose(),
+      child: MenuAnchor(
+        controller: _menuCtrl,
+        alignmentOffset: Offset(widget.isWide ? 10 : 6, 0),
+        style: MenuStyle(
+          alignment: Alignment.topRight,
+          backgroundColor: WidgetStateProperty.all(palette.bgElevated2),
+          surfaceTintColor: WidgetStateProperty.all(Colors.transparent),
+          shadowColor: WidgetStateProperty.all(
+            palette.isDark
+                ? Colors.black.withValues(alpha: 0.45)
+                : Colors.black.withValues(alpha: 0.12),
+          ),
+          elevation: WidgetStateProperty.all(palette.isDark ? 14 : 10),
+          padding: WidgetStateProperty.all(EdgeInsets.zero),
+          shape: WidgetStateProperty.all(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+              side: BorderSide(color: palette.borderSubtle),
+            ),
+          ),
+        ),
+        menuChildren: [
+          MouseRegion(
+            onEnter: (_) => _cancelClose(),
+            onExit: (_) => _scheduleClose(),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 220),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.x4,
+                      AppSpacing.x3,
+                      AppSpacing.x4,
+                      AppSpacing.x2,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.headphones,
+                          size: 14,
+                          color: palette.accent,
+                        ),
+                        const SizedBox(width: AppSpacing.x2),
+                        Text(
+                          l10n.navEarbuds,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: palette.textMuted,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: palette.borderSubtle,
+                  ),
+                  const SizedBox(height: AppSpacing.x1),
+                  ...List.generate(tabLabels.length, (i) {
+                    return Consumer<EarbudsState>(
+                      builder: (context, es, _) {
+                        final active = es.tabIndex == i;
+                        return _EarbudsMenuTile(
+                          icon: tabIcons[i],
+                          label: tabLabels[i],
+                          active: active,
+                          onTap: () {
+                            es.setTabIndex(i);
+                            widget.onSelect();
+                            _cancelClose();
+                            _menuCtrl.close();
+                          },
+                        );
+                      },
+                    );
+                  }),
+                  const SizedBox(height: AppSpacing.x1),
+                ],
+              ),
+            ),
+          ),
+        ],
+        child: _NavItem(
+          isWide: widget.isWide,
+          item: widget.item,
+          selected: widget.selected,
+          onTap: widget.onSelect,
+        ),
+      ),
+    );
+  }
+}
+
+/// Earbuds 二级菜单单项:对齐 NavItem 视觉(accent + bgElevated 风格)。
+class _EarbudsMenuTile extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _EarbudsMenuTile({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  State<_EarbudsMenuTile> createState() => _EarbudsMenuTileState();
+}
+
+class _EarbudsMenuTileState extends State<_EarbudsMenuTile> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    final theme = Theme.of(context);
+
+    final Color fg;
+    final Color bg;
+    final FontWeight weight;
+    if (widget.active) {
+      fg = palette.accent;
+      bg = palette.accent.withValues(alpha: 0.14);
+      weight = FontWeight.w600;
+    } else if (_hover) {
+      fg = palette.textPrimary;
+      bg = palette.bgElevated3.withValues(alpha: 0.85);
+      weight = FontWeight.w500;
+    } else {
+      fg = palette.textSecondary;
+      bg = Colors.transparent;
+      weight = FontWeight.w500;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hover = true),
+        onExit: (_) => setState(() => _hover = false),
+        child: Semantics(
+          button: true,
+          selected: widget.active,
+          label: widget.label,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.onTap,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              curve: Curves.easeOut,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.x3,
+                vertical: AppSpacing.x2,
+              ),
+              constraints: const BoxConstraints(minHeight: 36),
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              ),
+              child: Row(
+                children: [
+                  if (widget.active)
+                    Container(
+                      width: 3,
+                      height: 16,
+                      margin: const EdgeInsets.only(right: AppSpacing.x2),
+                      decoration: BoxDecoration(
+                        color: palette.accent,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    )
+                  else
+                    const SizedBox(width: AppSpacing.x2 + 3),
+                  Icon(widget.icon, size: 16, color: fg),
+                  const SizedBox(width: AppSpacing.x3),
+                  Expanded(
+                    child: Text(
+                      widget.label,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 13,
+                        fontWeight: weight,
+                        color: fg,
+                        letterSpacing: 0.1,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (widget.active)
+                    Icon(
+                      Icons.check_rounded,
+                      size: 14,
+                      color: palette.accent,
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

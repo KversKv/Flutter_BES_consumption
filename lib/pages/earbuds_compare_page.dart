@@ -57,7 +57,7 @@ class _EarbudsComparePageState extends State<EarbudsComparePage>
     return Scaffold(
       body: Row(
         children: [
-          _LeftSidebar(tabCtrl: _tabCtrl),
+          const _LeftSidebar(),
           Expanded(
             child: TabBarView(
               controller: _tabCtrl,
@@ -79,8 +79,7 @@ class _EarbudsComparePageState extends State<EarbudsComparePage>
 }
 
 class _LeftSidebar extends StatefulWidget {
-  final TabController tabCtrl;
-  const _LeftSidebar({required this.tabCtrl});
+  const _LeftSidebar();
 
   @override
   State<_LeftSidebar> createState() => _LeftSidebarState();
@@ -112,7 +111,7 @@ class _LeftSidebarState extends State<_LeftSidebar> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ConfigSection(tabCtrl: widget.tabCtrl),
+          const _ConfigSection(),
           const Divider(height: 1),
           Padding(
             padding: const EdgeInsets.fromLTRB(
@@ -363,8 +362,7 @@ class _SidebarStat extends StatelessWidget {
 }
 
 class _ConfigSection extends StatelessWidget {
-  final TabController tabCtrl;
-  const _ConfigSection({required this.tabCtrl});
+  const _ConfigSection();
 
   @override
   Widget build(BuildContext context) {
@@ -372,16 +370,6 @@ class _ConfigSection extends StatelessWidget {
     final cs = theme.colorScheme;
     final s = AppLocalizations.of(context);
     final es = context.watch<EarbudsState>();
-
-    final tabLabels = [
-      s.ebTabScene,
-      s.ebTabBt,
-      s.ebTabSleep,
-      s.ebTabRun,
-      s.ebTabTx,
-      s.ebTabRx,
-      s.ebTabPa,
-    ];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -441,35 +429,6 @@ class _ConfigSection extends StatelessWidget {
             const SizedBox(height: AppSpacing.x2),
             _FocusedChipDropdown(chips: es.visibleChips),
           ],
-          const SizedBox(height: AppSpacing.x3),
-          Text(
-            s.ebContent,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: cs.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.x1),
-          Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            children: List.generate(tabLabels.length, (i) {
-              final active = es.tabIndex == i;
-              return ChoiceChip(
-                label: Text(
-                  tabLabels[i],
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                ),
-                selected: active,
-                onSelected: (_) => es.setTabIndex(i),
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                labelPadding: const EdgeInsets.symmetric(horizontal: 2),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              );
-            }),
-          ),
         ],
       ),
     );
