@@ -680,18 +680,7 @@ class _SceneMetaTable extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.x3),
-            Wrap(
-              spacing: AppSpacing.x3,
-              runSpacing: AppSpacing.x3,
-              children: rows
-                  .map(
-                    (r) => SizedBox(
-                      width: 260,
-                      child: _MetaInfoCard(label: r.label, value: r.value),
-                    ),
-                  )
-                  .toList(),
-            ),
+            _MetaInfoList(rows: rows),
           ],
         ),
       ),
@@ -699,39 +688,61 @@ class _SceneMetaTable extends StatelessWidget {
   }
 }
 
-class _MetaInfoCard extends StatelessWidget {
-  final String label;
-  final String value;
-  const _MetaInfoCard({required this.label, required this.value});
+class _MetaInfoList extends StatelessWidget {
+  final List<_MetaRow> rows;
+  const _MetaInfoList({required this.rows});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final dividerColor = cs.outlineVariant.withValues(alpha: 0.25);
 
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.x3),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerHigh.withValues(alpha: 0.45),
+        color: cs.surfaceContainerHigh.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: cs.onSurfaceVariant,
+          for (var i = 0; i < rows.length; i++)
+            Container(
+              decoration: BoxDecoration(
+                border: i == rows.length - 1
+                    ? null
+                    : Border(
+                        bottom: BorderSide(color: dividerColor, width: 1),
+                      ),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.x4,
+                vertical: AppSpacing.x3,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 160,
+                    child: Text(
+                      rows[i].label,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.x3),
+                  Expanded(
+                    child: Text(
+                      rows[i].value,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.x1),
-          Text(
-            value,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
         ],
       ),
     );
@@ -763,15 +774,30 @@ class _SceneDataTable extends StatelessWidget {
         scene.powerOffAncOn != null ||
         scene.sniffPageAncOn != null;
 
-    final headerBg = cs.primaryContainer.withValues(alpha: 0.2);
-    final headerStyle = theme.textTheme.labelLarge?.copyWith(
-      fontWeight: FontWeight.w600,
-    );
-    final cellStyle = theme.textTheme.bodyMedium;
-    final groupStyle = theme.textTheme.bodyMedium?.copyWith(
-      fontWeight: FontWeight.w600,
-      color: cs.primary,
-    );
+    final groups = <_TestCaseGroup>[
+      _TestCaseGroup(
+        title: s.ebTestCase1,
+        rows: [
+          _TestCaseRow(s.ebHotelCal, s.ebVol1325, scene.hotelCal, scene.hotelCalAncOn),
+          _TestCaseRow(s.ebPlay1Khz, s.ebVol2525, scene.k1Hz, scene.k1HzAncOn),
+          _TestCaseRow(s.ebMuteCurrent, s.ebVol025, scene.mute, scene.muteAncOn),
+          _TestCaseRow(s.ebPinkNoise, s.ebVol1325, scene.noisePink, scene.noisePinkAncOn),
+        ],
+      ),
+      _TestCaseGroup(
+        title: s.ebTestCase2,
+        rows: [
+          _TestCaseRow(s.ebPhoneCall, s.ebVol10086, scene.call, scene.callAncOn),
+        ],
+      ),
+      _TestCaseGroup(
+        title: s.ebTestCase3,
+        rows: [
+          _TestCaseRow(s.ebPowerOffCurrent, s.ebShutdown, scene.powerOff, scene.powerOffAncOn),
+          _TestCaseRow(s.ebStandby, s.ebConnectNoBehavior, scene.sniffPage, scene.sniffPageAncOn),
+        ],
+      ),
+    ];
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -793,94 +819,240 @@ class _SceneDataTable extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.x3),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                headingRowColor: WidgetStateProperty.all(headerBg),
-                columnSpacing: 24,
-                headingTextStyle: headerStyle,
-                dataTextStyle: cellStyle,
-                dataRowMinHeight: 44,
-                dataRowMaxHeight: 52,
-                columns: [
-                  DataColumn(label: Text(s.ebProject)),
-                  DataColumn(label: Text(s.ebTestMusic)),
-                  DataColumn(label: Text(s.ebVolumeReq)),
-                  DataColumn(label: Text(s.ebAncOff), numeric: true),
-                  if (hasAncOn)
-                    DataColumn(label: Text(s.ebAncOn), numeric: true),
-                ],
-                rows: [
-                  _buildRow(
-                    s.ebTestCase1,
-                    s.ebHotelCal,
-                    s.ebVol1325,
-                    scene.hotelCal,
-                    scene.hotelCalAncOn,
-                    hasAncOn,
-                    groupStyle,
-                    cellStyle,
+            _GroupedSceneTable(
+              groups: groups,
+              hasAncOn: hasAncOn,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TestCaseGroup {
+  final String title;
+  final List<_TestCaseRow> rows;
+  const _TestCaseGroup({required this.title, required this.rows});
+}
+
+class _TestCaseRow {
+  final String music;
+  final String volume;
+  final double? ancOff;
+  final double? ancOn;
+  const _TestCaseRow(this.music, this.volume, this.ancOff, this.ancOn);
+}
+
+class _GroupedSceneTable extends StatelessWidget {
+  final List<_TestCaseGroup> groups;
+  final bool hasAncOn;
+  const _GroupedSceneTable({required this.groups, required this.hasAncOn});
+
+  static const double _kGroupColWidth = 120;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    final headerBg = cs.primaryContainer.withValues(alpha: 0.2);
+    final headerStyle = theme.textTheme.labelLarge?.copyWith(
+      fontWeight: FontWeight.w600,
+    );
+    final cellStyle = theme.textTheme.bodyMedium;
+    final groupStyle = theme.textTheme.titleSmall?.copyWith(
+      fontWeight: FontWeight.w700,
+      color: cs.primary,
+    );
+    final borderColor = cs.outlineVariant.withValues(alpha: 0.35);
+    final groupBg = cs.primaryContainer.withValues(alpha: 0.12);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: borderColor),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHeader(s, headerBg, headerStyle, borderColor),
+            for (var i = 0; i < groups.length; i++)
+              _buildGroup(
+                group: groups[i],
+                isLast: i == groups.length - 1,
+                cellStyle: cellStyle,
+                groupStyle: groupStyle,
+                groupBg: groupBg,
+                borderColor: borderColor,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(
+    AppLocalizations s,
+    Color bg,
+    TextStyle? style,
+    Color borderColor,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border(bottom: BorderSide(color: borderColor, width: 1)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: _kGroupColWidth,
+            child: _cellPad(
+              child: Text(s.ebProject, style: style),
+            ),
+          ),
+          _vDivider(borderColor),
+          Expanded(flex: 2, child: _cellPad(child: Text(s.ebTestMusic, style: style))),
+          _vDivider(borderColor),
+          Expanded(flex: 2, child: _cellPad(child: Text(s.ebVolumeReq, style: style))),
+          _vDivider(borderColor),
+          Expanded(
+            flex: 2,
+            child: _cellPad(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(s.ebAncOff, style: style),
+              ),
+            ),
+          ),
+          if (hasAncOn) ...[
+            _vDivider(borderColor),
+            Expanded(
+              flex: 2,
+              child: _cellPad(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(s.ebAncOn, style: style),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroup({
+    required _TestCaseGroup group,
+    required bool isLast,
+    required TextStyle? cellStyle,
+    required TextStyle? groupStyle,
+    required Color groupBg,
+    required Color borderColor,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        border: isLast
+            ? null
+            : Border(bottom: BorderSide(color: borderColor, width: 1)),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              width: _kGroupColWidth,
+              child: ColoredBox(
+                color: groupBg,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.x3,
+                    vertical: AppSpacing.x3,
                   ),
-                  _buildRow(
-                    null,
-                    s.ebPlay1Khz,
-                    s.ebVol2525,
-                    scene.k1Hz,
-                    scene.k1HzAncOn,
-                    hasAncOn,
-                    groupStyle,
-                    cellStyle,
+                  child: Center(
+                    child: Text(
+                      group.title,
+                      style: groupStyle,
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                  _buildRow(
-                    null,
-                    s.ebMuteCurrent,
-                    s.ebVol025,
-                    scene.mute,
-                    scene.muteAncOn,
-                    hasAncOn,
-                    groupStyle,
-                    cellStyle,
-                  ),
-                  _buildRow(
-                    null,
-                    s.ebPinkNoise,
-                    s.ebVol1325,
-                    scene.noisePink,
-                    scene.noisePinkAncOn,
-                    hasAncOn,
-                    groupStyle,
-                    cellStyle,
-                  ),
-                  _buildRow(
-                    s.ebTestCase2,
-                    s.ebPhoneCall,
-                    s.ebVol10086,
-                    scene.call,
-                    scene.callAncOn,
-                    hasAncOn,
-                    groupStyle,
-                    cellStyle,
-                  ),
-                  _buildRow(
-                    s.ebTestCase3,
-                    s.ebPowerOffCurrent,
-                    s.ebShutdown,
-                    scene.powerOff,
-                    scene.powerOffAncOn,
-                    hasAncOn,
-                    groupStyle,
-                    cellStyle,
-                  ),
-                  _buildRow(
-                    null,
-                    s.ebStandby,
-                    s.ebConnectNoBehavior,
-                    scene.sniffPage,
-                    scene.sniffPageAncOn,
-                    hasAncOn,
-                    groupStyle,
-                    cellStyle,
-                  ),
+                ),
+              ),
+            ),
+            _vDivider(borderColor),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var i = 0; i < group.rows.length; i++)
+                    Container(
+                      decoration: BoxDecoration(
+                        border: i == group.rows.length - 1
+                            ? null
+                            : Border(
+                                bottom: BorderSide(
+                                  color: borderColor,
+                                  width: 1,
+                                ),
+                              ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: _cellPad(
+                              child: Text(group.rows[i].music, style: cellStyle),
+                            ),
+                          ),
+                          _vDivider(borderColor),
+                          Expanded(
+                            flex: 2,
+                            child: _cellPad(
+                              child: Text(group.rows[i].volume, style: cellStyle),
+                            ),
+                          ),
+                          _vDivider(borderColor),
+                          Expanded(
+                            flex: 2,
+                            child: _cellPad(
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  group.rows[i].ancOff != null
+                                      ? EarbudsQuery.format(group.rows[i].ancOff!)
+                                      : '-',
+                                  style: cellStyle?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (hasAncOn) ...[
+                            _vDivider(borderColor),
+                            Expanded(
+                              flex: 2,
+                              child: _cellPad(
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Text(
+                                    group.rows[i].ancOn != null
+                                        ? EarbudsQuery.format(group.rows[i].ancOn!)
+                                        : '-',
+                                    style: cellStyle?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -890,41 +1062,17 @@ class _SceneDataTable extends StatelessWidget {
     );
   }
 
-  DataRow _buildRow(
-    String? group,
-    String music,
-    String volume,
-    double? ancOff,
-    double? ancOn,
-    bool hasAncOn,
-    TextStyle? groupStyle,
-    TextStyle? cellStyle,
-  ) {
-    return DataRow(
-      cells: [
-        DataCell(Text(group ?? '', style: groupStyle)),
-        DataCell(Text(music)),
-        DataCell(Text(volume)),
-        DataCell(
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              ancOff != null ? EarbudsQuery.format(ancOff) : '-',
-              style: cellStyle?.copyWith(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
-        if (hasAncOn)
-          DataCell(
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                ancOn != null ? EarbudsQuery.format(ancOn) : '-',
-                style: cellStyle?.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-      ],
+  Widget _cellPad({required Widget child}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.x3,
+        vertical: AppSpacing.x3,
+      ),
+      child: child,
     );
+  }
+
+  Widget _vDivider(Color color) {
+    return Container(width: 1, color: color);
   }
 }
