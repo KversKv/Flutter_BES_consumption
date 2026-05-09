@@ -122,14 +122,34 @@ class _PageBody extends StatelessWidget {
               _MetricTableTab(group: MetricGroup.bt),
               _MetricTableTab(group: MetricGroup.sleep),
               _MetricTableTab(group: MetricGroup.mcuRun),
-              const _TxSweepTab(),
-              const _RxSweepTab(),
+              const _KeepAliveWrapper(child: _TxSweepTab()),
+              const _KeepAliveWrapper(child: _RxSweepTab()),
               _MetricTableTab(group: MetricGroup.pa),
             ],
           ),
         ),
       ],
     );
+  }
+}
+
+class _KeepAliveWrapper extends StatefulWidget {
+  final Widget child;
+  const _KeepAliveWrapper({required this.child});
+
+  @override
+  State<_KeepAliveWrapper> createState() => _KeepAliveWrapperState();
+}
+
+class _KeepAliveWrapperState extends State<_KeepAliveWrapper>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }
 
@@ -681,12 +701,17 @@ class _MetricTableTab extends StatefulWidget {
   State<_MetricTableTab> createState() => _MetricTableTabState();
 }
 
-class _MetricTableTabState extends State<_MetricTableTab> {
+class _MetricTableTabState extends State<_MetricTableTab>
+    with AutomaticKeepAliveClientMixin {
   int? _sortMetricIndex;
   bool _ascending = true;
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     final s = AppLocalizations.of(context);
     final es = context.watch<EarbudsState>();
     final metrics = metricsOf(widget.group);

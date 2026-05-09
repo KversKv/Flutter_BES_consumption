@@ -4,16 +4,16 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/ble_chip.dart';
 import '../models/bt_chip.dart';
+import '../config/ble_chip_config.dart';
 import '../config/bt_chip_config.dart';
 import '../models/power_event.dart';
-import 'app_state.dart';
 import '../models/profile_params.dart';
 import '../services/power_calculator.dart';
 
 enum BTCase { btSniff, btPage, btPagescan, relay }
 
 class BTState extends ChangeNotifier {
-  final List<BleChip> bleChips = AppState().chips;
+  final List<BleChip> bleChips = defaultBleChips;
   final List<BtChip> btChips = defaultBtChips;
 
   late String selectedChipId;

@@ -68,15 +68,6 @@ class _ConfigPanelState extends State<ConfigPanel> {
       );
     }
     final app = context.watch<AppState>();
-    try {
-      final sniffState = context.read<BTState>();
-      sniffState.setMode(app.params.mode);
-      sniffState.setConnIntervalMs(app.params.connIntervalMs);
-      sniffState.setAdvIntervalMs(app.params.advIntervalMs);
-      sniffState.setTxPower(app.params.txPowerDbm);
-    } catch (_) {
-      // Provider<BTState> not found above this widget; ignore sync.
-    }
     List<double> levels;
     double currentTx;
     levels = app.chip.txPowerLevelsDbm.cast<double>();
@@ -87,12 +78,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
       _setConnText(app.params.connIntervalMs);
     }
 
-    BTState? btState;
-    try {
-      btState = context.watch<BTState>();
-    } catch (_) {
-      btState = null;
-    }
+    final btState = context.watch<BTState>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,13 +109,13 @@ class _ConfigPanelState extends State<ConfigPanel> {
                 },
               ),
               const SizedBox(height: 12),
-              Text('Voltage: ${((btState?.supplyVoltage_V) ?? 3.80).toStringAsFixed(2)} V'),
+              Text('Voltage: ${btState.supplyVoltage_V.toStringAsFixed(2)} V'),
               Slider(
-                value: (btState?.supplyVoltage_V) ?? 3.80,
+                value: btState.supplyVoltage_V,
                 min: 1.8,
                 max: 5.5,
                 divisions: 37,
-                onChanged: btState != null ? (v) => context.read<BTState>().setSupplyVoltage(v) : null,
+                onChanged: (v) => context.read<BTState>().setSupplyVoltage(v),
               ),
             ],
           ),
@@ -312,7 +298,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
                       SizedBox(
                         width: double.infinity,
                         child: DropdownButton<HdtModule>(
-                          value: btState?.hdtModule ?? app.hdtModule,
+                          value: btState.hdtModule,
                           isExpanded: true,
                           items: [
                             DropdownMenuItem(value: HdtModule.sink, child: Text(AppLocalizations.of(context).sink)),
@@ -320,11 +306,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
                           ],
                           onChanged: (v) {
                             if (v == null) return;
-                            if (btState != null) {
-                              context.read<BTState>().setHdtModule(v);
-                            } else {
-                              context.read<AppState>().setHdtModule(v);
-                            }
+                            context.read<BTState>().setHdtModule(v);
                           },
                         ),
                       ),
@@ -334,7 +316,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
                       SizedBox(
                         width: double.infinity,
                         child: DropdownButton<String>(
-                          value: btState?.band ?? app.hdtBand,
+                          value: btState.band,
                           isExpanded: true,
                           items: const [
                             DropdownMenuItem(value: '2.4G', child: Text('2.4G')),
@@ -342,11 +324,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
                           ],
                           onChanged: (v) {
                             if (v == null) return;
-                            if (btState != null) {
-                              context.read<BTState>().setBand(v);
-                            } else {
-                              context.read<AppState>().setHdtBand(v);
-                            }
+                            context.read<BTState>().setBand(v);
                           },
                         ),
                       ),

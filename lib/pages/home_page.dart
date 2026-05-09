@@ -17,26 +17,15 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int selectedIndex = 0;
 
+  static const _pages = <Widget>[
+    BleCasePage(),
+    BTPage(),
+    WifiPage(),
+    Placeholder(),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    Widget page;
-    switch (selectedIndex) {
-      case 0:
-        page = const BleCasePage();
-        break;
-      case 1:
-        page = const BTPage();
-        break;
-      case 2:
-        page = const WifiPage();
-        break;
-      case 3:
-        page = const Placeholder();
-        break;
-      default:
-        page = const BleCasePage();
-    }
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isWide = constraints.maxWidth >= 1100;
@@ -54,24 +43,9 @@ class _MyHomePageState extends State<MyHomePage> {
               Expanded(
                 child: Stack(
                   children: [
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 220),
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeInCubic,
-                      transitionBuilder: (child, animation) {
-                        final offset = Tween<Offset>(
-                          begin: const Offset(0.02, 0),
-                          end: Offset.zero,
-                        ).animate(animation);
-                        return FadeTransition(
-                          opacity: animation,
-                          child: SlideTransition(position: offset, child: child),
-                        );
-                      },
-                      child: KeyedSubtree(
-                        key: ValueKey<int>(selectedIndex),
-                        child: page,
-                      ),
+                    IndexedStack(
+                      index: selectedIndex,
+                      children: _pages,
                     ),
                     const Positioned(
                       top: AppSpacing.x3,

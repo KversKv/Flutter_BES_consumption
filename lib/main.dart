@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'state/app_state.dart';
+import 'state/bt_state.dart';
 import 'state/earbuds_state.dart';
 import 'state/theme_controller.dart';
 import 'pages/home_page.dart';
@@ -26,6 +27,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AppState()),
+        ChangeNotifierProvider(create: (_) => BTState()),
         ChangeNotifierProvider(create: (_) => EarbudsState()),
         ChangeNotifierProvider(create: (_) => ThemeController()),
       ],

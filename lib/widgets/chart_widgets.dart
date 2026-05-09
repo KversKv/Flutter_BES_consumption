@@ -64,12 +64,14 @@ class _UnifiedPowerChartState extends State<UnifiedPowerChart> {
         const SizedBox(height: 8),
 
         Expanded(
-          child: TimelineChartInteractive(
-            events: widget.events,
-            periodUs: widget.periodUs,
-            maxCurrent: math.max(1.0, widget.maxCurrent),
-            hideLowPowerGaps: widget.hideLowPowerGaps,
-            onHoverEvent: (e) => setState(() => hovered = e),
+          child: RepaintBoundary(
+            child: TimelineChartInteractive(
+              events: widget.events,
+              periodUs: widget.periodUs,
+              maxCurrent: math.max(1.0, widget.maxCurrent),
+              hideLowPowerGaps: widget.hideLowPowerGaps,
+              onHoverEvent: (e) => setState(() => hovered = e),
+            ),
           ),
         ),
 
@@ -112,12 +114,18 @@ class TimelineChartInteractive extends StatefulWidget {
 }
 
 class _TimelineChartInteractiveState extends State<TimelineChartInteractive> {
-  List<_EventRect> rects = [];
+  List<_EventRect> _rects = [];
+  Size _lastSize = Size.zero;
   PowerEvent? hoveredEvent;
   Offset? pointerLocalPos;
 
   void _recomputeRects(Size size) {
-    rects = _computeEventRects(
+    if (size == _lastSize &&
+        _rects.isNotEmpty) {
+      return;
+    }
+    _lastSize = size;
+    _rects = _computeEventRects(
       size: size,
       events: widget.events,
       periodUs: widget.periodUs,
@@ -126,12 +134,34 @@ class _TimelineChartInteractiveState extends State<TimelineChartInteractive> {
     );
   }
 
+  void _forceRecomputeRects(Size size) {
+    _lastSize = size;
+    _rects = _computeEventRects(
+      size: size,
+      events: widget.events,
+      periodUs: widget.periodUs,
+      hideLowPowerGaps: widget.hideLowPowerGaps,
+      maxCurrent: widget.maxCurrent,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant TimelineChartInteractive oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.events != widget.events ||
+        oldWidget.periodUs != widget.periodUs ||
+        oldWidget.maxCurrent != widget.maxCurrent ||
+        oldWidget.hideLowPowerGaps != widget.hideLowPowerGaps) {
+      _rects = [];
+    }
+  }
+
   void _handleHover(PointerHoverEvent e, Size size) {
-    if (rects.isEmpty) _recomputeRects(size);
+    if (_rects.isEmpty) _forceRecomputeRects(size);
     final pos = e.localPosition;
     pointerLocalPos = pos;
     PowerEvent? hit;
-    for (final r in rects) {
+    for (final r in _rects) {
       if (r.rect.contains(pos)) {
         hit = r.event;
         break;
@@ -420,6 +450,7 @@ class _TimelinePainter extends CustomPainter {
         oldDelegate.periodUs != periodUs ||
         oldDelegate.maxCurrent != maxCurrent ||
         oldDelegate.hideLowPowerGaps != hideLowPowerGaps ||
+        oldDelegate.hovered != hovered ||
         oldDelegate.palette.brightness != palette.brightness;
   }
 }
