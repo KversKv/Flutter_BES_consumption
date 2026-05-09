@@ -22,6 +22,10 @@ class _LeftSidebarState extends State<_LeftSidebar> {
         ? allChips
         : allChips.where((c) => c.id.toLowerCase().contains(_search.toLowerCase())).toList();
 
+    // 仅当处于「支持视图模式 & Single Chip」时，隐藏所有 ChipInfo 相关控件。
+    final hideChipPickers = es.currentTabSupportsViewMode &&
+        es.sceneViewMode == EarbudsSceneViewMode.singleChip;
+
     return Container(
       width: 268,
       decoration: BoxDecoration(
@@ -34,111 +38,114 @@ class _LeftSidebarState extends State<_LeftSidebar> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const _ConfigSection(),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.x3,
-              AppSpacing.x3,
-              AppSpacing.x3,
-              AppSpacing.x2,
+          if (!hideChipPickers) ...[
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.x3,
+                AppSpacing.x3,
+                AppSpacing.x3,
+                AppSpacing.x2,
+              ),
+              child: _SelectionOverviewCard(es: es),
             ),
-            child: _SelectionOverviewCard(es: es),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3),
-            child: SizedBox(
-              height: 36,
-              child: TextField(
-                onChanged: (v) => setState(() => _search = v),
-                decoration: InputDecoration(
-                  hintText: s.ebSearchChip,
-                  prefixIcon: const Icon(Icons.search, size: 16),
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.x2,
-                    vertical: AppSpacing.x2,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3),
+              child: SizedBox(
+                height: 36,
+                child: TextField(
+                  onChanged: (v) => setState(() => _search = v),
+                  decoration: InputDecoration(
+                    hintText: s.ebSearchChip,
+                    prefixIcon: const Icon(Icons.search, size: 16),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.x2,
+                      vertical: AppSpacing.x2,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                    ),
                   ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                  ),
+                  style: theme.textTheme.bodySmall,
                 ),
-                style: theme.textTheme.bodySmall,
               ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.x2),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3),
-            child: Row(
-              children: [
-                Expanded(
-                  child: FilterChip(
-                    selected: es.massProductionOnly,
-                    label: Text(
-                      s.ebFilterMassOnly,
-                      style: theme.textTheme.labelSmall,
+            const SizedBox(height: AppSpacing.x2),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: FilterChip(
+                      selected: es.massProductionOnly,
+                      label: Text(
+                        s.ebFilterMassOnly,
+                        style: theme.textTheme.labelSmall,
+                      ),
+                      avatar: es.massProductionOnly
+                          ? const Icon(Icons.check_rounded, size: 14)
+                          : const Icon(Icons.filter_alt_outlined, size: 14),
+                      onSelected: (_) => es.toggleMassProductionOnly(),
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      labelPadding: const EdgeInsets.only(left: 2, right: 4),
                     ),
-                    avatar: es.massProductionOnly
-                        ? const Icon(Icons.check_rounded, size: 14)
-                        : const Icon(Icons.filter_alt_outlined, size: 14),
-                    onSelected: (_) => es.toggleMassProductionOnly(),
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    labelPadding: const EdgeInsets.only(left: 2, right: 4),
                   ),
-                ),
-                if (es.selectedIds.isNotEmpty)
-                  InkWell(
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                    onTap: () => es.clearSelection(),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Icon(
-                        Icons.clear_all_rounded,
-                        size: 16,
-                        color: cs.onSurfaceVariant,
+                  if (es.selectedIds.isNotEmpty)
+                    InkWell(
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                      onTap: () => es.clearSelection(),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.clear_all_rounded,
+                          size: 16,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.x2),
-          const Divider(height: 1),
-          _ChipInfoHeader(es: es),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.x1),
-              itemCount: filtered.length,
-              itemBuilder: (context, i) {
-                final chip = filtered[i];
-                final selected = es.isSelected(chip.id);
-                final colorIdx = es.selectedIds.indexOf(chip.id);
-                final palette = AppPalette.of(context).dataSeries;
-                final chipColor = colorIdx >= 0
-                    ? palette[colorIdx % palette.length]
-                    : null;
+            const SizedBox(height: AppSpacing.x2),
+            const Divider(height: 1),
+            _ChipInfoHeader(es: es),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.x1),
+                itemCount: filtered.length,
+                itemBuilder: (context, i) {
+                  final chip = filtered[i];
+                  final selected = es.isSelected(chip.id);
+                  final colorIdx = es.selectedIds.indexOf(chip.id);
+                  final palette = AppPalette.of(context).dataSeries;
+                  final chipColor = colorIdx >= 0
+                      ? palette[colorIdx % palette.length]
+                      : null;
 
-                return _ChipListTile(
-                  chip: chip,
-                  selected: selected,
-                  chipColor: chipColor,
-                  onTap: () {
-                    final ok = es.toggleSelected(chip.id);
-                    if (!ok) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(s.ebSelectionFull),
-                          duration: const Duration(seconds: 1),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
-                  },
-                );
-              },
+                  return _ChipListTile(
+                    chip: chip,
+                    selected: selected,
+                    chipColor: chipColor,
+                    onTap: () {
+                      final ok = es.toggleSelected(chip.id);
+                      if (!ok) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(s.ebSelectionFull),
+                            duration: const Duration(seconds: 1),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                  );
+                },
+              ),
             ),
-          ),
+          ] else
+            const Spacer(),
         ],
       ),
     );
@@ -316,40 +323,41 @@ class _ConfigSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.x2),
-          Text(
-            s.ebViewMode,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: cs.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.x1),
-          SizedBox(
-            width: double.infinity,
-            child: SegmentedButton<EarbudsSceneViewMode>(
-              segments: [
-                ButtonSegment(
-                  value: EarbudsSceneViewMode.singleChip,
-                  label: Text(s.ebViewSingle, style: theme.textTheme.labelSmall),
-                  icon: const Icon(Icons.view_agenda_outlined, size: 14),
-                ),
-                ButtonSegment(
-                  value: EarbudsSceneViewMode.comparison,
-                  label: Text(s.ebViewCompare, style: theme.textTheme.labelSmall),
-                  icon: const Icon(Icons.compare_arrows, size: 14),
-                ),
-              ],
-              selected: {es.sceneViewMode},
-              onSelectionChanged: (set) => es.setSceneViewMode(set.first),
-              style: SegmentedButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          if (es.currentTabSupportsViewMode) ...[
+            Text(
+              s.ebViewMode,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: cs.onSurfaceVariant,
               ),
             ),
-          ),
-          if (es.sceneViewMode == EarbudsSceneViewMode.singleChip &&
-              es.tabIndex == 0) ...[
-            const SizedBox(height: AppSpacing.x2),
-            _FocusedChipDropdown(chips: es.visibleChips),
+            const SizedBox(height: AppSpacing.x1),
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<EarbudsSceneViewMode>(
+                segments: [
+                  ButtonSegment(
+                    value: EarbudsSceneViewMode.singleChip,
+                    label: Text(s.ebViewSingle, style: theme.textTheme.labelSmall),
+                    icon: const Icon(Icons.view_agenda_outlined, size: 14),
+                  ),
+                  ButtonSegment(
+                    value: EarbudsSceneViewMode.comparison,
+                    label: Text(s.ebViewCompare, style: theme.textTheme.labelSmall),
+                    icon: const Icon(Icons.compare_arrows, size: 14),
+                  ),
+                ],
+                selected: {es.sceneViewMode},
+                onSelectionChanged: (set) => es.setSceneViewMode(set.first),
+                style: SegmentedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ),
+            if (es.sceneViewMode == EarbudsSceneViewMode.singleChip) ...[
+              const SizedBox(height: AppSpacing.x2),
+              _FocusedChipDropdown(chips: es.visibleChips),
+            ],
           ],
         ],
       ),

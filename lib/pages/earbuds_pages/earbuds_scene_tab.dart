@@ -44,7 +44,11 @@ class _SceneOverviewPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final metrics = metricsOf(MetricGroup.scene);
+    final es = context.watch<EarbudsState>();
+    final metrics = es.selectedMetricsOf(MetricGroup.scene);
+    if (metrics.isEmpty) {
+      return const SizedBox.shrink();
+    }
     final stats = _computeMetricStats(chips, metrics);
 
     return SizedBox(
@@ -114,7 +118,12 @@ class _SceneRadarChart extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final palette = AppPalette.of(context);
-    final metrics = metricsOf(MetricGroup.scene);
+    final es = context.watch<EarbudsState>();
+    var metrics = es.selectedMetricsOf(MetricGroup.scene);
+    // RadarChart 至少需要 3 个维度才能正常渲染
+    if (metrics.length < 3) {
+      metrics = metricsOf(MetricGroup.scene);
+    }
     final stats = _computeMetricStats(chips, metrics);
 
     final dataSets = <RadarDataSet>[];

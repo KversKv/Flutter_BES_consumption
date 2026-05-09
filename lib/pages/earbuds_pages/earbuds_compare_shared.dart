@@ -78,3 +78,267 @@ class _KeepAliveWrapperState extends State<_KeepAliveWrapper>
     return widget.child;
   }
 }
+
+/// 通用单芯片视图：展示某个 group 下，被选中芯片的所有 metric 数据。
+class _SingleChipMetricView extends StatelessWidget {
+  final MetricGroup group;
+  const _SingleChipMetricView({required this.group});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final es = context.watch<EarbudsState>();
+    final chips = es.visibleChips;
+
+    if (chips.isEmpty) {
+      return _EmptyHint(hint: s.ebSelectChipsHint);
+    }
+
+    final chip = es.focusedChip ?? chips.first;
+    final metrics = metricsOf(group);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSpacing.x4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.x4,
+              vertical: AppSpacing.x4,
+            ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  cs.primaryContainer.withValues(alpha: 0.35),
+                  cs.surfaceContainerHigh,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+              border: Border.all(
+                color: cs.outlineVariant.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: cs.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  ),
+                  child: Icon(Icons.headphones_rounded, color: cs.primary),
+                ),
+                const SizedBox(width: AppSpacing.x3),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'BES${chip.id}',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _groupTitle(group, s),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (chip.process != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.x3,
+                      vertical: AppSpacing.x2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: cs.surface.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                    ),
+                    child: Text(
+                      chip.process!,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.x4),
+          Card(
+            clipBehavior: Clip.antiAlias,
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.x4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.table_chart_rounded,
+                          size: 16, color: cs.primary),
+                      const SizedBox(width: AppSpacing.x2),
+                      Text(
+                        s.ebMeasurement,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.x3),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      headingRowColor: WidgetStateProperty.all(
+                        cs.primaryContainer.withValues(alpha: 0.2),
+                      ),
+                      columnSpacing: 24,
+                      headingTextStyle: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      dataRowMinHeight: 44,
+                      dataRowMaxHeight: 52,
+                      columns: [
+                        DataColumn(label: Text(s.ebProject)),
+                        DataColumn(
+                          label: Text(s.ebMeasurement),
+                          numeric: true,
+                        ),
+                        const DataColumn(label: Text('Unit')),
+                      ],
+                      rows: metrics.map((m) {
+                        final v = m.read(chip);
+                        return DataRow(
+                          cells: [
+                            DataCell(Text(m.label(s))),
+                            DataCell(
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  v != null ? EarbudsQuery.format(v) : '-',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    fontFeatures: const [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            DataCell(Text(unitLabel(m.unit, s))),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _groupTitle(MetricGroup g, AppLocalizations s) {
+    switch (g) {
+      case MetricGroup.scene:
+        return s.ebTabScene;
+      case MetricGroup.bt:
+        return s.ebTabBt;
+      case MetricGroup.cpuConsumption:
+        return s.ebTabCpuConsumption;
+      case MetricGroup.pa:
+        return s.ebTabPa;
+    }
+  }
+}
+
+/// 通用曲线 Tab 外壳：header + chart + legend。
+class _CurveTabShell extends StatelessWidget {
+  final Widget header;
+  final Widget chart;
+  final List<_LegendItem> legend;
+  const _CurveTabShell({
+    required this.header,
+    required this.chart,
+    required this.legend,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        header,
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.x4,
+              AppSpacing.x2,
+              AppSpacing.x4,
+              AppSpacing.x2,
+            ),
+            child: chart,
+          ),
+        ),
+        _Legend(items: legend),
+      ],
+    );
+  }
+}
+
+class _Legend extends StatelessWidget {
+  final List<_LegendItem> items;
+  const _Legend({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.x4,
+        AppSpacing.x1,
+        AppSpacing.x4,
+        AppSpacing.x3,
+      ),
+      child: Wrap(
+        spacing: AppSpacing.x3,
+        runSpacing: AppSpacing.x1,
+        children: items
+            .map((e) => Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: e.color,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(e.text, style: theme.textTheme.bodySmall),
+                  ],
+                ))
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _LegendItem {
+  final Color color;
+  final String text;
+  const _LegendItem({required this.color, required this.text});
+}

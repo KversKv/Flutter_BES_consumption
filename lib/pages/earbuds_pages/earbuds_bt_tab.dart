@@ -5,6 +5,9 @@ class _BtTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _MetricTableView(group: MetricGroup.bt);
+    final es = context.watch<EarbudsState>();
+    return es.sceneViewMode == EarbudsSceneViewMode.singleChip
+        ? const _SingleChipMetricView(group: MetricGroup.bt)
+        : const _MetricTableView(group: MetricGroup.bt);
   }
 }

@@ -21,14 +21,19 @@ class _MetricTableViewState extends State<_MetricTableView>
     super.build(context);
     final s = AppLocalizations.of(context);
     final es = context.watch<EarbudsState>();
-    final metrics = metricsOf(widget.group);
+    final allMetrics = metricsOf(widget.group);
+    final metrics = es.selectedMetricsOf(widget.group);
     var chips = List<EarbudsChip>.of(es.selectedChips);
 
     if (chips.isEmpty) {
       return _EmptyHint(hint: s.ebSelectChipsHint);
     }
 
-    if (_sortMetricIndex != null) {
+    if (metrics.isEmpty) {
+      return _EmptyHint(hint: s.ebSelectChipsHint);
+    }
+
+    if (_sortMetricIndex != null && _sortMetricIndex! < metrics.length) {
       final metric = metrics[_sortMetricIndex!];
       chips = EarbudsQuery.sortByMetric(chips, metric, ascending: _ascending);
     }
@@ -44,6 +49,7 @@ class _MetricTableViewState extends State<_MetricTableView>
 
     return Column(
       children: [
+        _CaseSelectorBar(group: widget.group, allMetrics: allMetrics),
         Padding(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.x4,
@@ -668,6 +674,98 @@ class _MiniStat extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _CaseSelectorBar extends StatelessWidget {
+  final MetricGroup group;
+  final List<EarbudsMetric> allMetrics;
+  const _CaseSelectorBar({required this.group, required this.allMetrics});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final s = AppLocalizations.of(context);
+    final es = context.watch<EarbudsState>();
+
+    final selectedCount =
+        allMetrics.where((m) => es.isMetricSelected(group, m.key)).length;
+    final isAllSelected = selectedCount == allMetrics.length;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.x4,
+        AppSpacing.x3,
+        AppSpacing.x4,
+        AppSpacing.x2,
+      ),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.2)),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.checklist_rounded, size: 16, color: cs.primary),
+              const SizedBox(width: AppSpacing.x2),
+              Text(
+                'Cases',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.x2),
+              Text(
+                '$selectedCount / ${allMetrics.length}',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: isAllSelected
+                    ? null
+                    : () => es.selectAllMetrics(group),
+                icon: const Icon(Icons.done_all_rounded, size: 16),
+                label: const Text('All'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.x2,
+                    vertical: 0,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.x2),
+          Wrap(
+            spacing: AppSpacing.x2,
+            runSpacing: AppSpacing.x1,
+            children: allMetrics.map((m) {
+              final selected = es.isMetricSelected(group, m.key);
+              return FilterChip(
+                selected: selected,
+                label: Text(
+                  m.label(s),
+                  style: theme.textTheme.labelSmall,
+                ),
+                onSelected: (_) => es.toggleMetric(group, m.key),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 }

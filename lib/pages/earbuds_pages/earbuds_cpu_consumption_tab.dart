@@ -5,6 +5,9 @@ class _CpuConsumptionTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _MetricTableView(group: MetricGroup.cpuConsumption);
+    final es = context.watch<EarbudsState>();
+    return es.sceneViewMode == EarbudsSceneViewMode.singleChip
+        ? const _SingleChipMetricView(group: MetricGroup.cpuConsumption)
+        : const _MetricTableView(group: MetricGroup.cpuConsumption);
   }
 }

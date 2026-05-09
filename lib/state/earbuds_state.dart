@@ -113,6 +113,52 @@ class EarbudsState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 当前 Tab 是否支持视图模式切换（Single Chip / Comparison）。
+  /// 仅 Earbuds Scene(0) / BT&BLE(1) / CPU Consumption(2) 三个 tab 支持。
+  bool get currentTabSupportsViewMode =>
+      _tabIndex == 0 || _tabIndex == 1 || _tabIndex == 2;
+
+  // --- Comparison 模式：选中的对比 case (按 metric key 区分) ------------------
+
+  /// 每个 group 当前选中的 metric key 集合。
+  /// null 表示尚未初始化 / 默认全选。
+  final Map<MetricGroup, Set<String>> _selectedMetricKeys = {};
+
+  Set<String> _ensureMetricKeys(MetricGroup g) {
+    final cached = _selectedMetricKeys[g];
+    if (cached != null) return cached;
+    final all = metricsOf(g).map((m) => m.key).toSet();
+    _selectedMetricKeys[g] = all;
+    return all;
+  }
+
+  bool isMetricSelected(MetricGroup g, String key) =>
+      _ensureMetricKeys(g).contains(key);
+
+  void toggleMetric(MetricGroup g, String key) {
+    final set = _ensureMetricKeys(g);
+    if (set.contains(key)) {
+      // 至少保留一个 case，避免出现空表格
+      if (set.length <= 1) return;
+      set.remove(key);
+    } else {
+      set.add(key);
+    }
+    notifyListeners();
+  }
+
+  void selectAllMetrics(MetricGroup g) {
+    final all = metricsOf(g).map((m) => m.key).toSet();
+    _selectedMetricKeys[g] = all;
+    notifyListeners();
+  }
+
+  /// 根据当前 group 已选 keys，对原始 metrics 进行过滤（保持原始顺序）。
+  List<EarbudsMetric> selectedMetricsOf(MetricGroup g) {
+    final keys = _ensureMetricKeys(g);
+    return metricsOf(g).where((m) => keys.contains(m.key)).toList(growable: false);
+  }
+
   // --- Tab 索引 (左侧面板控制) -----------------------------------------------
 
   int _tabIndex = 0;
