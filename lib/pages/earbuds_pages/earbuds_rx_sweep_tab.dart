@@ -322,25 +322,59 @@ class _RxSweepTableView extends StatelessWidget {
                     ),
                     columnSpacing: 22,
                     headingTextStyle: headerStyle,
+                    headingRowHeight: 56,
                     dataRowMinHeight: 44,
                     dataRowMaxHeight: 52,
                     columns: [
                       DataColumn(label: Text(s.ebChartXaxisGain)),
-                      ...gainDomain.map(
-                        (g) => DataColumn(
+                      ...series.map(
+                        (ser) => DataColumn(
                           numeric: true,
                           label: SizedBox(
-                            width: 72,
-                            child: Text(
-                              '$g',
-                              textAlign: TextAlign.right,
+                            width: 120,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Container(
+                                      width: 10,
+                                      height: 10,
+                                      decoration: BoxDecoration(
+                                        color: ser.color,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpacing.x1),
+                                    Flexible(
+                                      child: Text(
+                                        'BES${ser.chipId}',
+                                        textAlign: TextAlign.right,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (ser.suffix.isNotEmpty)
+                                  Text(
+                                    ser.suffix.trim(),
+                                    textAlign: TextAlign.right,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: cs.onSurfaceVariant,
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ),
                       ),
                     ],
-                    rows: List<DataRow>.generate(series.length, (idx) {
-                      final ser = series[idx];
+                    rows: List<DataRow>.generate(gainDomain.length, (idx) {
+                      final g = gainDomain[idx];
                       return DataRow(
                         color: WidgetStateProperty.all(
                           idx.isEven
@@ -350,32 +384,18 @@ class _RxSweepTableView extends StatelessWidget {
                         ),
                         cells: [
                           DataCell(
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    color: ser.color,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: AppSpacing.x2),
-                                Text(
-                                  'BES${ser.chipId}${ser.suffix}',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              '$g',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
-                          ...gainDomain.map((g) {
+                          ...series.map((ser) {
                             final v = ser.values[g];
                             return DataCell(
                               SizedBox(
-                                width: 72,
+                                width: 120,
                                 child: Text(
                                   v == null ? '-' : v.toStringAsFixed(2),
                                   textAlign: TextAlign.right,

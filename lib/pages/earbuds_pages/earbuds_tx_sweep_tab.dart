@@ -294,25 +294,58 @@ class _TxSweepTableView extends StatelessWidget {
                     ),
                     columnSpacing: 22,
                     headingTextStyle: headerStyle,
+                    headingRowHeight: 56,
                     dataRowMinHeight: 44,
                     dataRowMaxHeight: 52,
                     columns: [
                       DataColumn(label: Text(s.ebChartXaxisDbm)),
-                      ...dbmDomain.map(
-                        (dbm) => DataColumn(
+                      ...series.map(
+                        (ser) => DataColumn(
                           numeric: true,
                           label: SizedBox(
-                            width: 72,
-                            child: Text(
-                              '${dbm}dBm',
-                              textAlign: TextAlign.right,
+                            width: 108,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Container(
+                                      width: 10,
+                                      height: 10,
+                                      decoration: BoxDecoration(
+                                        color: ser.color,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpacing.x1),
+                                    Flexible(
+                                      child: Text(
+                                        'BES${ser.chipId}',
+                                        textAlign: TextAlign.right,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  '(${ser.variantLabel})',
+                                  textAlign: TextAlign.right,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: cs.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ),
                     ],
-                    rows: List<DataRow>.generate(series.length, (idx) {
-                      final ser = series[idx];
+                    rows: List<DataRow>.generate(dbmDomain.length, (idx) {
+                      final dbm = dbmDomain[idx];
                       return DataRow(
                         color: WidgetStateProperty.all(
                           idx.isEven
@@ -322,32 +355,18 @@ class _TxSweepTableView extends StatelessWidget {
                         ),
                         cells: [
                           DataCell(
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    color: ser.color,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: AppSpacing.x2),
-                                Text(
-                                  'BES${ser.chipId} · ${ser.variantLabel}',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              '${dbm}dBm',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
-                          ...dbmDomain.map((dbm) {
+                          ...series.map((ser) {
                             final v = ser.values[dbm];
                             return DataCell(
                               SizedBox(
-                                width: 72,
+                                width: 108,
                                 child: Text(
                                   v == null ? '-' : v.toStringAsFixed(1),
                                   textAlign: TextAlign.right,
