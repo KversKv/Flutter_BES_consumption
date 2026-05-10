@@ -22,6 +22,7 @@ class _TxSweepTab extends StatelessWidget {
     final palette = AppPalette.of(context).dataSeries;
     final lines = <LineChartBarData>[];
     final legend = <_LegendItem>[];
+    final barMeta = <_TxBarMeta>[];
     var colorIdx = 0;
 
     for (final c in chips) {
@@ -47,6 +48,7 @@ class _TxSweepTab extends StatelessWidget {
           color: color,
           text: 'BES${c.id} · ${variant.label}',
         ));
+        barMeta.add(_TxBarMeta(chipId: c.id, variantLabel: variant.label));
       }
     }
 
@@ -129,15 +131,58 @@ class _TxSweepTab extends StatelessWidget {
           ),
           lineTouchData: LineTouchData(
             touchTooltipData: LineTouchTooltipData(
-              getTooltipItems: (spots) => spots
-                  .map((sp) => LineTooltipItem(
-                        '${sp.x.toInt()} dBm\n${sp.y.toStringAsFixed(1)} mA',
-                        TextStyle(
-                          color: theme.colorScheme.onInverseSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ))
-                  .toList(),
+              fitInsideHorizontally: true,
+              fitInsideVertically: true,
+              maxContentWidth: 320,
+              tooltipHorizontalAlignment: FLHorizontalAlignment.left,
+              tooltipPadding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 8,
+              ),
+              getTooltipItems: (spots) {
+                final tooltipColor = theme.colorScheme.onInverseSurface;
+                final baseStyle = TextStyle(
+                  color: tooltipColor,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'monospace',
+                  fontFamilyFallback: const [
+                    'Menlo',
+                    'Consolas',
+                    'Courier New',
+                  ],
+                  height: 1.25,
+                );
+                final maxIdLen = spots.fold<int>(0, (acc, sp) {
+                  final idx = sp.barIndex;
+                  if (idx < 0 || idx >= barMeta.length) return acc;
+                  final len = barMeta[idx].chipId.length;
+                  return len > acc ? len : acc;
+                });
+                return List<LineTooltipItem>.generate(spots.length, (i) {
+                  final sp = spots[i];
+                  final idx = sp.barIndex;
+                  final meta = (idx >= 0 && idx < barMeta.length)
+                      ? barMeta[idx]
+                      : null;
+                  final idPart = meta == null
+                      ? ''
+                      : 'BES${meta.chipId.padRight(maxIdLen)}';
+                  final suffix = meta != null &&
+                          meta.variantLabel.toUpperCase().startsWith('VPA=')
+                      ? ' (${meta.variantLabel})'
+                      : '';
+                  final body =
+                      '$idPart:${sp.y.toStringAsFixed(1)}mA$suffix';
+                  final text = i == 0
+                      ? 'TX Power: ${sp.x.toInt()}dBm\n$body'
+                      : body;
+                  return LineTooltipItem(
+                    text,
+                    baseStyle,
+                    textAlign: TextAlign.left,
+                  );
+                });
+              },
             ),
           ),
         ),
@@ -145,4 +190,10 @@ class _TxSweepTab extends StatelessWidget {
       legend: legend,
     );
   }
+}
+
+class _TxBarMeta {
+  final String chipId;
+  final String variantLabel;
+  const _TxBarMeta({required this.chipId, required this.variantLabel});
 }
