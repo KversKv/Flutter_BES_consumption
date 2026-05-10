@@ -342,3 +342,36 @@ class _LegendItem {
   final String text;
   const _LegendItem({required this.color, required this.text});
 }
+
+/// TX / RX Sweep Tab 右上角的 视图切换按钮（曲线 / 表格）。
+class _SweepViewToggle extends StatelessWidget {
+  final EarbudsSweepViewMode mode;
+  final ValueChanged<EarbudsSweepViewMode> onChanged;
+  const _SweepViewToggle({required this.mode, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return SegmentedButton<EarbudsSweepViewMode>(
+      segments: [
+        ButtonSegment(
+          value: EarbudsSweepViewMode.curve,
+          icon: const Icon(Icons.show_chart_rounded, size: 16),
+          label: Text(s.ebSweepViewCurve, style: theme.textTheme.labelSmall),
+        ),
+        ButtonSegment(
+          value: EarbudsSweepViewMode.table,
+          icon: const Icon(Icons.table_rows_rounded, size: 16),
+          label: Text(s.ebSweepViewTable, style: theme.textTheme.labelSmall),
+        ),
+      ],
+      selected: {mode},
+      onSelectionChanged: (set) => onChanged(set.first),
+      style: SegmentedButton.styleFrom(
+        visualDensity: VisualDensity.compact,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
+  }
+}

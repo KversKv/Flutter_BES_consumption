@@ -143,6 +143,8 @@ class AppLocalizations {
       'eb_rx_domain': 'Supply domain',
       'eb_rx_vana': 'VANA',
       'eb_rx_vsys': 'VSYS (3.8V)',
+      'eb_sweep_view_curve': 'Curve',
+      'eb_sweep_view_table': 'Table',
       'eb_process': 'Process',
       'eb_core': 'Core',
       'eb_ram': 'RAM',
@@ -372,6 +374,8 @@ class AppLocalizations {
       'eb_rx_domain': '电源域',
       'eb_rx_vana': 'VANA',
       'eb_rx_vsys': 'VSYS (3.8V)',
+      'eb_sweep_view_curve': '曲线',
+      'eb_sweep_view_table': '表格',
       'eb_process': '工艺',
       'eb_core': 'Core',
       'eb_ram': 'RAM',
@@ -611,6 +615,8 @@ class AppLocalizations {
   String get ebRxDomain => _t('eb_rx_domain');
   String get ebRxVana => _t('eb_rx_vana');
   String get ebRxVsys => _t('eb_rx_vsys');
+  String get ebSweepViewCurve => _t('eb_sweep_view_curve');
+  String get ebSweepViewTable => _t('eb_sweep_view_table');
   String get ebProcess => _t('eb_process');
   String get ebCore => _t('eb_core');
   String get ebRam => _t('eb_ram');

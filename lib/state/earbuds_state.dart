@@ -10,6 +10,9 @@ enum EarbudsSortDir { original, asc, desc }
 /// Earbuds Scene 视图模式
 enum EarbudsSceneViewMode { singleChip, comparison }
 
+/// TX / RX Sweep 呈现方式
+enum EarbudsSweepViewMode { curve, table }
+
 /// Earbuds 对比页面的交互状态。
 class EarbudsState extends ChangeNotifier {
   EarbudsState() {
@@ -129,6 +132,24 @@ class EarbudsState extends ChangeNotifier {
   void setRxUseVsys(bool v) {
     if (_rxUseVsys == v) return;
     _rxUseVsys = v;
+    notifyListeners();
+  }
+
+  /// TX Sweep 视图模式（曲线 / 表格），默认曲线。
+  EarbudsSweepViewMode _txViewMode = EarbudsSweepViewMode.curve;
+  EarbudsSweepViewMode get txViewMode => _txViewMode;
+  void setTxViewMode(EarbudsSweepViewMode mode) {
+    if (_txViewMode == mode) return;
+    _txViewMode = mode;
+    notifyListeners();
+  }
+
+  /// RX Sweep 视图模式（曲线 / 表格），默认曲线。
+  EarbudsSweepViewMode _rxViewMode = EarbudsSweepViewMode.curve;
+  EarbudsSweepViewMode get rxViewMode => _rxViewMode;
+  void setRxViewMode(EarbudsSweepViewMode mode) {
+    if (_rxViewMode == mode) return;
+    _rxViewMode = mode;
     notifyListeners();
   }
 

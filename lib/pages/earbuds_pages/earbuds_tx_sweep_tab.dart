@@ -20,40 +20,68 @@ class _TxSweepTab extends StatelessWidget {
     }
 
     final palette = AppPalette.of(context).dataSeries;
-    final lines = <LineChartBarData>[];
-    final legend = <_LegendItem>[];
-    final barMeta = <_TxBarMeta>[];
+    final series = <_TxSeries>[];
     var colorIdx = 0;
-
     for (final c in chips) {
       for (final variant in c.txSweep) {
-        final spots = <FlSpot>[];
+        final values = <int, double>{};
         for (final dbm in dbmDomain) {
           final v = variant.values[dbm];
-          if (v != null) spots.add(FlSpot(dbm.toDouble(), v));
+          if (v != null) values[dbm] = v;
         }
-        if (spots.isEmpty) continue;
-        final color = palette[colorIdx % palette.length];
-        colorIdx++;
-        lines.add(
-          LineChartBarData(
-            spots: spots,
-            color: color,
-            barWidth: 2.5,
-            isCurved: false,
-            dotData: const FlDotData(show: true),
-          ),
-        );
-        legend.add(_LegendItem(
-          color: color,
-          text: 'BES${c.id} · ${variant.label}',
+        if (values.isEmpty) continue;
+        series.add(_TxSeries(
+          chipId: c.id,
+          variantLabel: variant.label,
+          color: palette[colorIdx % palette.length],
+          values: values,
         ));
-        barMeta.add(_TxBarMeta(chipId: c.id, variantLabel: variant.label));
+        colorIdx++;
       }
     }
 
-    if (lines.isEmpty) {
+    if (series.isEmpty) {
       return _EmptyHint(hint: s.ebChipNotApplicable);
+    }
+
+    final viewToggle = _SweepViewToggle(
+      mode: es.txViewMode,
+      onChanged: es.setTxViewMode,
+    );
+
+    if (es.txViewMode == EarbudsSweepViewMode.table) {
+      return _TxSweepTableView(
+        series: series,
+        dbmDomain: dbmDomain,
+        header: _TxSweepHeader(viewToggle: viewToggle),
+      );
+    }
+
+    final lines = <LineChartBarData>[];
+    final legend = <_LegendItem>[];
+    final barMeta = <_TxBarMeta>[];
+    for (final ser in series) {
+      final spots = <FlSpot>[];
+      for (final dbm in dbmDomain) {
+        final v = ser.values[dbm];
+        if (v != null) spots.add(FlSpot(dbm.toDouble(), v));
+      }
+      lines.add(
+        LineChartBarData(
+          spots: spots,
+          color: ser.color,
+          barWidth: 2.5,
+          isCurved: false,
+          dotData: const FlDotData(show: true),
+        ),
+      );
+      legend.add(_LegendItem(
+        color: ser.color,
+        text: 'BES${ser.chipId} · ${ser.variantLabel}',
+      ));
+      barMeta.add(
+        _TxBarMeta(chipId: ser.chipId, variantLabel: ser.variantLabel),
+      );
     }
 
     final minX = dbmDomain.first.toDouble();
@@ -67,30 +95,7 @@ class _TxSweepTab extends StatelessWidget {
     if (maxY == 0) maxY = 1;
 
     return _CurveTabShell(
-      header: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.x4,
-          AppSpacing.x3,
-          AppSpacing.x4,
-          AppSpacing.x1,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                s.ebChartXaxisDbm,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            Text(
-              s.ebChartYaxisMa,
-              style: theme.textTheme.bodySmall,
-            ),
-          ],
-        ),
-      ),
+      header: _TxSweepHeader(viewToggle: viewToggle),
       chart: LineChart(
         LineChartData(
           minX: minX,
@@ -102,6 +107,16 @@ class _TxSweepTab extends StatelessWidget {
           borderData: FlBorderData(show: false),
           titlesData: FlTitlesData(
             leftTitles: AxisTitles(
+              axisNameWidget: Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  s.ebChartYaxisMa,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              axisNameSize: 20,
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 44,
@@ -112,6 +127,16 @@ class _TxSweepTab extends StatelessWidget {
               ),
             ),
             bottomTitles: AxisTitles(
+              axisNameWidget: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  s.ebChartXaxisDbm,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              axisNameSize: 20,
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 28,
@@ -190,6 +215,172 @@ class _TxSweepTab extends StatelessWidget {
       legend: legend,
     );
   }
+}
+
+class _TxSweepHeader extends StatelessWidget {
+  final Widget viewToggle;
+  const _TxSweepHeader({required this.viewToggle});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.x4,
+        AppSpacing.x3,
+        AppSpacing.x4,
+        AppSpacing.x1,
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Center(
+            child: Text(
+              s.ebTabTx,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: viewToggle,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TxSweepTableView extends StatelessWidget {
+  final List<_TxSeries> series;
+  final List<int> dbmDomain;
+  final Widget header;
+  const _TxSweepTableView({
+    required this.series,
+    required this.dbmDomain,
+    required this.header,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final headerStyle = theme.textTheme.labelLarge?.copyWith(
+      fontWeight: FontWeight.w600,
+    );
+
+    return Column(
+      children: [
+        header,
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.x4,
+              AppSpacing.x2,
+              AppSpacing.x4,
+              AppSpacing.x4,
+            ),
+            child: Card(
+              clipBehavior: Clip.antiAlias,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SingleChildScrollView(
+                  child: DataTable(
+                    headingRowColor: WidgetStateProperty.all(
+                      cs.primaryContainer.withValues(alpha: 0.18),
+                    ),
+                    columnSpacing: 22,
+                    headingTextStyle: headerStyle,
+                    dataRowMinHeight: 44,
+                    dataRowMaxHeight: 52,
+                    columns: [
+                      DataColumn(label: Text(s.ebChartXaxisDbm)),
+                      ...dbmDomain.map(
+                        (dbm) => DataColumn(
+                          numeric: true,
+                          label: SizedBox(
+                            width: 72,
+                            child: Text(
+                              '${dbm}dBm',
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    rows: List<DataRow>.generate(series.length, (idx) {
+                      final ser = series[idx];
+                      return DataRow(
+                        color: WidgetStateProperty.all(
+                          idx.isEven
+                              ? Colors.transparent
+                              : cs.surfaceContainerHighest
+                                  .withValues(alpha: 0.3),
+                        ),
+                        cells: [
+                          DataCell(
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: ser.color,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.x2),
+                                Text(
+                                  'BES${ser.chipId} · ${ser.variantLabel}',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          ...dbmDomain.map((dbm) {
+                            final v = ser.values[dbm];
+                            return DataCell(
+                              SizedBox(
+                                width: 72,
+                                child: Text(
+                                  v == null ? '-' : v.toStringAsFixed(1),
+                                  textAlign: TextAlign.right,
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+                      );
+                    }),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TxSeries {
+  final String chipId;
+  final String variantLabel;
+  final Color color;
+  final Map<int, double> values;
+  const _TxSeries({
+    required this.chipId,
+    required this.variantLabel,
+    required this.color,
+    required this.values,
+  });
 }
 
 class _TxBarMeta {

@@ -45,18 +45,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
               Expanded(
-                child: Stack(
-                  children: [
-                    IndexedStack(
-                      index: selectedIndex,
-                      children: _pages,
-                    ),
-                    const Positioned(
-                      top: AppSpacing.x3,
-                      right: AppSpacing.x3,
-                      child: SafeArea(child: _ThemeToggleButton()),
-                    ),
-                  ],
+                child: IndexedStack(
+                  index: selectedIndex,
+                  children: _pages,
                 ),
               ),
             ],
@@ -635,6 +626,11 @@ class _VersionFooter extends StatelessWidget {
                 color: palette.textMuted,
               ),
             ),
+            const SizedBox(width: AppSpacing.x2),
+            const _ThemeToggleButton(),
+          ] else ...[
+            const SizedBox(width: AppSpacing.x2),
+            const _ThemeToggleButton(),
           ],
         ],
       ),
