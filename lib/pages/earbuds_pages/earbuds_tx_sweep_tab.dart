@@ -271,6 +271,7 @@ class _TxSweepTableView extends StatelessWidget {
     final headerStyle = theme.textTheme.labelLarge?.copyWith(
       fontWeight: FontWeight.w600,
     );
+    final sortedDbm = [...dbmDomain]..sort((a, b) => b.compareTo(a));
 
     return Column(
       children: [
@@ -344,8 +345,8 @@ class _TxSweepTableView extends StatelessWidget {
                         ),
                       ),
                     ],
-                    rows: List<DataRow>.generate(dbmDomain.length, (idx) {
-                      final dbm = dbmDomain[idx];
+                    rows: List<DataRow>.generate(sortedDbm.length, (idx) {
+                      final dbm = sortedDbm[idx];
                       return DataRow(
                         color: WidgetStateProperty.all(
                           idx.isEven

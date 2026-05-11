@@ -299,6 +299,7 @@ class _RxSweepTableView extends StatelessWidget {
     final headerStyle = theme.textTheme.labelLarge?.copyWith(
       fontWeight: FontWeight.w600,
     );
+    final sortedGain = [...gainDomain]..sort((a, b) => a.compareTo(b));
 
     return Column(
       children: [
@@ -373,8 +374,8 @@ class _RxSweepTableView extends StatelessWidget {
                         ),
                       ),
                     ],
-                    rows: List<DataRow>.generate(gainDomain.length, (idx) {
-                      final g = gainDomain[idx];
+                    rows: List<DataRow>.generate(sortedGain.length, (idx) {
+                      final g = sortedGain[idx];
                       return DataRow(
                         color: WidgetStateProperty.all(
                           idx.isEven
