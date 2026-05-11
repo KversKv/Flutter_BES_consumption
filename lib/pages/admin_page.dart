@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../l10n/app_localizations.dart';
+import '../services/chips_export_service.dart';
 import '../services/earbuds_repository.dart';
 import '../theme/app_spacing.dart';
 
@@ -68,6 +69,11 @@ class _AdminPageState extends State<AdminPage> {
           onPressed: () => Navigator.of(context).pushReplacementNamed('/'),
         ),
         actions: [
+          TextButton.icon(
+            onPressed: () => _exportJson(context),
+            icon: const Icon(Icons.file_download_outlined),
+            label: Text(t.adminExportJson),
+          ),
           TextButton.icon(
             onPressed: () => _confirmResetAll(context),
             icon: const Icon(Icons.restore),
@@ -161,6 +167,30 @@ class _AdminPageState extends State<AdminPage> {
     );
     if (ok == true) {
       await EarbudsRepository.instance.resetToSeed();
+    }
+  }
+
+  Future<void> _exportJson(BuildContext context) async {
+    final t = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final files = EarbudsRepository.instance.exportAsJsonFiles();
+      final location = await saveChipsExportZip(files);
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(t.adminExportSuccess(location)),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(t.adminExportFailed('$e')),
+          duration: const Duration(seconds: 4),
+        ),
+      );
     }
   }
 }

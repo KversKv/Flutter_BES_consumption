@@ -7,19 +7,31 @@
         {
             "name": "bes_consumption",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "args": [
+                "--web-port=5173",
+                "--web-hostname=localhost"
+            ]
         },
         {
             "name": "bes_consumption (profile mode)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "profile"
+            "flutterMode": "profile",
+            "args": [
+                "--web-port=5173",
+                "--web-hostname=localhost"
+            ]
         },
         {
             "name": "bes_consumption (release mode)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release"
+            "flutterMode": "release",
+            "args": [
+                "--web-port=5173",
+                "--web-hostname=localhost"
+            ]
         }
     ]
 }

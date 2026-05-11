@@ -242,6 +242,10 @@ class AppLocalizations {
       'admin_drag_handle': 'Drag to reorder',
       'admin_reorder_disabled_in_search':
           'Clear the search to drag-reorder chips.',
+      'admin_export_json': 'Export JSON',
+      'admin_export_success':
+          'Exported chips to {location}. Replace assets/data/chips/ to make it the new seed.',
+      'admin_export_failed': 'Export failed: {error}',
     },
     'zh': {
       'appTitle': 'BES 功耗 (演示)',
@@ -473,6 +477,9 @@ class AppLocalizations {
       'admin_invalid_id': 'ID 不能为空或与已有 ID 重复。',
       'admin_drag_handle': '拖拽排序',
       'admin_reorder_disabled_in_search': '请先清空搜索,才能拖拽排序。',
+      'admin_export_json': '导出 JSON',
+      'admin_export_success': '已导出到 {location}，覆盖 assets/data/chips/ 后即为新的种子数据。',
+      'admin_export_failed': '导出失败：{error}',
     },
   };
 
@@ -719,6 +726,11 @@ class AppLocalizations {
   String get adminDragHandle => _t('admin_drag_handle');
   String get adminReorderDisabledInSearch =>
       _t('admin_reorder_disabled_in_search');
+  String get adminExportJson => _t('admin_export_json');
+  String adminExportSuccess(String location) =>
+      _t('admin_export_success').replaceFirst('{location}', location);
+  String adminExportFailed(String error) =>
+      _t('admin_export_failed').replaceFirst('{error}', error);
 
   static AppLocalizations of(BuildContext context) {
     final instance = Localizations.of<AppLocalizations>(context, AppLocalizations);

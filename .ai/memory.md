@@ -123,16 +123,16 @@
   - 理由：用户明确要求"网址后面后缀 /admin"
   - 放弃：`go_router`（增加依赖体量，Demo 仅两条路由）
 
-### 数据库格式 / 持久化（2026-05-09）
-- [决策] **芯片数据从 Dart const 迁到 JSON 资源**：`assets/data/earbuds_chips.json`（schema `{version:1, chips:[...]}`），由 `EarbudsChipLoader` 通过 `rootBundle` 装载
-  - 理由：用户要求"通用格式 + 从那里取数据"，JSON 是最通用、人类可读、IDE 友好（VSCode/JetBrains 都有自动格式化与折叠）
-  - 放弃：YAML（多一个解析依赖、缩进敏感）/ TOML（同上）/ CSV（嵌套表达力差，scene、txSweep 是嵌套结构）/ SQLite（Web 麻烦、过度工程）
-- [决策] 运行时数据落盘仍走 `shared_preferences ^2.2.0`，整库以单 JSON 字符串落键 `earbuds_db_v1`；Schema 与 asset 共用
-  - 理由：六端原生通过、零原生依赖、读写性能足够、与 asset 同 schema 便于互转
-- [决策] 历史 const 数据已彻底删除（`lib/config/earbuds/chips/*`、`earbuds_chip_registry.dart`、`tool/dump_chips_json.dart`），JSON 资源是唯一真相源；以后改数据 = 改 JSON
-  - 理由：避免"两份数据要同步"的心智负担；保留 `@Deprecated` 通道反而催生技术债
-- [决策] 持久化唯一入口为 `EarbudsRepository`；`models/` 提供 `toJson/fromJson`；写操作（`commit/add/duplicate/delete/resetToSeed`）触发 `_persist()`；`main()` 启动 `await load()`；`load()` 优先 SP 存档 → 否则读 JSON 资源 → 失败退化空仓
-  - 理由：写入收口、UI 永远拿不可变快照、JSON 资源不可写决定数据源单向性
+### 数据库格式 / 持久化（2026-05-09，2026-05-11 拆分）
+- [决策] **芯片数据从 Dart const 迁到 JSON 资源**：单文件 → 拆分为 `assets/data/chips_index.json`（`{version:1, order:[<id>...]}`）+ `assets/data/chips/<id>.json`（每芯片一个 `EarbudsChip.toJson()`），由 `EarbudsChipLoader` 先读 index 再 `Future.wait` 并行读取
+  - 理由：人类可读 + IDE 友好 + git diff 友好；拆分后多人并行编辑互不冲突，admin 也能整齐导出
+  - 放弃：YAML / TOML / CSV / SQLite（理由同前）；放弃单文件聚合（diff 噪声大）
+- [决策] 运行时数据落盘仍走 `shared_preferences ^2.2.0`，整库以单 JSON 字符串落键 `earbuds_db_v1`；Schema 与 asset 单芯片格式共用
+  - 理由：六端原生通过、零原生依赖、读写性能足够
+- [决策] 历史 const 数据已彻底删除（`lib/config/earbuds/chips/*`、`earbuds_chip_registry.dart`、`tool/dump_chips_json.dart`、`assets/data/earbuds_chips.json`），拆分后的 JSON 资源是唯一真相源
+- [决策] 持久化唯一入口为 `EarbudsRepository`；`models/` 提供 `toJson/fromJson`；写操作（`commit/add/duplicate/delete/reorder/resetToSeed`）触发 `_persist()`；`main()` 启动 `await load()`；`load()` 优先 SP 存档 → 否则读 JSON 资源 → 失败退化空仓
+- [决策] **admin「导出 JSON」按钮**为反向写回唯一通道：`exportAsJsonFiles()` 产出 `{path -> jsonString}`，`chips_export_service.dart` 用 `archive: ^3.6.1` 打 zip；条件导入分发：Web 用 `dart:html` Blob 触发下载，原生写 `Directory.systemTemp`；用户解压覆盖 `assets/data/chips/` → 重 `flutter run` 即为新种子
+  - 理由：浏览器沙盒不允许直接写 assets，"运行时存档（SP）+ 显式导出落盘"是六端通吃的最简方案
 
 ### Admin 拖拽排序（2026-05-11）
 - [决策] `EarbudsRepository.reorder(int oldIndex, int newIndex)` 为芯片排序的**唯一**写入入口,语义遵循 `ReorderableListView.onReorder`(target>old 时减一);写入后 `_rebuildSnapshot/notifyListeners/_persist` 与其它 CRUD 一致
@@ -258,6 +258,9 @@
 ### 构建
 - [坑] Windows 下不能 `flutter build linux`；跨平台构建需在对应宿主
 - [坑] iOS 首次构建需 `cd ios && pod install`
+- [坑] **Web 端 `shared_preferences` 按 origin (scheme+hostname+port) 隔离**(2026-05-11)
+  - 现象：`flutter run -d chrome` 每次随机分配端口，导致 admin 改的数据"看着没保存"
+  - 解法：`.vscode/launch.json` 固定 `--web-port=5173 --web-hostname=localhost`；权威数据用 admin 导出 zip 覆写 `assets/data/chips/`，与 SP 解耦
 
 ### 文档
 - [禁区] 不得再向 `docs/ai/memory.md` 追加事实 / 决策（已降级为导航）

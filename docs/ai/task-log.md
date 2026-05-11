@@ -16,6 +16,21 @@
 
 ---
 
+## 2026-05-11 · 数据源拆分：单文件 → 每芯片独立 JSON + 导出按钮
+- **类型**：refactor / decision
+- **范围**：`assets/data/`、`lib/services/earbuds_chip_loader.dart`、`lib/services/earbuds_repository.dart`、`lib/services/chips_export_*.dart`、`lib/pages/admin_page.dart`、`lib/l10n/app_localizations.dart`、`pubspec.yaml`
+- **动因**：原 `assets/data/earbuds_chips.json` 单文件难协作；用户希望"数据独立化、读写直连 JSON、不要和 port 挂钩"。但浏览器沙盒不允许写回 assets，故采用"拆分只读资源 + admin 导出 zip 由用户回写"的折中。
+- **变更**：
+  1. 删除 `assets/data/earbuds_chips.json`；新增 `assets/data/chips/<id>.json` ×16 与 `assets/data/chips_index.json`（含 `version` + `order`）。
+  2. `EarbudsChipLoader` 改为先读 index、再 `Future.wait` 并行读各 chip 文件。
+  3. `EarbudsRepository` 新增 `exportAsJsonFiles()` 返回 `{path -> jsonString}`；落盘逻辑放在新 `chips_export_service.dart`，通过条件导入分发到 `chips_export_io.dart`（原生写 systemTemp）/ `chips_export_web.dart`（Blob+AnchorElement 触发下载）。
+  4. admin 工具栏新增「导出 JSON」按钮；新增 `adminExportJson / adminExportSuccess / adminExportFailed` 三组 zh+en 文案。
+  5. 新增依赖 `archive: ^3.6.1`（理由：纯 Dart zip 编码，跨平台无原生依赖）。
+- **影响**：浏览器 localStorage 仍按 origin 隔离，故 `--web-port=5173` 固定端口的 launch.json 改动保留作"运行期工作副本"兜底。最终的"权威数据"以 `assets/data/chips/` 为准；admin 修改后须导出 zip → 解压覆盖 → 重新 `flutter run` 才会同步给所有端。
+- **后续**：`test/widget_test.dart` 仍是脚手架自带的计数器示例，无关本次改动；建议另起任务清理。
+
+---
+
 ## 2026-05-11 · 精简 project-rules.md 至 ≤1000 字符
 - **类型**：docs / decision
 - **范围**：`.trae/rules/project-rules.md`、`docs/ai/tech-context.md`

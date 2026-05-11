@@ -550,6 +550,45 @@ class EarbudsRepository extends ChangeNotifier {
     await _persist();
   }
 
+  /// 把当前内存中的全套芯片数据导出为「拆分文件」格式。
+  ///
+  /// 返回 `{ 相对路径 -> JSON 字符串 }`，包括：
+  ///   - `chips_index.json`
+  ///   - `chips/<id>.json`（每芯片一个）
+  ///
+  /// 调用方负责把它们打包 / 下载 / 落盘；本方法不触碰 IO。
+  Map<String, String> exportAsJsonFiles() {
+    const encoder = JsonEncoder.withIndent('  ');
+    final files = <String, String>{};
+    final order = <String>[];
+    for (final r in _records) {
+      final id = r.id.trim();
+      if (id.isEmpty) continue;
+      final safe = _safeFileName(id);
+      if (files.containsKey('chips/$safe.json')) continue;
+      files['chips/$safe.json'] = encoder.convert(r.toImmutable().toJson());
+      order.add(safe);
+    }
+    files['chips_index.json'] = encoder.convert(<String, Object>{
+      'version': _schemaVersion,
+      'order': order,
+    });
+    return files;
+  }
+
+  String _safeFileName(String id) {
+    final buf = StringBuffer();
+    for (final r in id.runes) {
+      final c = String.fromCharCode(r);
+      if (RegExp(r'[A-Za-z0-9_\-]').hasMatch(c)) {
+        buf.write(c);
+      } else {
+        buf.write('_');
+      }
+    }
+    return buf.toString();
+  }
+
   String _generateId(String? hint) {
     final base = (hint == null || hint.trim().isEmpty) ? 'chip_new' : hint.trim();
     if (recordById(base) == null) return base;
