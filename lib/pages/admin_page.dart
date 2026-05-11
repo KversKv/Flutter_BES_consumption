@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/earbuds_repository.dart';
@@ -31,14 +32,16 @@ class _AdminPageState extends State<AdminPage> {
 
   void _onRepoChanged() {
     if (!mounted) return;
-    final list = EarbudsRepository.instance.records;
-    if (_selectedId != null &&
-        !list.any((r) => r.id == _selectedId)) {
-      _selectedId = list.isEmpty ? null : list.first.id;
-    } else if (_selectedId == null && list.isNotEmpty) {
-      _selectedId = list.first.id;
-    }
-    setState(() {});
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final list = EarbudsRepository.instance.records;
+      if (_selectedId != null && !list.any((r) => r.id == _selectedId)) {
+        _selectedId = list.isEmpty ? null : list.first.id;
+      } else if (_selectedId == null && list.isNotEmpty) {
+        _selectedId = list.first.id;
+      }
+      setState(() {});
+    });
   }
 
   @override
@@ -94,6 +97,9 @@ class _AdminPageState extends State<AdminPage> {
                 setState(() => _selectedId = c.id);
               },
               onDelete: (id) => _confirmDelete(context, id),
+              onReorder: (oldIndex, newIndex) {
+                repo.reorder(oldIndex, newIndex);
+              },
             ),
           ),
           const VerticalDivider(width: 1),
@@ -169,6 +175,7 @@ class _ChipListPanel extends StatelessWidget {
   final VoidCallback onAdd;
   final ValueChanged<String> onDuplicate;
   final ValueChanged<String> onDelete;
+  final void Function(int oldIndex, int newIndex) onReorder;
 
   const _ChipListPanel({
     required this.chips,
@@ -180,11 +187,13 @@ class _ChipListPanel extends StatelessWidget {
     required this.onAdd,
     required this.onDuplicate,
     required this.onDelete,
+    required this.onReorder,
   });
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final canReorder = query.trim().isEmpty;
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.x2),
       child: Column(
@@ -219,47 +228,111 @@ class _ChipListPanel extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
+          if (!canReorder)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.x1),
+              child: Text(
+                t.adminReorderDisabledInSearch,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+              ),
+            ),
           const Divider(),
           Expanded(
-            child: ListView.builder(
-              itemCount: chips.length,
-              itemBuilder: (ctx, i) {
-                final c = chips[i];
-                final isSel = c.id == selectedId;
-                return ListTile(
-                  dense: true,
-                  selected: isSel,
-                  title: Text(c.id),
-                  subtitle: Text(
-                    [
-                      if (c.process != null) c.process,
-                      if (c.massProduction) 'MP',
-                    ].whereType<String>().join(' · '),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (v) {
-                      if (v == 'duplicate') onDuplicate(c.id);
-                      if (v == 'delete') onDelete(c.id);
+            child: canReorder
+                ? ReorderableListView.builder(
+                    buildDefaultDragHandles: false,
+                    itemCount: chips.length,
+                    onReorder: onReorder,
+                    itemBuilder: (ctx, i) {
+                      if (i < 0 || i >= chips.length) {
+                        return SizedBox.shrink(
+                          key: ValueKey('chip_tile_oob_$i'),
+                        );
+                      }
+                      final c = chips[i];
+                      return _buildChipTile(
+                        context,
+                        t,
+                        c,
+                        key: ValueKey('chip_tile_${c.id}'),
+                        dragIndex: i,
+                      );
                     },
-                    itemBuilder: (_) => [
-                      PopupMenuItem(
-                        value: 'duplicate',
-                        child: Text(t.adminDuplicate),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Text(t.adminDelete),
-                      ),
-                    ],
+                  )
+                : ListView.builder(
+                    itemCount: chips.length,
+                    itemBuilder: (ctx, i) {
+                      if (i < 0 || i >= chips.length) {
+                        return const SizedBox.shrink();
+                      }
+                      final c = chips[i];
+                      return _buildChipTile(
+                        context,
+                        t,
+                        c,
+                        key: ValueKey('chip_tile_${c.id}'),
+                        dragIndex: null,
+                      );
+                    },
                   ),
-                  onTap: () => onSelect(c.id),
-                );
-              },
-            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildChipTile(
+    BuildContext context,
+    AppLocalizations t,
+    MutableEarbudsChip c, {
+    required Key key,
+    required int? dragIndex,
+  }) {
+    final isSel = c.id == selectedId;
+    return Material(
+      key: key,
+      type: MaterialType.transparency,
+      child: ListTile(
+        dense: true,
+        selected: isSel,
+        leading: dragIndex == null
+            ? null
+            : ReorderableDragStartListener(
+                index: dragIndex,
+                child: Semantics(
+                  label: t.adminDragHandle,
+                  button: true,
+                  child: const Icon(Icons.drag_indicator, size: 18),
+                ),
+              ),
+        title: Text(c.id),
+        subtitle: Text(
+          [
+            if (c.process != null) c.process,
+            if (c.massProduction) 'MP',
+          ].whereType<String>().join(' · '),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: PopupMenuButton<String>(
+          onSelected: (v) {
+            if (v == 'duplicate') onDuplicate(c.id);
+            if (v == 'delete') onDelete(c.id);
+          },
+          itemBuilder: (_) => [
+            PopupMenuItem(
+              value: 'duplicate',
+              child: Text(t.adminDuplicate),
+            ),
+            PopupMenuItem(
+              value: 'delete',
+              child: Text(t.adminDelete),
+            ),
+          ],
+        ),
+        onTap: () => onSelect(c.id),
       ),
     );
   }

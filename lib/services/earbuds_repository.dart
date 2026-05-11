@@ -516,6 +516,27 @@ class EarbudsRepository extends ChangeNotifier {
     return true;
   }
 
+  /// 调整芯片顺序(拖拽排序入口)。
+  ///
+  /// - 参数语义遵循 Flutter `ReorderableListView.onReorder`:
+  ///   `newIndex` 是"移除 oldIndex 前"的目标下标,需要在 `newIndex > oldIndex`
+  ///   时减 1 才是真实插入位置。
+  /// - 同样触发 snapshot 重建 / 持久化 / `notifyListeners`,用户展示界面会
+  ///   通过 `EarbudsRepository.instance.chips` 自动按新顺序渲染。
+  void reorder(int oldIndex, int newIndex) {
+    if (oldIndex < 0 || oldIndex >= _records.length) return;
+    var target = newIndex;
+    if (target > oldIndex) target -= 1;
+    if (target < 0) target = 0;
+    if (target >= _records.length) target = _records.length - 1;
+    if (target == oldIndex) return;
+    final moved = _records.removeAt(oldIndex);
+    _records.insert(target, moved);
+    _rebuildSnapshot();
+    notifyListeners();
+    unawaited(_persist());
+  }
+
   /// 重置为 JSON 资源里的出厂种子（同时清掉用户编辑落盘）。
   Future<void> resetToSeed() async {
     try {

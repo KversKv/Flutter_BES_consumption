@@ -48,3 +48,13 @@ flutter build web
 
 ## 已知未引入
 - 无 HTTP / DIO / 数据库 / 代码生成（freezed/json_serializable）依赖。若后续需要，先在 `task-log.md` 记录动机再加入。
+
+## 数据持久化细则（从 project-rules.md 迁出）
+- 唯一入口：`services/earbuds_repository.dart` 的 `EarbudsRepository`。
+- **数据源（种子）**：`assets/data/earbuds_chips.json`，由 `services/earbuds_chip_loader.dart` 装载；新增 / 修改芯片数据请直接改此 JSON。
+- **持久化（用户改动）**：`shared_preferences`，整库以单 JSON 字符串落键 `earbuds_db_v1`。
+- Schema 版本：`{ version, chips:[...] }`；版本号变更必须写迁移分支，禁止悄改字段。
+- 历史 `lib/config/earbuds/chips/*.dart` + `earbuds_chip_registry.dart` + `tool/dump_chips_json.dart` 已全部删除；JSON 资源是唯一真相源。
+- 写操作必须经 `commit/add/duplicate/delete/resetToSeed`，并触发持久化与 `notifyListeners`。
+- `models/` 提供 `toJson/fromJson`；UI 永远读 `repo.chips` 不可变快照。
+- 数据写入只走仓储；禁止页面 / 状态层直接调用 `SharedPreferences`。

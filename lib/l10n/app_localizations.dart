@@ -239,6 +239,9 @@ class AppLocalizations {
       'admin_no_chip_selected': 'Select a chip on the left to edit.',
       'admin_total_chips': 'Total: {n}',
       'admin_invalid_id': 'ID cannot be empty or duplicated.',
+      'admin_drag_handle': 'Drag to reorder',
+      'admin_reorder_disabled_in_search':
+          'Clear the search to drag-reorder chips.',
     },
     'zh': {
       'appTitle': 'BES 功耗 (演示)',
@@ -468,6 +471,8 @@ class AppLocalizations {
       'admin_no_chip_selected': '请在左侧选择一个芯片进行编辑。',
       'admin_total_chips': '共 {n} 颗',
       'admin_invalid_id': 'ID 不能为空或与已有 ID 重复。',
+      'admin_drag_handle': '拖拽排序',
+      'admin_reorder_disabled_in_search': '请先清空搜索,才能拖拽排序。',
     },
   };
 
@@ -711,6 +716,9 @@ class AppLocalizations {
   String adminTotalChips(int n) =>
       _t('admin_total_chips').replaceFirst('{n}', '$n');
   String get adminInvalidId => _t('admin_invalid_id');
+  String get adminDragHandle => _t('admin_drag_handle');
+  String get adminReorderDisabledInSearch =>
+      _t('admin_reorder_disabled_in_search');
 
   static AppLocalizations of(BuildContext context) {
     final instance = Localizations.of<AppLocalizations>(context, AppLocalizations);

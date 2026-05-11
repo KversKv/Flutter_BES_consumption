@@ -16,6 +16,55 @@
 
 ---
 
+## 2026-05-11 · 精简 project-rules.md 至 ≤1000 字符
+- **类型**：docs / decision
+- **范围**：`.trae/rules/project-rules.md`、`docs/ai/tech-context.md`
+- **动因**：规则文件冗长（>1100 字符），影响 LLM 注入预算与可读性。
+- **变更**：
+  1. 将"数据持久化"全套细则迁出至 `docs/ai/tech-context.md` 新增节"数据持久化细则（从 project-rules.md 迁出）"。
+  2. 规则文件保留要点+指针，新增硬规则 #12："本文件 ≤1000 字符；超出须精简或外迁至 `docs/ai/`"。
+  3. 当前字符数 = 999。
+- **影响**：后续维护规则时若新增条目，须先评估字符预算，优先把"细则"沉到 `docs/ai/`。
+- **后续**：无。
+
+---
+
+## 2026-05-11 · Admin 拖拽排序红屏一闪定位与根治
+- **类型**：fix / decision
+- **范围**：`lib/pages/admin_page.dart`、`lib/services/earbuds_repository.dart`、`lib/main.dart`、`.ai/memory.md`
+- **动因**：在 `/admin` 拖拽排序后,屏幕短暂全红一闪,异常文案 `Unexpected null value`。需要先定位、再根治。
+- **变更**：
+  1. 临时加入三层诊断手段:`main.dart` 全局接管 `FlutterError.onError`(仅 `kDebugMode`);`EarbudsRepository.reorder` 与 `_AdminPageState._onRepoChanged`、`onReorder`、`itemBuilder` 路径加 `[admin]/[reorder]` `debugPrint`;`itemBuilder` 增加 `i` 越界保护(返回 `SizedBox.shrink`)
+  2. 抓到的真实堆栈 `material/tooltip.dart::_buildTooltipOverlay → localToGlobal → applyPaintTransform → sliver_multi_box_adaptor.childMainAxisPosition` nullCheck,确认根因:`Tooltip` 在 `ReorderableDragStartListener` 内被 `Overlay` 渲染时,与 `ReorderableListView` 把 dragged item 从 sliver 中"提"走(`parentData` 短暂解除)发生时序竞态
+  3. 根治:把拖拽手柄 `Icon(Icons.drag_indicator)` 外层的 `Tooltip(message:)` 替换为 `Semantics(label:, button: true)`,保留无障碍语义,彻底绕开 Tooltip Overlay 的 `localToGlobal` 路径
+  4. 清理所有临时调试日志与 `FlutterError.onError` 接管;**保留** `itemBuilder` 的 `i` 越界 `SizedBox.shrink` 防御(成本低、收益正向)
+  5. 补足顺序拖拽功能链:`EarbudsRepository.reorder(oldIndex, newIndex)` 写入入口、写入后 `_rebuildSnapshot/notifyListeners/_persist`;`_AdminPageState._onRepoChanged` 用 `SchedulerBinding.addPostFrameCallback` 推迟 setState 与 reorder 动画解耦;`_buildChipTile` 顶层包 `Material(type: transparency)` 让 drag overlay 仍能找到 Material 祖先
+  6. i18n:新增 `adminDragHandle` / `adminReorderDisabledInSearch`(zh+en 同步)
+- **影响**:
+  - `EarbudsRepository.reorder` 成为芯片排序的唯一写入入口,顺序经 SP 持久化 + 经 `EarbudsState.allChips → EarbudsRepository.instance.chips` 自动同步到所有用户展示界面
+  - 搜索过滤期间禁止拖拽(`canReorder = query.trim().isEmpty`),避免 index 与 records 错位
+  - **新坑沉淀**:`Tooltip` 不可放在 `ReorderableDragStartListener` 的 child 上 → 写入 `.ai/memory.md` §5
+- **校验**:`flutter analyze` → No issues found
+- **后续**:无
+
+---
+
+## 2026-05-11 · Admin 增加芯片拖拽排序
+- **类型**：feature
+- **范围**：`lib/pages/admin_page.dart`、`lib/services/earbuds_repository.dart`、`lib/l10n/app_localizations.dart`
+- **动因**：用户要求在 admin 中支持拖拽排芯片,且顺序需同步到所有用户展示界面
+- **变更**：
+  1. `EarbudsRepository` 新增 `reorder(int oldIndex, int newIndex)`:遵循 `ReorderableListView.onReorder` 语义(target>old 时减一),修改 `_records` → `_rebuildSnapshot()` → `notifyListeners()` → `unawaited(_persist())`
+  2. `admin_page.dart` 把 `ListView.builder` 替换为 `ReorderableListView.builder(buildDefaultDragHandles: false)`,leading 槽放 `ReorderableDragStartListener(child: Icon(drag_indicator))` 作为自定义手柄
+  3. 搜索过滤期间(`canReorder = query.trim().isEmpty`)降级为普通 `ListView.builder`,并显示"清空搜索后才能拖拽排序"提示,避免可见 index 与底层 `_records` 索引错位
+  4. i18n 同步新增 `adminDragHandle` / `adminReorderDisabledInSearch`(zh+en)
+- **影响**:`EarbudsState.allChips` 直接读 `EarbudsRepository.instance.chips`,新顺序经 `notifyListeners` 自动散发到所有页面;新顺序经 SP 持久化重启不丢
+- **校验**:`flutter analyze` → No issues found
+- **后续**：无
+
+---
+
+
 ## 2026-05-09 · 删除历史 const 芯片数据（`lib/config/earbuds/chips/` + 反向导出脚本）
 - **类型**：refactor / decision
 - **范围**：删除 `lib/config/earbuds/chips/*.dart`（16 文件）、`lib/config/earbuds/earbuds_chip_registry.dart`、`tool/dump_chips_json.dart`；同步更新 `lib/models/earbuds.dart` 注释、`.trae/rules/project-rules.md`、`docs/ai/{project-overview,glossary,tech-context}.md`、`CLAUDE.md`、`.ai/memory.md`

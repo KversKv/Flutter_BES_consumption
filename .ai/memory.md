@@ -134,6 +134,14 @@
 - [决策] 持久化唯一入口为 `EarbudsRepository`；`models/` 提供 `toJson/fromJson`；写操作（`commit/add/duplicate/delete/resetToSeed`）触发 `_persist()`；`main()` 启动 `await load()`；`load()` 优先 SP 存档 → 否则读 JSON 资源 → 失败退化空仓
   - 理由：写入收口、UI 永远拿不可变快照、JSON 资源不可写决定数据源单向性
 
+### Admin 拖拽排序（2026-05-11）
+- [决策] `EarbudsRepository.reorder(int oldIndex, int newIndex)` 为芯片排序的**唯一**写入入口,语义遵循 `ReorderableListView.onReorder`(target>old 时减一);写入后 `_rebuildSnapshot/notifyListeners/_persist` 与其它 CRUD 一致
+  - 理由:与"写入收口"原则一致;`EarbudsState.allChips → EarbudsRepository.instance.chips` 自动散发新顺序到所有用户展示页面;新顺序经 SP 持久化重启不丢
+  - 放弃:在页面/状态层就地排序(违反"持久化唯一入口"约束)
+- [决策] 搜索过滤期间禁止拖拽(`canReorder = query.trim().isEmpty`),降级为普通 `ListView.builder`,并显示提示文案
+  - 理由:可见 index 与底层 `_records` 索引会在过滤时错位,直接拖拽会写错顺序
+- [决策] 拖拽手柄使用 `Semantics(label:, button: true)` 而非 `Tooltip`(详见 §5 坑)
+
 ### 分层架构
 - [决策] 严格向下依赖：`models → config → services → state → widgets → pages`
   - 理由：保证计算层可单元测试、UI 可替换
@@ -240,6 +248,12 @@
 ### UI / 图表
 - [待验证] Web 端 `fl_chart` 在大数据点下可能卡顿（未基准化）
 - [坑] 自定义 `TooltipBehavior` / legend hover 与 `fl_chart` 默认行为叠加易出现双重提示
+- [坑] **`Tooltip` 不可作为 `ReorderableDragStartListener` 的 child**(2026-05-11)
+  - 现象：`/admin` 拖拽时屏幕闪一帧红屏,`Unexpected null value`
+  - 根因：`Tooltip._buildTooltipOverlay` 在 `Overlay` 中调用 `localToGlobal` → `applyPaintTransform` → `RenderSliverMultiBoxAdaptor.childMainAxisPosition`,与 `ReorderableListView` 把被拖项从 sliver 中"提"走(`parentData` 短暂为 null)发生时序竞态,`nullCheck` 抛出
+  - 解法:拖拽手柄上用 `Semantics(label:, button: true)` 替代 `Tooltip`,保留无障碍语义,绕开 Overlay/`localToGlobal` 路径
+  - 推论:任何会创建 Overlay 的浮层 widget(`Tooltip`、自定义 popup)都不应直接套在 reorder 拖拽手柄/被拖项上
+- [坑] `ReorderableListView.builder` 的 `itemBuilder` 返回的最外层 widget 必须是 `Material` 后代;若返回裸 `ListTile`,drag proxy 在 Overlay 中渲染时会丢失 `Material` 祖先 → 解法:顶层包 `Material(type: MaterialType.transparency, key: …)`,key 必须上移到顶层 Material
 
 ### 构建
 - [坑] Windows 下不能 `flutter build linux`；跨平台构建需在对应宿主
@@ -258,6 +272,7 @@
 - [事实] 已完成六端工程 + M3 亮暗主题切换（`ThemeController`）
 - [事实] 已完成 BLE / BT / Wi-Fi 场景页 + 耳机对比页 + Sniff 专页
 - [事实] 已内置 16 款 BES 芯片参数（chip_1306 ~ chip_1702）
+- [事实] 2026-05-11 · `/admin` 支持芯片拖拽排序,经 `EarbudsRepository.reorder` 收口、SP 持久化、自动同步到所有用户展示页面;红屏一闪根因为 Tooltip+ReorderableListView 时序竞态,已切换 `Semantics` 根治
 
 ---
 
