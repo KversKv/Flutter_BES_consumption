@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/power_event.dart';
+import '../theme/app_colors.dart';
 
 /// 鼠标悬浮时显示的当前事件信息栏
 class HoverInfoBar extends StatelessWidget {
@@ -9,11 +11,12 @@ class HoverInfoBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textStyle = Theme.of(context).textTheme.bodyMedium;
+    final l10n = AppLocalizations.of(context);
     if (event == null) {
       return Align(
         alignment: Alignment.centerLeft,
         child: Text(
-          '悬浮在图表上可查看阶段名、持续时间、电流信息',
+          l10n.chartHoverHint,
           style: textStyle,
         ),
       );
@@ -26,9 +29,9 @@ class HoverInfoBar extends StatelessWidget {
         spacing: 16,
         runSpacing: 8,
         children: [
-          Text('阶段: ${event!.label}', style: textStyle),
-          Text('持续: ${durMs.toStringAsFixed(3)} ms', style: textStyle),
-          Text('电流: ${event!.currentMa.toStringAsFixed(3)} mA', style: textStyle),
+          Text('${l10n.chartPhase}: ${event!.label}', style: textStyle),
+          Text('${l10n.chartDuration}: ${durMs.toStringAsFixed(3)} ms', style: textStyle),
+          Text('${l10n.chartCurrent}: ${event!.currentMa.toStringAsFixed(3)} mA', style: textStyle),
         ],
       ),
     );
@@ -46,6 +49,7 @@ class EventLegendPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(8),
@@ -67,7 +71,7 @@ class EventLegendPanel extends StatelessWidget {
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: isHovered ? theme.colorScheme.primary : const Color(0xFFDDDDDD),
+                  color: isHovered ? theme.colorScheme.primary : palette.borderSubtle,
                   width: isHovered ? 2 : 1,
                 ),
               ),

@@ -1,34 +1,62 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // 需要引入 provider 来获取数据
+import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../state/app_state.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
 import '../widgets/config_panels.dart';
 import '../widgets/kpi_widgets.dart';
 import '../widgets/chart_widgets.dart';
 
-class BleCasePage extends StatelessWidget {
+class BleCasePage extends StatefulWidget {
   const BleCasePage({super.key});
+
+  @override
+  State<BleCasePage> createState() => _BleCasePageState();
+}
+
+class _BleCasePageState extends State<BleCasePage> {
+  bool _panelExpanded = true;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // 监听数据源
+    final palette = AppPalette.of(context);
+    final l10n = AppLocalizations.of(context);
     final appState = context.watch<AppState>();
 
     return Row(
       children: [
-        SizedBox(
-          width: 380,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Card(
-              elevation: 0,
-              color: theme.colorScheme.surfaceContainerHighest,
-              child: const Padding(
-                padding: EdgeInsets.all(16),
-                child: ConfigPanel(),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          width: _panelExpanded ? 380 : 0,
+          clipBehavior: Clip.hardEdge,
+          decoration: BoxDecoration(
+            border: Border(
+              right: BorderSide(
+                color: _panelExpanded ? palette.borderSubtle : Colors.transparent,
               ),
             ),
           ),
+          child: _panelExpanded
+              ? SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Card(
+                    elevation: 0,
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    child: const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: ConfigPanel(),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+        _CollapseToggle(
+          expanded: _panelExpanded,
+          onToggle: () => setState(() => _panelExpanded = !_panelExpanded),
+          tooltip: _panelExpanded ? l10n.collapsePanel : l10n.expandPanel,
         ),
         Expanded(
           child: Column(
@@ -44,7 +72,6 @@ class BleCasePage extends StatelessWidget {
                     color: theme.colorScheme.surfaceContainer,
                     child: Padding(
                       padding: const EdgeInsets.all(12),
-                      // 使用统一的图表组件
                       child: UnifiedPowerChart(
                         events: appState.events,
                         periodUs: appState.periodUs,
@@ -60,6 +87,50 @@ class BleCasePage extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _CollapseToggle extends StatelessWidget {
+  final bool expanded;
+  final VoidCallback onToggle;
+  final String tooltip;
+
+  const _CollapseToggle({
+    required this.expanded,
+    required this.onToggle,
+    required this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return SizedBox(
+      width: 20,
+      child: Align(
+        alignment: Alignment.center,
+        child: Tooltip(
+          message: tooltip,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+            onTap: onToggle,
+            child: Container(
+              width: 20,
+              height: 48,
+              decoration: BoxDecoration(
+                color: palette.bgElevated2,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                border: Border.all(color: palette.borderSubtle),
+              ),
+              child: Icon(
+                expanded ? Icons.chevron_left : Icons.chevron_right,
+                size: 14,
+                color: palette.textSecondary,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

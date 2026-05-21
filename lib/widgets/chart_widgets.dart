@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import '../l10n/app_localizations.dart';
 import '../models/power_event.dart';
 import '../theme/app_colors.dart';
 import 'legend_hover_widgets.dart';
@@ -34,6 +35,7 @@ class _UnifiedPowerChartState extends State<UnifiedPowerChart> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -45,7 +47,7 @@ class _UnifiedPowerChartState extends State<UnifiedPowerChart> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('隐藏睡眠/空隙'),
+                Text(l10n.chartHideSleepGaps),
                 Switch(
                   value: widget.hideLowPowerGaps,
                   onChanged: widget.onToggleHideGaps,
@@ -54,8 +56,8 @@ class _UnifiedPowerChartState extends State<UnifiedPowerChart> {
             ),
             Text(
               widget.hideLowPowerGaps
-                  ? '时间轴：压缩视图（睡眠已隐藏）'
-                  : '时间轴：完整周期视图',
+                  ? l10n.chartTimelineCompressed
+                  : l10n.chartTimelineFull,
               style: const TextStyle(fontSize: 12),
               textAlign: TextAlign.right,
             ),
@@ -203,38 +205,10 @@ class _TimelineChartInteractiveState extends State<TimelineChartInteractive> {
               size: Size.infinite,
             ),
             if (hoveredEvent != null && pointerLocalPos != null)
-              Positioned(
-                left: pointerLocalPos!.dx + 8,
-                top: math.max(8, pointerLocalPos!.dy - 60),
-                child: Material(
-                  elevation: 4,
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(6),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          hoveredEvent!.label,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Length: ${hoveredEvent!.durationUs.toStringAsFixed(0)} µs',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        Text(
-                          'Current: ${hoveredEvent!.currentMa.toStringAsFixed(3)} mA',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              _ChartTooltip(
+                event: hoveredEvent!,
+                pointer: pointerLocalPos!,
+                containerSize: size,
               ),
           ],
         ),
@@ -247,6 +221,78 @@ class _EventRect {
   final PowerEvent event;
   final Rect rect;
   _EventRect(this.event, this.rect);
+}
+
+class _ChartTooltip extends StatelessWidget {
+  final PowerEvent event;
+  final Offset pointer;
+  final Size containerSize;
+
+  const _ChartTooltip({
+    required this.event,
+    required this.pointer,
+    required this.containerSize,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    const tooltipWidth = 180.0;
+    const tooltipHeight = 72.0;
+    const gap = 12.0;
+
+    double left = pointer.dx + gap;
+    double top = pointer.dy - tooltipHeight / 2;
+
+    if (left + tooltipWidth > containerSize.width - gap) {
+      left = pointer.dx - tooltipWidth - gap;
+    }
+    if (left < gap) left = gap;
+    if (top < gap) top = gap;
+    if (top + tooltipHeight > containerSize.height - gap) {
+      top = containerSize.height - tooltipHeight - gap;
+    }
+
+    return Positioned(
+      left: left,
+      top: top,
+      child: AnimatedOpacity(
+        opacity: 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: Material(
+          elevation: 6,
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(8),
+          shadowColor: Colors.black.withValues(alpha: 0.3),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  event.label,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${l10n.chartDuration}: ${event.durationUs.toStringAsFixed(0)} µs',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                Text(
+                  '${l10n.chartCurrent}: ${event.currentMa.toStringAsFixed(3)} mA',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 List<_EventRect> _computeEventRects({

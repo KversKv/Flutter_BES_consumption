@@ -196,48 +196,65 @@ class _NavItem extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isWide ? AppSpacing.x3 : AppSpacing.x2,
-              vertical: AppSpacing.x2,
-            ),
-            child: isWide
-                ? Row(
-                    children: [
-                      Icon(item.icon, size: 20, color: color),
-                      const SizedBox(width: AppSpacing.x3),
-                      Expanded(
-                        child: Text(
-                          item.label,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight:
-                                selected ? FontWeight.w600 : FontWeight.w400,
-                            color: color,
+          child: Stack(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isWide ? AppSpacing.x3 : AppSpacing.x2,
+                  vertical: AppSpacing.x2,
+                ),
+                child: isWide
+                    ? Row(
+                        children: [
+                          Icon(item.icon, size: 20, color: color),
+                          const SizedBox(width: AppSpacing.x3),
+                          Expanded(
+                            child: Text(
+                              item.label,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight:
+                                    selected ? FontWeight.w600 : FontWeight.w400,
+                                color: color,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        ],
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(item.icon, size: 22, color: color),
+                          const SizedBox(height: 2),
+                          Text(
+                            item.label,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: color,
+                              fontWeight:
+                                  selected ? FontWeight.w600 : FontWeight.w400,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                    ],
-                  )
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(item.icon, size: 22, color: color),
-                      const SizedBox(height: 2),
-                      Text(
-                        item.label,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: color,
-                          fontWeight:
-                              selected ? FontWeight.w600 : FontWeight.w400,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+              ),
+              if (selected)
+                Positioned(
+                  left: 0,
+                  top: isWide ? 8 : 6,
+                  bottom: isWide ? 8 : 6,
+                  child: Container(
+                    width: 3,
+                    decoration: BoxDecoration(
+                      color: palette.accent,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
+                ),
+            ],
           ),
         ),
       ),

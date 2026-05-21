@@ -246,6 +246,15 @@ class AppLocalizations {
       'admin_export_success':
           'Exported chips to {location}. Replace assets/data/chips/ to make it the new seed.',
       'admin_export_failed': 'Export failed: {error}',
+      'chart_hide_sleep_gaps': 'Hide sleep/gaps',
+      'chart_timeline_compressed': 'Timeline: compressed view (sleep hidden)',
+      'chart_timeline_full': 'Timeline: full period view',
+      'chart_hover_hint': 'Hover over the chart to view phase name, duration, and current info',
+      'chart_phase': 'Phase',
+      'chart_duration': 'Duration',
+      'chart_current': 'Current',
+      'collapse_panel': 'Collapse panel',
+      'expand_panel': 'Expand panel',
     },
     'zh': {
       'appTitle': 'BES 功耗 (演示)',
@@ -480,6 +489,15 @@ class AppLocalizations {
       'admin_export_json': '导出 JSON',
       'admin_export_success': '已导出到 {location}，覆盖 assets/data/chips/ 后即为新的种子数据。',
       'admin_export_failed': '导出失败：{error}',
+      'chart_hide_sleep_gaps': '隐藏睡眠/空隙',
+      'chart_timeline_compressed': '时间轴：压缩视图（睡眠已隐藏）',
+      'chart_timeline_full': '时间轴：完整周期视图',
+      'chart_hover_hint': '悬浮在图表上可查看阶段名、持续时间、电流信息',
+      'chart_phase': '阶段',
+      'chart_duration': '持续',
+      'chart_current': '电流',
+      'collapse_panel': '收起面板',
+      'expand_panel': '展开面板',
     },
   };
 
@@ -731,6 +749,16 @@ class AppLocalizations {
       _t('admin_export_success').replaceFirst('{location}', location);
   String adminExportFailed(String error) =>
       _t('admin_export_failed').replaceFirst('{error}', error);
+
+  String get chartHideSleepGaps => _t('chart_hide_sleep_gaps');
+  String get chartTimelineCompressed => _t('chart_timeline_compressed');
+  String get chartTimelineFull => _t('chart_timeline_full');
+  String get chartHoverHint => _t('chart_hover_hint');
+  String get chartPhase => _t('chart_phase');
+  String get chartDuration => _t('chart_duration');
+  String get chartCurrent => _t('chart_current');
+  String get collapsePanel => _t('collapse_panel');
+  String get expandPanel => _t('expand_panel');
 
   static AppLocalizations of(BuildContext context) {
     final instance = Localizations.of<AppLocalizations>(context, AppLocalizations);

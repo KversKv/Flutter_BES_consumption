@@ -22,6 +22,7 @@ dependencies:
   provider: ^6.0.0
   fl_chart: ^1.1.1
   shared_preferences: ^2.2.0
+  google_fonts: ^6.2.1
   # archive: 纯 Dart zip 实现，admin 一键导出 chips/ + chips_index.json
   # 给用户回写到 assets/data/ 用；六端通吃，无原生依赖。
   archive: ^3.6.1

@@ -95,16 +95,16 @@ class _ConfigPanelState extends State<ConfigPanel> {
             children: [
               Text(AppLocalizations.of(context).chip),
               const SizedBox(height: 6),
-              DropdownButton<String>(
-                value: app.selectedChipId,
-                isExpanded: true,
-                items: app.chips
-                    .map((c) => DropdownMenuItem(
+              DropdownMenu<String>(
+                initialSelection: app.selectedChipId,
+                expandedInsets: EdgeInsets.zero,
+                dropdownMenuEntries: app.chips
+                    .map((c) => DropdownMenuEntry(
                           value: c.id,
-                          child: Text(c.name),
+                          label: c.name,
                         ))
                     .toList(),
-                onChanged: (v) {
+                onSelected: (v) {
                   if (v != null) context.read<AppState>().setChip(v);
                 },
               ),
@@ -132,17 +132,17 @@ class _ConfigPanelState extends State<ConfigPanel> {
               const SizedBox(height: 6),
               SizedBox(
                 width: double.infinity,
-                child: DropdownButton<Mode>(
-                  value: app.params.mode,
-                  isExpanded: true,
-                  items: [
-                    DropdownMenuItem(value: Mode.advertisingTxRx, child: Text(AppLocalizations.of(context).advertisingTxRx)),
-                    DropdownMenuItem(value: Mode.advertisingTxOnly, child: Text(AppLocalizations.of(context).advertisingTxOnly)),
-                    DropdownMenuItem(value: Mode.bleConnectionPeripheral, child: Text(AppLocalizations.of(context).bleConnectionPeripheral)),
-                    DropdownMenuItem(value: Mode.bleConnectionCentral, child: Text(AppLocalizations.of(context).bleConnectionCentral)),
-                    if (app.chip.supportsHDT) DropdownMenuItem(value: Mode.hdt, child: const Text('HDT')),
+                child: DropdownMenu<Mode>(
+                  initialSelection: app.params.mode,
+                  expandedInsets: EdgeInsets.zero,
+                  dropdownMenuEntries: [
+                    DropdownMenuEntry(value: Mode.advertisingTxRx, label: AppLocalizations.of(context).advertisingTxRx),
+                    DropdownMenuEntry(value: Mode.advertisingTxOnly, label: AppLocalizations.of(context).advertisingTxOnly),
+                    DropdownMenuEntry(value: Mode.bleConnectionPeripheral, label: AppLocalizations.of(context).bleConnectionPeripheral),
+                    DropdownMenuEntry(value: Mode.bleConnectionCentral, label: AppLocalizations.of(context).bleConnectionCentral),
+                    if (app.chip.supportsHDT) DropdownMenuEntry(value: Mode.hdt, label: 'HDT'),
                   ],
-                  onChanged: (v) {
+                  onSelected: (v) {
                     if (v != null) context.read<AppState>().setMode(v);
                   },
                 ),
@@ -151,16 +151,16 @@ class _ConfigPanelState extends State<ConfigPanel> {
 
               Text('${AppLocalizations.of(context).txPowerLabel} $currentTx'),
               const SizedBox(height: 6),
-              DropdownButton<double>(
-                value: currentTx,
-                isExpanded: true,
-                items: levels
-                    .map((lv) => DropdownMenuItem(
+              DropdownMenu<double>(
+                initialSelection: currentTx,
+                expandedInsets: EdgeInsets.zero,
+                dropdownMenuEntries: levels
+                    .map((lv) => DropdownMenuEntry(
                           value: lv,
-                          child: Text(lv.toString()),
+                          label: lv.toString(),
                         ))
                     .toList(),
-                onChanged: (v) {
+                onSelected: (v) {
                   if (v != null) context.read<AppState>().setTxPower(v);
                 },
               ),
@@ -554,7 +554,7 @@ class SniffingConfigPanel extends StatelessWidget {
         }),
         const SizedBox(height: 12),
 
-        Text('电池容量 (mAh): ${st.batteryCapacity_mAh.toStringAsFixed(0)}'),
+        Text('${AppLocalizations.of(context).batteryCapacityLabel} ${st.batteryCapacity_mAh.toStringAsFixed(0)}'),
         Slider(
           value: st.batteryCapacity_mAh,
           min: 50,
@@ -590,12 +590,12 @@ class ChipInfoCard extends StatelessWidget {
               spacing: 12,
               runSpacing: 8,
               children: [
-                _specItem(AppLocalizations.of(context).model, chip.name),
-                _specItem(AppLocalizations.of(context).vbat, '${chip.vbat} V'),
+                _specItem(context, AppLocalizations.of(context).model, chip.name),
+                _specItem(context, AppLocalizations.of(context).vbat, '${chip.vbat} V'),
                 // _specItem('Sleep', '${chip.sleepCurrent_uA} µA'),
-                _specItem(AppLocalizations.of(context).rx, '${chip.rxCurrent_mA} mA'),
-                _specItem(AppLocalizations.of(context).tx, '${chip.txCurrent_mA_forDbm[chip.txPowerLevelsDbm.first]} mA'),
-                _specItem(AppLocalizations.of(context).descriptionLabel, '${chip.description}'),
+                _specItem(context, AppLocalizations.of(context).rx, '${chip.rxCurrent_mA} mA'),
+                _specItem(context, AppLocalizations.of(context).tx, '${chip.txCurrent_mA_forDbm[chip.txPowerLevelsDbm.first]} mA'),
+                _specItem(context, AppLocalizations.of(context).descriptionLabel, '${chip.description}'),
               ],
             ),
             const SizedBox(height: 8),
@@ -609,13 +609,13 @@ class ChipInfoCard extends StatelessWidget {
     );
   }
 
-  Widget _specItem(String title, String value) {
+  Widget _specItem(BuildContext context, String title, String value) {
     return SizedBox(
       width: 180,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+          Text(title, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
