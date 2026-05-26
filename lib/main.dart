@@ -5,6 +5,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'services/config/config_repository.dart';
+import 'services/chip_json_repository.dart';
 import 'services/earbuds_repository.dart';
 import 'state/app_state.dart';
 import 'state/bt_state.dart';
@@ -17,6 +18,7 @@ import 'theme/app_theme.dart';
 // Toggle this flag to choose the UI language for the whole app.
 // Set to `true` to force Chinese (Simplified), `false` for English.
 const bool useChinese = false;
+const String adminSecretKey = 'admin';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +27,8 @@ Future<void> main() async {
   }
   await ConfigRepository.instance.load();
   await EarbudsRepository.instance.load();
-  const appLocale = useChinese ?  Locale('zh') :  Locale('en');
+  await ChipJsonRepository.instance.load();
+  const appLocale = useChinese ? Locale('zh') : Locale('en');
   runApp(MyApp(locale: appLocale));
 }
 
@@ -64,7 +67,7 @@ class MyApp extends StatelessWidget {
           initialRoute: '/',
           routes: {
             '/': (_) => const MyHomePage(),
-            '/admin': (_) => const AdminPage(),
+            '/admin': (_) => const AdminPage(secretKey: adminSecretKey),
           },
         ),
       ),

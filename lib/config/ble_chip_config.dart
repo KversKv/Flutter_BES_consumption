@@ -15,9 +15,6 @@ final List<BleChip> defaultBleChips = [
     rxWindow_us: 409.6,
     tifs_us: 122.88,
     tifsCurrent_mA: 2,
-    txPowerLevelsDbm: [
-      0, 9
-    ],
     txCurrent_mA_forDbm: {
       0: 24,
       9: 38.7,
@@ -39,7 +36,6 @@ final List<BleChip> defaultBleChips = [
     description: 'BES2710CP: LTE | BT | BLE High Performance&Low Power SOC.',
     hdtIdleCurrent_mA: 0.07,
   ),
-
   BleChip(
     id: 'BES2720YP',
     name: 'BES2720YP',
@@ -51,11 +47,6 @@ final List<BleChip> defaultBleChips = [
     rxWindow_us: 184.32,
     tifs_us: 150,
     tifsCurrent_mA: 2.953,
-    txPowerLevelsDbm: [
-      -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-      10, 11, 12, 13, 14, 15
-    ],
     txCurrent_mA_forDbm: {
       -10: 15.0,
       -9: 15.0,
@@ -101,8 +92,6 @@ final List<BleChip> defaultBleChips = [
     description: 'BES2720YP: high performance SOC for BT&BLE.',
     hdtIdleCurrent_mA: 2.0,
   ),
-
-
   BleChip(
     id: 'BES2720IMP',
     name: 'BES2720IMP',
@@ -114,11 +103,6 @@ final List<BleChip> defaultBleChips = [
     rxWindow_us: 300.0,
     tifs_us: 150,
     tifsCurrent_mA: 1.5,
-    txPowerLevelsDbm: [
-      -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-      10, 11, 12, 13, 14, 15
-    ],
     txCurrent_mA_forDbm: {
       -10: 15.0,
       -9: 15.0,
@@ -164,7 +148,6 @@ final List<BleChip> defaultBleChips = [
     description: 'BES2720IMP: low-power BLE transceiver, demo parameters.',
     hdtIdleCurrent_mA: 0.025,
   ),
-
   BleChip(
     id: 'BES2700IMP',
     name: 'BES2700IMP',
@@ -174,14 +157,9 @@ final List<BleChip> defaultBleChips = [
     rxCurrent_mA_HDT_2G4: 13.0,
     rxCurrent_mA_HDT_5G: 18.0,
     rxWindow_us: 200.0,
-    txPowerLevelsDbm: [
-      -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-      10, 11, 12, 13, 14, 15
-    ],
     txCurrent_mA_forDbm: {
       -10: 5.0,
-      -9:  5.0,
+      -9: 5.0,
       -8: 5.0,
       -7: 6.0,
       -6: 7.0,
@@ -223,19 +201,14 @@ final List<BleChip> defaultBleChips = [
     advGapCurrent_mA: 2.004, // 2.004mA
     postProcess_us: 900.0,
     postCurrent_mA: 0.7,
-    description: 'BES2700IMP: 1503 : The most outstanding low-power chip to date from BES.',
+    description:
+        'BES2700IMP: 1503 : The most outstanding low-power chip to date from BES.',
     hdtIdleCurrent_mA: 0.0182,
   ),
-
   BleChip(
     id: 'BES2610WD',
     name: 'BES2610WD',
     vbat: 3.8,
-    txPowerLevelsDbm: [
-      -4, -3, -2, -1,
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-      10, 11, 12
-    ],
     txCurrent_mA_forDbm: {
       -4: 13.2,
       -3: 13.4,
@@ -279,7 +252,6 @@ final List<BleChip> defaultBleChips = [
     description: 'BES2610WD: compact BLE SoC, balanced RX/TX currents.',
     hdtIdleCurrent_mA: 0.0275,
   ),
-
   BleChip(
     id: 'BES2720BP',
     name: 'BES2720BP',
@@ -291,24 +263,22 @@ final List<BleChip> defaultBleChips = [
     rxWindow_us: 300.0,
     tifs_us: 150,
     tifsCurrent_mA: 0.2 * 8.0,
-    txPowerLevelsDbm: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-      10, 11, 12, 13, 14],
-    txCurrent_mA_forDbm: {    
+    txCurrent_mA_forDbm: {
       14: 40.0,
       13: 35.0,
       12: 31.0,
       11: 27.0,
       10: 24.0,
-      9:  21.0,
-      8:  18.7,
-      7:  17.6,
-      6:  16.5,
-      5:  15.8,
-      4:  11.0,
-      3:  10.7,
-      2:  10.5,
-      1:  10.3,
-      0:  10.1,
+      9: 21.0,
+      8: 18.7,
+      7: 17.6,
+      6: 16.5,
+      5: 15.8,
+      4: 11.0,
+      3: 10.7,
+      2: 10.5,
+      1: 10.3,
+      0: 10.1,
     },
     postProcess_us: 1000.0,
     postCurrent_mA: 4.0,
@@ -326,36 +296,33 @@ final List<BleChip> defaultBleChips = [
     description: 'BES_2800BP: low-power BLE chip, example parameters.',
     hdtIdleCurrent_mA: 0.04,
   ),
-
   BleChip(
     id: 'BES2720ZP_8C',
     name: 'BES2720ZP_8C',
     vbat: 3.3,
-    sleepCurrent_uA: 67.5,  //NOBTC: 52.86
+    sleepCurrent_uA: 67.5, //NOBTC: 52.86
     rxCurrent_mA: 6.0,
     rxCurrent_mA_HDT_2G4: 13.0,
     rxCurrent_mA_HDT_5G: 18.0,
     rxWindow_us: 300.0,
     tifs_us: 107.52,
     tifsCurrent_mA: 1.506,
-    txPowerLevelsDbm: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-      10, 11, 12, 13, 14],
-    txCurrent_mA_forDbm: {    
+    txCurrent_mA_forDbm: {
       14: 40.0,
       13: 35.0,
       12: 31.0,
       11: 27.0,
       10: 24.0,
-      9:  21.0,
-      8:  18.7,
-      7:  17.6,
-      6:  19.5,   //17.2
-      5:  15.8,
-      4:  11.0,
-      3:  10.7,
-      2:  10.5,
-      1:  10.3,
-      0:  10.1,
+      9: 21.0,
+      8: 18.7,
+      7: 17.6,
+      6: 19.5, //17.2
+      5: 15.8,
+      4: 11.0,
+      3: 10.7,
+      2: 10.5,
+      1: 10.3,
+      0: 10.1,
     },
     postProcess_us: 588.8,
     postCurrent_mA: 0.918,
@@ -369,26 +336,23 @@ final List<BleChip> defaultBleChips = [
     startRadio_us: 46.08,
     startRadioCurrent_mA: 5.547,
     advGap_us: 102.4,
-    advGapCurrent_mA: 1.098, 
+    advGapCurrent_mA: 1.098,
     description: 'BES2720ZP_8C: High performance SOC.',
     hdtIdleCurrent_mA: 0.04,
   ),
-
-
   BleChip(
     id: 'BES2720ZP_8C_For_Fitbit',
     name: 'BES2720ZP_8C_For_Fitbit',
     vbat: 3.8,
-    sleepCurrent_uA: 34.319,  //3.8V: 67.5uA ; 3.3V: 74.304uA
+    sleepCurrent_uA: 34.319, //3.8V: 67.5uA ; 3.3V: 74.304uA
     rxCurrent_mA: 6.1,
     rxCurrent_mA_HDT_2G4: 13.0,
     rxCurrent_mA_HDT_5G: 18.0,
     rxWindow_us: 300.0,
     tifs_us: 112.64,
     tifsCurrent_mA: 1.864,
-    txPowerLevelsDbm: [6],
-    txCurrent_mA_forDbm: {    
-      6:  9.5,   //3.3V: 17.35   
+    txCurrent_mA_forDbm: {
+      6: 9.5, //3.3V: 17.35
     },
     postProcess_us: 588.8,
     postCurrent_mA: 0.826,
@@ -402,12 +366,10 @@ final List<BleChip> defaultBleChips = [
     startRadio_us: 46.08,
     startRadioCurrent_mA: 5.547,
     advGap_us: 102.4,
-    advGapCurrent_mA: 3.502, 
+    advGapCurrent_mA: 3.502,
     description: 'BES2720ZP_8C_2POINT: High performance SOC.',
     hdtIdleCurrent_mA: 0.04,
   ),
-
-
   BleChip(
     id: 'BES2800BP',
     name: 'BES2800BP',
@@ -419,7 +381,6 @@ final List<BleChip> defaultBleChips = [
     rxWindow_us: 300.0,
     tifs_us: 150,
     tifsCurrent_mA: 0.2 * 8.0,
-    txPowerLevelsDbm: [-20, -12, -8, -4, 0, 4, 8],
     txCurrent_mA_forDbm: {
       -20: 3.0,
       -12: 3.8,
@@ -445,7 +406,6 @@ final List<BleChip> defaultBleChips = [
     description: 'BES_2800BP: low-power BLE chip, example parameters.',
     hdtIdleCurrent_mA: 0.04,
   ),
-
   BleChip(
     id: 'BES1505(HDT Demo)',
     name: 'BES1505(HDT Demo)',
@@ -457,11 +417,6 @@ final List<BleChip> defaultBleChips = [
     rxWindow_us: 184.32,
     tifs_us: 150,
     tifsCurrent_mA: 2.953,
-    txPowerLevelsDbm: [
-      -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-      10, 11, 12, 13, 14, 15
-    ],
     txCurrent_mA_forDbm: {
       -10: 15.0,
       -9: 15.0,
@@ -492,8 +447,8 @@ final List<BleChip> defaultBleChips = [
     },
 
     txCurrentByBand: {
-    '2.4G': {0: 28, 5: 34.0, 10: 43.0},
-    '5G': {0: 39.2, 5: 41.0, 10: 47.6},
+      '2.4G': {0: 28, 5: 34.0, 10: 43.0},
+      '5G': {0: 39.2, 5: 41.0, 10: 47.6},
     },
     rxCurrentByBand: {
       '2.4G': 13.0,
@@ -517,7 +472,6 @@ final List<BleChip> defaultBleChips = [
     hdtIdleCurrent_mA: 2.0,
     supportsHDT: true,
   ),
-
   BleChip(
     id: 'nrf52832',
     name: 'nRF52832 (demo)',
@@ -529,7 +483,6 @@ final List<BleChip> defaultBleChips = [
     rxWindow_us: 300.0,
     tifs_us: 150,
     tifsCurrent_mA: 0.2 * 5.5,
-    txPowerLevelsDbm: [-20, -16, -12, -8, -4, 0, 4],
     txCurrent_mA_forDbm: {
       -20: 3.4,
       -16: 3.6,
@@ -555,6 +508,4 @@ final List<BleChip> defaultBleChips = [
     description: 'nRF52832: Nordic demo profile, for comparison.',
     hdtIdleCurrent_mA: 0.0018,
   ),
-
 ];
-

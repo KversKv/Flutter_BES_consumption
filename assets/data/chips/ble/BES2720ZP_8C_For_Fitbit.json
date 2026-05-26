@@ -9,9 +9,6 @@
   "rxWindow_us": 300.0,
   "tifs_us": 112.64,
   "tifsCurrent_mA": 1.864,
-  "txPowerLevelsDbm": [
-    6.0
-  ],
   "txCurrent_mA_forDbm": {
     "6": 9.5
   },

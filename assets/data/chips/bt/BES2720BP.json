@@ -10,23 +10,6 @@
   "clockDriftPpm": 50,
   "tifs_us": 150,
   "tifsCurrent_mA": 1.6,
-  "txPowerLevelsDbm": [
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14
-  ],
   "txCurrent_mA_forDbm": {
     "0": 10.1,
     "1": 10.3,

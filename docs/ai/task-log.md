@@ -414,3 +414,25 @@
   3. `BTState.useDefaultConfig` 默认开启；开启时 BT Sniff 直接使用 JSON Length 生成波形，只有 Sleep Length 随 Connect Interval 剩余时间变化；关闭后恢复 packet/payload/attempt/clock drift 公式计算。
   4. BT 配置面板将 Connect Interval 移到 Voltage 下方，并在其下新增 Default Config 开关；开启时隐藏后续手动长度参数。
 - **验证**：`flutter analyze` 通过；`flutter test` 全量通过。
+## 2026-05-26 - Admin 统一扩展为四类芯片 JSON 管理界面
+- **类型**：feature / docs
+- **范围**：`lib/main.dart`、`lib/pages/admin_page.dart`、`lib/services/chip_json_repository.dart`、`lib/services/config/config_repository.dart`、`lib/services/earbuds_repository.dart`、`lib/l10n/app_localizations.dart`、`.ai/memory.md`
+- **动因**：用户要求 `/admin` 提供密钥登录，并以标签栏管理 BLE CASE、BT CASE、Earbuds、Wi-Fi、运维管理、访问热度；芯片字段需与当前 JSON 同步并支持自定义字段。
+- **变更**：新增 `adminSecretKey = 'admin'`；新增通用 `ChipJsonRepository`；`AdminPage` 改为登录 + 6 标签 + 通用 JSON 字段表单；保存同步运行期模型，导出生成 `chips/<domain>/index.json + 单芯片 json`。
+- **影响**：Web 端仍不能直接写回 assets，admin 保存先落本地持久化；权威源更新需导出后覆盖 `assets/data/chips/`。
+- **验证**：`flutter analyze` 通过；`flutter test` 全量通过；本地 `http://localhost:54542/admin` 返回 200。
+
+## 2026-05-26 - Admin JSON 字段展示优化与显式排序入口
+- **类型**：feature / ui
+- **范围**：`lib/pages/admin_page.dart`、`lib/l10n/app_localizations.dart`
+- **动因**：对象字段以整段 JSON 文本呈现时，类似 `scene.noisePink` 的二级字段难以定位和修改；芯片排序能力也需要更显式地提示会同步到 `index.json`。
+- **变更**：对象型 JSON 字段改为递归展开的子字段编辑器，数组和复杂结构仍保留 JSON 文本兜底；芯片列表保留拖拽排序，并在菜单中新增上移/下移；列表区提示导出 JSON 会将当前顺序写入 `index.json`。
+- **影响**：保存后仍走 `ChipJsonRepository` 的运行期持久化与导出链路；排序不直接写 assets，导出后覆盖 `assets/data/chips/<domain>/index.json` 才成为新种子顺序。
+- **验证**：`flutter analyze` 通过；`flutter test` 全量通过；本地 `http://localhost:54542/admin` 返回 200。
+
+## 2026-05-26 - TX power levels derived from current map
+- **Type**: cleanup / data / test
+- **Scope**: `lib/models/{ble_chip,bt_chip,wifi_chip}.dart`, `lib/services/chip_json_repository.dart`, `lib/config/*_chip_config.dart`, `assets/data/chips/{ble,bt,wifi}/*.json`, `test/tx_power_levels_test.dart`
+- **Reason**: `txPowerLevelsDbm` duplicated the keys of `txCurrent_mA_forDbm`, so admin edits had two sources of truth for the same TX power table.
+- **Change**: BLE/BT/Wi-Fi models now derive `txPowerLevelsDbm` from sorted `txCurrent_mA_forDbm` keys, keep the legacy list only as a read fallback, and omit it from `toJson()`; admin repository canonicalizes BLE/BT/Wi-Fi records by removing `txPowerLevelsDbm`; seed JSON and Dart fallback configs were cleaned to store only the dBm -> mA map.
+- **Verification**: `flutter analyze` passed; `flutter test` passed; local `http://localhost:54542/admin` returned 200.

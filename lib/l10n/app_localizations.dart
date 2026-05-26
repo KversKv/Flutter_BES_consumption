@@ -253,10 +253,44 @@ class AppLocalizations {
       'admin_drag_handle': 'Drag to reorder',
       'admin_reorder_disabled_in_search':
           'Clear the search to drag-reorder chips.',
+      'admin_sort_hint':
+          'Drag the handle or use Move up / Move down. Export JSON writes this order to index.json.',
+      'admin_move_up': 'Move up',
+      'admin_move_down': 'Move down',
       'admin_export_json': 'Export JSON',
       'admin_export_success':
-          'Exported chips to {location}. Replace assets/data/chips/earbuds/ to make it the new seed.',
+          'Exported chips to {location}. Replace assets/data/chips/ to make it the new seed.',
       'admin_export_failed': 'Export failed: {error}',
+      'admin_login_title': 'Admin login',
+      'admin_secret': 'Secret key',
+      'admin_login': 'Login',
+      'admin_logout': 'Logout',
+      'admin_invalid_secret': 'Invalid secret key.',
+      'admin_ble_case': 'BLE CASE Management',
+      'admin_bt_case': 'BT CASE Management',
+      'admin_earbuds': 'Earbuds Management',
+      'admin_wifi': 'Wi-Fi Management',
+      'admin_ops': 'Operations',
+      'admin_heat': 'Visit Heat',
+      'admin_json_editor': 'JSON fields',
+      'admin_add_field': 'Add field',
+      'admin_field_name': 'Field name',
+      'admin_field_value': 'Value',
+      'admin_field_type': 'Type',
+      'admin_type_string': 'String',
+      'admin_type_number': 'Number',
+      'admin_type_bool': 'Boolean',
+      'admin_type_json': 'JSON',
+      'admin_bad_json': 'Invalid JSON.',
+      'admin_nested_fields': 'Expanded object fields',
+      'admin_add_nested_field': 'Add nested field',
+      'admin_saved_local': 'Saved locally. Export JSON to update seed files.',
+      'admin_reset_domain': 'Reset this tab',
+      'admin_export_all': 'Export all JSON',
+      'admin_ops_hint':
+          'Use Export all JSON after editing, then replace assets/data/chips/ with the exported files.',
+      'admin_heat_hint':
+          'Visit heat is reserved for future instrumentation. No telemetry is collected in this demo.',
       'chart_hide_sleep_gaps': 'Hide sleep/gaps',
       'chart_timeline_compressed': 'Timeline: compressed view (sleep hidden)',
       'chart_timeline_full': 'Timeline: full period view',
@@ -509,10 +543,41 @@ class AppLocalizations {
       'admin_invalid_id': 'ID 不能为空或与已有 ID 重复。',
       'admin_drag_handle': '拖拽排序',
       'admin_reorder_disabled_in_search': '请先清空搜索,才能拖拽排序。',
+      'admin_sort_hint': '可拖拽手柄，或使用上移 / 下移；导出 JSON 会把当前顺序写入 index.json。',
+      'admin_move_up': '上移',
+      'admin_move_down': '下移',
       'admin_export_json': '导出 JSON',
       'admin_export_success':
-          '已导出到 {location}，覆盖 assets/data/chips/earbuds/ 后即为新的种子数据。',
+          '已导出到 {location}，覆盖 assets/data/chips/ 后即为新的种子数据。',
       'admin_export_failed': '导出失败：{error}',
+      'admin_login_title': '管理员登录',
+      'admin_secret': '密钥',
+      'admin_login': '登录',
+      'admin_logout': '退出',
+      'admin_invalid_secret': '密钥不正确。',
+      'admin_ble_case': 'BLE CASE 管理',
+      'admin_bt_case': 'BT CASE 管理',
+      'admin_earbuds': 'Earbuds 管理',
+      'admin_wifi': 'Wi-Fi 管理',
+      'admin_ops': '运维管理',
+      'admin_heat': '访问热度',
+      'admin_json_editor': 'JSON 字段',
+      'admin_add_field': '新增字段',
+      'admin_field_name': '字段名',
+      'admin_field_value': '值',
+      'admin_field_type': '类型',
+      'admin_type_string': '字符串',
+      'admin_type_number': '数字',
+      'admin_type_bool': '布尔',
+      'admin_type_json': 'JSON',
+      'admin_bad_json': 'JSON 格式不正确。',
+      'admin_nested_fields': '已展开对象字段',
+      'admin_add_nested_field': '新增子字段',
+      'admin_saved_local': '已保存到本地，导出 JSON 后可更新种子文件。',
+      'admin_reset_domain': '还原当前标签',
+      'admin_export_all': '导出全部 JSON',
+      'admin_ops_hint': '编辑后使用“导出全部 JSON”，再用导出的文件覆盖 assets/data/chips/。',
+      'admin_heat_hint': '访问热度预留给后续埋点；当前 Demo 不采集遥测数据。',
       'chart_hide_sleep_gaps': '隐藏睡眠/空隙',
       'chart_timeline_compressed': '时间轴：压缩视图（睡眠已隐藏）',
       'chart_timeline_full': '时间轴：完整周期视图',
@@ -780,11 +845,42 @@ class AppLocalizations {
   String get adminDragHandle => _t('admin_drag_handle');
   String get adminReorderDisabledInSearch =>
       _t('admin_reorder_disabled_in_search');
+  String get adminSortHint => _t('admin_sort_hint');
+  String get adminMoveUp => _t('admin_move_up');
+  String get adminMoveDown => _t('admin_move_down');
   String get adminExportJson => _t('admin_export_json');
   String adminExportSuccess(String location) =>
       _t('admin_export_success').replaceFirst('{location}', location);
   String adminExportFailed(String error) =>
       _t('admin_export_failed').replaceFirst('{error}', error);
+  String get adminLoginTitle => _t('admin_login_title');
+  String get adminSecret => _t('admin_secret');
+  String get adminLogin => _t('admin_login');
+  String get adminLogout => _t('admin_logout');
+  String get adminInvalidSecret => _t('admin_invalid_secret');
+  String get adminBleCase => _t('admin_ble_case');
+  String get adminBtCase => _t('admin_bt_case');
+  String get adminEarbuds => _t('admin_earbuds');
+  String get adminWifi => _t('admin_wifi');
+  String get adminOps => _t('admin_ops');
+  String get adminHeat => _t('admin_heat');
+  String get adminJsonEditor => _t('admin_json_editor');
+  String get adminAddField => _t('admin_add_field');
+  String get adminFieldName => _t('admin_field_name');
+  String get adminFieldValue => _t('admin_field_value');
+  String get adminFieldType => _t('admin_field_type');
+  String get adminTypeString => _t('admin_type_string');
+  String get adminTypeNumber => _t('admin_type_number');
+  String get adminTypeBool => _t('admin_type_bool');
+  String get adminTypeJson => _t('admin_type_json');
+  String get adminBadJson => _t('admin_bad_json');
+  String get adminNestedFields => _t('admin_nested_fields');
+  String get adminAddNestedField => _t('admin_add_nested_field');
+  String get adminSavedLocal => _t('admin_saved_local');
+  String get adminResetDomain => _t('admin_reset_domain');
+  String get adminExportAll => _t('admin_export_all');
+  String get adminOpsHint => _t('admin_ops_hint');
+  String get adminHeatHint => _t('admin_heat_hint');
 
   String get chartHideSleepGaps => _t('chart_hide_sleep_gaps');
   String get chartTimelineCompressed => _t('chart_timeline_compressed');

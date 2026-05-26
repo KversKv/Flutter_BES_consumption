@@ -403,8 +403,7 @@ class EarbudsRepository extends ChangeNotifier {
         if (decoded is Map && decoded['chips'] is List) {
           final chips = (decoded['chips'] as List)
               .whereType<Map>()
-              .map((m) =>
-                  EarbudsChip.fromJson(Map<String, dynamic>.from(m)))
+              .map((m) => EarbudsChip.fromJson(Map<String, dynamic>.from(m)))
               .where((c) => c.id.isNotEmpty)
               .toList();
           _records
@@ -562,6 +561,19 @@ class EarbudsRepository extends ChangeNotifier {
     await _persist();
   }
 
+  void replaceFromJsonRecords(List<Map<String, dynamic>> records) {
+    final chips = records
+        .map(EarbudsChip.fromJson)
+        .where((chip) => chip.id.isNotEmpty)
+        .toList();
+    _records
+      ..clear()
+      ..addAll(chips.map(MutableEarbudsChip.from));
+    _rebuildSnapshot();
+    notifyListeners();
+    unawaited(_persist());
+  }
+
   /// 把当前内存中的全套芯片数据导出为「拆分文件」格式。
   ///
   /// 返回 `{ 相对路径 -> JSON 字符串 }`，包括：
@@ -603,7 +615,8 @@ class EarbudsRepository extends ChangeNotifier {
   }
 
   String _generateId(String? hint) {
-    final base = (hint == null || hint.trim().isEmpty) ? 'chip_new' : hint.trim();
+    final base =
+        (hint == null || hint.trim().isEmpty) ? 'chip_new' : hint.trim();
     if (recordById(base) == null) return base;
     var i = 2;
     while (recordById('${base}_$i') != null) {

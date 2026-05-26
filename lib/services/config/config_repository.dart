@@ -118,10 +118,24 @@ class ConfigRepository extends ChangeNotifier {
             .toList(),
       }),
       for (final c in _wifiChips)
-        'chips/wifi/${_safeFileName(c.id)}.json':
-            encoder.convert(c.toJson()),
+        'chips/wifi/${_safeFileName(c.id)}.json': encoder.convert(c.toJson()),
       ...EarbudsRepository.instance.exportAsJsonFiles(),
     };
+  }
+
+  void replaceBleChips(List<BleChip> chips) {
+    _bleChips = List<BleChip>.unmodifiable(chips);
+    notifyListeners();
+  }
+
+  void replaceBtChips(List<BtChip> chips) {
+    _btChips = List<BtChip>.unmodifiable(chips);
+    notifyListeners();
+  }
+
+  void replaceWifiChips(List<WifiChip> chips) {
+    _wifiChips = List<WifiChip>.unmodifiable(chips);
+    notifyListeners();
   }
 
   String _safeFileName(String id) {

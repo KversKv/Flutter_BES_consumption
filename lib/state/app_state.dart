@@ -32,9 +32,10 @@ class AppState extends ChangeNotifier {
 
   AppState() {
     selectedChipId = chips.first.id;
-    final initialTx = chips.first.txPowerLevelsDbm.firstWhere(
+    final initialLevels = chips.first.txPowerLevelsDbm;
+    final initialTx = initialLevels.firstWhere(
       (e) => e == 0,
-      orElse: () => chips.first.txPowerLevelsDbm.first,
+      orElse: () => initialLevels.isEmpty ? 0 : initialLevels.first,
     );
     params = ProfileParams(
       mode: Mode.bleConnectionPeripheral,
@@ -147,8 +148,9 @@ class AppState extends ChangeNotifier {
   }
 
   void recompute() {
-    if (params.mode == Mode.advertisingTxOnly ) {
-      final intervalUs = (params.advIntervalMs * 1000).clamp(20000, 3_000_000).toDouble();
+    if (params.mode == Mode.advertisingTxOnly) {
+      final intervalUs =
+          (params.advIntervalMs * 1000).clamp(20000, 3_000_000).toDouble();
       periodUs = intervalUs;
       events = PowerCalculator.generateBleAdvertisingTxOnly(
         chip: chip,
@@ -156,7 +158,8 @@ class AppState extends ChangeNotifier {
         periodUs: periodUs,
       );
     } else if (params.mode == Mode.advertisingTxRx) {
-      final intervalUs = (params.advIntervalMs * 1000).clamp(20000, 3_000_000).toDouble();
+      final intervalUs =
+          (params.advIntervalMs * 1000).clamp(20000, 3_000_000).toDouble();
       periodUs = intervalUs;
       events = PowerCalculator.generateBleAdvertisingTxRx(
         chip: chip,
@@ -165,7 +168,8 @@ class AppState extends ChangeNotifier {
         rxCurrentMa: rxCurrentConnected_mA,
       );
     } else if (params.mode == Mode.bleConnectionCentral) {
-      final intervalUs = (params.connIntervalMs * 1000).clamp(7500, 4_000_000).toDouble();
+      final intervalUs =
+          (params.connIntervalMs * 1000).clamp(7500, 4_000_000).toDouble();
       periodUs = intervalUs;
       events = PowerCalculator.generateBleConnectedCentral(
         chip: chip,
@@ -175,7 +179,8 @@ class AppState extends ChangeNotifier {
         rxCurrentMa: rxCurrentConnected_mA,
       );
     } else if (params.mode == Mode.bleConnectionPeripheral) {
-      final intervalUs = (params.connIntervalMs * 1000).clamp(7500, 4_000_000).toDouble();
+      final intervalUs =
+          (params.connIntervalMs * 1000).clamp(7500, 4_000_000).toDouble();
       periodUs = intervalUs;
       events = PowerCalculator.generateBleConnectedPeripheral(
         chip: chip,
@@ -198,7 +203,7 @@ class AppState extends ChangeNotifier {
         hdtPhyRateMbps: 15.0,
         hdtPayloadBytes: 144,
       );
-    } 
+    }
     averageCurrent_mA = PowerCalculator.computeAverageCurrent(events, periodUs);
     notifyListeners();
   }
@@ -215,8 +220,6 @@ class AppState extends ChangeNotifier {
   double get sleepCurrent_uA {
     return chip.sleepCurrent_uA;
   }
-
-
 
   double get period_ms => periodUs / 1000.0;
 

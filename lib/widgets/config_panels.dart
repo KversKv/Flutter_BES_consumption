@@ -1013,7 +1013,7 @@ class ChipInfoCard extends StatelessWidget {
                 _specItem(context, AppLocalizations.of(context).rx,
                     '${chip.rxCurrent_mA} mA'),
                 _specItem(context, AppLocalizations.of(context).tx,
-                    '${chip.txCurrent_mA_forDbm[chip.txPowerLevelsDbm.first]} mA'),
+                    '${chip.txCurrentForPower(chip.snapTxPower(0.0))} mA'),
                 _specItem(
                     context,
                     AppLocalizations.of(context).descriptionLabel,

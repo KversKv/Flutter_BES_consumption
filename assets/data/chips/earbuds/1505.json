@@ -1,6 +1,6 @@
 {
   "id": "1505",
-  "process": "TSMC N22",
+  "process": "HLMC N22",
   "core": "M33*2 + BTC",
   "fullRamKb": 1408.0,
   "massProduction": true,

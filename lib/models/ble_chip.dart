@@ -19,7 +19,7 @@ class BleChip {
   final double tifsCurrent_mA;
 
   // 发射功率档位（dBm -> mA）
-  final List<double> txPowerLevelsDbm; // 可选的功率档位
+  final List<double> _txPowerLevelsDbmFallback;
   final Map<double, double> txCurrent_mA_forDbm; // 对应档位的发射电流
 
   // TX 结束后的后处理时长与电流
@@ -63,7 +63,7 @@ class BleChip {
     required this.rxWindow_us,
     required this.tifs_us,
     required this.tifsCurrent_mA,
-    required this.txPowerLevelsDbm,
+    List<double> txPowerLevelsDbm = const [],
     required this.txCurrent_mA_forDbm,
     required this.postProcess_us,
     required this.postCurrent_mA,
@@ -82,7 +82,13 @@ class BleChip {
     this.supportsHDT = false,
     this.txCurrentByBand,
     this.rxCurrentByBand,
-  });
+  }) : _txPowerLevelsDbmFallback = txPowerLevelsDbm;
+
+  List<double> get txPowerLevelsDbm {
+    final levels = txCurrent_mA_forDbm.keys.toList()..sort();
+    if (levels.isNotEmpty) return List<double>.unmodifiable(levels);
+    return List<double>.unmodifiable(_txPowerLevelsDbmFallback);
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -95,7 +101,6 @@ class BleChip {
         'rxWindow_us': rxWindow_us,
         'tifs_us': tifs_us,
         'tifsCurrent_mA': tifsCurrent_mA,
-        'txPowerLevelsDbm': txPowerLevelsDbm,
         'txCurrent_mA_forDbm':
             txCurrent_mA_forDbm.map((k, v) => MapEntry(k.toString(), v)),
         'postProcess_us': postProcess_us,
@@ -156,7 +161,9 @@ class BleChip {
 
   double txCurrentForPower(double txPowerDbm, [String? band]) {
     // If a band-specific map is provided and contains values, prefer it.
-    if (band != null && txCurrentByBand != null && txCurrentByBand!.containsKey(band)) {
+    if (band != null &&
+        txCurrentByBand != null &&
+        txCurrentByBand!.containsKey(band)) {
       final map = txCurrentByBand![band]!;
       if (map.containsKey(txPowerDbm)) return map[txPowerDbm]!;
       // fallback to closest key in band map
@@ -172,12 +179,13 @@ class BleChip {
       return map[closest]!;
     }
 
+    if (txCurrent_mA_forDbm.isEmpty) return 0;
     if (txCurrent_mA_forDbm.containsKey(txPowerDbm)) {
       return txCurrent_mA_forDbm[txPowerDbm]!;
     }
-    double closest = txPowerLevelsDbm.first;
+    double closest = txCurrent_mA_forDbm.keys.first;
     double minDiff = (txPowerDbm - closest).abs();
-    for (final level in txPowerLevelsDbm) {
+    for (final level in txCurrent_mA_forDbm.keys) {
       final diff = (txPowerDbm - level).abs();
       if (diff < minDiff) {
         closest = level;
@@ -188,16 +196,20 @@ class BleChip {
   }
 
   double rxCurrentForBand([String? band]) {
-    if (band != null && rxCurrentByBand != null && rxCurrentByBand!.containsKey(band)) {
+    if (band != null &&
+        rxCurrentByBand != null &&
+        rxCurrentByBand!.containsKey(band)) {
       return rxCurrentByBand![band]!;
     }
     return rxCurrent_mA;
   }
 
   double snapTxPower(double txPowerDbm) {
-    double closest = txPowerLevelsDbm.first;
+    final levels = txPowerLevelsDbm;
+    if (levels.isEmpty) return txPowerDbm;
+    double closest = levels.first;
     double minDiff = (txPowerDbm - closest).abs();
-    for (final level in txPowerLevelsDbm) {
+    for (final level in levels) {
       final diff = (txPowerDbm - level).abs();
       if (diff < minDiff) {
         closest = level;
