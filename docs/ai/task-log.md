@@ -16,6 +16,43 @@
 
 ---
 
+## 2026-05-26 路 页面域配置架构一期：BLE/BT/Wi-Fi 数据拆分接入 ConfigRepository
+- **类型**：refactor / decision
+- **范围**：`assets/data/config_manifest.json`、`assets/data/chips/{ble,bt,wifi}/index.json`、`assets/data/chips/{ble,bt,wifi}/*.json`、`lib/models/{ble_chip,bt_chip,wifi_chip}.dart`、`lib/services/config/config_repository.dart`、`lib/state/{app_state,bt_state,sniffing_state,wifi_state}.dart`、`lib/main.dart`、`pubspec.yaml`
+- **动因**：用户希望 BLE CASE / BT CASE / Wi-Fi / Earbuds 等页面的数据按域分离，便于独立维护，而不是继续散落在 `config/*.dart` 与各自 State 默认值中。
+- **变更**：
+  1. 新增 `ConfigRepository` 作为页面域配置统一读取入口；启动时先加载页面域配置，再加载既有 `EarbudsRepository`。
+  2. BLE / BT / Wi-Fi 芯片列表从现有 Dart 配置机械导出为 `index.json` + 单芯片 JSON seed，保留旧 Dart 配置作为资源加载失败时的回退点，确保当前页面数据不变。
+  3. 梳理后移除 `assets/data/pages` 默认参数层；BLE / BT / Wi-Fi 页面直接消费对应 chips 数据，interval/payload/battery 等 UI 初始值继续保留在 State。
+  4. 为 `BleChip` / `BtChip` / `WifiChip` 补齐 `toJson/fromJson`，支持后续 Admin 与导入导出统一化。
+  5. 新增 `config_manifest.json` 描述页面域数据模块；Earbuds 继续沿用既有拆分 JSON，并通过 `ConfigRepository.earbudsChips` 暴露兼容入口。
+- **影响**：一期只迁移芯片数据入口与 seed 文件，不改变计算公式和当前默认参数；后续可继续把 Admin 升级为按页面域管理 BLE/BT/Wi-Fi/Earbuds 的配置中心。
+- **后续**：`flutter analyze` 在当前环境中启动超时（Dart/Flutter 工具链层面卡住，未产生 analyzer 输出），需在工具链恢复后补跑。
+
+## 2026-05-26 路 BLE/BT/Wi-Fi 芯片配置继续拆分为每芯片独立 JSON
+- **类型**：refactor
+- **范围**：`assets/data/chips/{ble,bt,wifi}/`、`assets/data/config_manifest.json`、`lib/services/config/config_repository.dart`
+- **动因**：用户希望 BLE / BT / Wi-Fi 的芯片数据也像 Earbuds 一样按芯片文件维护，减少聚合 `chips.json` 的冲突和 diff 噪声。
+- **变更**：
+  1. 删除聚合 `chips.json`，改为每个域一个 `index.json` + 多个单芯片 JSON 文件。
+  2. `index.json` 使用 `{id,file}` 映射，支持 `BES1505(HDT Demo)` 这类真实 id 与安全文件名分离。
+  3. `ConfigRepository` 改为先读 `index.json`，再按顺序读取各芯片文件；导出也输出同样的拆分结构。
+  4. `config_manifest.json` 中 BLE/BT/Wi-Fi 的 chips 入口更新为各自 `index.json`。
+- **影响**：数据数值保持不变；维护入口变为 `assets/data/chips/<domain>/index.json` 与同目录下单芯片文件。
+
+## 2026-05-26 路 修正芯片域目录并接入真实 Wi-Fi 页面
+- **类型**：refactor / fix
+- **范围**：`assets/data/chips/earbuds/`、`lib/services/earbuds_chip_loader.dart`、`lib/services/earbuds_repository.dart`、`lib/state/wifi_state.dart`、`lib/pages/wifi_case_page.dart`、`assets/data/config_manifest.json`、`pubspec.yaml`
+- **动因**：根目录 `assets/data/chips/*.json` 实际是 Earbuds 数据，和新增的 BLE/BT/Wi-Fi 子目录并列后语义不清；同时 Wi-Fi 导航页仍返回 `EarbudsComparePage`，没有使用真实 Wi-Fi 数据。
+- **变更**：
+  1. Earbuds 数据迁入 `assets/data/chips/earbuds/index.json` + `assets/data/chips/earbuds/<id>.json`，loader 和 manifest 同步更新。
+  2. `EarbudsRepository.exportAsJsonFiles()` 改为导出 `chips/earbuds/` 结构，Admin 导出提示同步更新。
+  3. `WIFIState` 改为读取 `ConfigRepository.instance.wifiChips`，不再复用 BLE/BT 芯片池。
+  4. `WifiPage` 改为真实 Wi-Fi 仿真页面，提供独立配置面板、KPI 与功耗事件图。
+- **影响**：四类芯片域现在目录一致：`earbuds / ble / bt / wifi`；Wi-Fi 页开始消费 `assets/data/chips/wifi/` 数据。
+
+---
+
 ## 2026-05-11 · 数据源拆分：单文件 → 每芯片独立 JSON + 导出按钮
 - **类型**：refactor / decision
 - **范围**：`assets/data/`、`lib/services/earbuds_chip_loader.dart`、`lib/services/earbuds_repository.dart`、`lib/services/chips_export_*.dart`、`lib/pages/admin_page.dart`、`lib/l10n/app_localizations.dart`、`pubspec.yaml`
@@ -26,7 +63,7 @@
   3. `EarbudsRepository` 新增 `exportAsJsonFiles()` 返回 `{path -> jsonString}`；落盘逻辑放在新 `chips_export_service.dart`，通过条件导入分发到 `chips_export_io.dart`（原生写 systemTemp）/ `chips_export_web.dart`（Blob+AnchorElement 触发下载）。
   4. admin 工具栏新增「导出 JSON」按钮；新增 `adminExportJson / adminExportSuccess / adminExportFailed` 三组 zh+en 文案。
   5. 新增依赖 `archive: ^3.6.1`（理由：纯 Dart zip 编码，跨平台无原生依赖）。
-- **影响**：浏览器 localStorage 仍按 origin 隔离，故 `--web-port=5173` 固定端口的 launch.json 改动保留作"运行期工作副本"兜底。最终的"权威数据"以 `assets/data/chips/` 为准；admin 修改后须导出 zip → 解压覆盖 → 重新 `flutter run` 才会同步给所有端。
+- **影响**：浏览器 localStorage 仍按 origin 隔离，故 `--web-port=5174` 固定端口的 launch.json 改动保留作"运行期工作副本"兜底。最终的"权威数据"以 `assets/data/chips/` 为准；admin 修改后须导出 zip → 解压覆盖 → 重新 `flutter run` 才会同步给所有端。
 - **后续**：`test/widget_test.dart` 仍是脚手架自带的计数器示例，无关本次改动；建议另起任务清理。
 
 ---
@@ -232,3 +269,14 @@
   - `flutter analyze` 全工程通过
 - **后续**：
   - [ ] 若 Tx/Rx Sweep 后续有真实实现，可在自己的 dart 文件内独立扩展，不影响其它 Tab
+
+## 2026-05-26 - 固定 Web 调试与部署访问端口为 5174
+- **类型**：infra / docs
+- **范围**：`.vscode/launch.json`、`docs/admin/workflow.md`、`.ai/memory.md`
+- **动因**：Web 端 `shared_preferences` 按 origin 隔离，随机端口会导致本地调试存档看起来丢失；服务器裸 IP 访问默认走 80 端口，也会和固定端口形成不同 origin。
+- **变更**：
+  1. VS Code debug/profile/release 三个启动项统一使用 `--web-port=5174 --web-hostname=localhost`。
+  2. Admin 工作流文档统一说明本地访问 `http://localhost:5174/`，服务器访问 `http://<服务器IP>:5174/`。
+  3. `.ai/memory.md` 的 Web origin 隔离坑位同步改为 5174。
+- **影响**：后续 Web 调试与服务器访问都应固定 5174；历史 5173 origin 下的浏览器本地存档不会自动迁移。
+- **后续**：若项目后续加入 nginx/Docker/systemd 配置，监听或外部映射端口也应使用 5174。

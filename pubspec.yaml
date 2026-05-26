@@ -23,7 +23,7 @@ dependencies:
   fl_chart: ^1.1.1
   shared_preferences: ^2.2.0
   google_fonts: ^6.2.1
-  # archive: 纯 Dart zip 实现，admin 一键导出 chips/ + chips_index.json
+  # archive: 纯 Dart zip 实现，admin 一键导出 chips/earbuds/ 等 JSON 资源
   # 给用户回写到 assets/data/ 用；六端通吃，无原生依赖。
   archive: ^3.6.1
 
@@ -36,5 +36,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/data/chips_index.json
+    - assets/data/config_manifest.json
     - assets/data/chips/
+    - assets/data/chips/earbuds/
+    - assets/data/chips/ble/
+    - assets/data/chips/bt/
+    - assets/data/chips/wifi/

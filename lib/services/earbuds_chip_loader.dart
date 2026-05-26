@@ -7,8 +7,8 @@ import '../models/earbuds.dart';
 /// 芯片"数据集"资源装载器。
 ///
 /// [事实] 数据源拆分为多文件资源：
-///   - `assets/data/chips_index.json`：`{ version:int, order:[<id>...] }`
-///   - `assets/data/chips/<id>.json`：单个 `EarbudsChip.toJson()` 对象
+///   - `assets/data/chips/earbuds/index.json`：`{ version:int, order:[<id>...] }`
+///   - `assets/data/chips/earbuds/<id>.json`：单个 `EarbudsChip.toJson()` 对象
 ///
 /// [决策] 每个芯片独立 JSON 文件，便于 git diff / 多人协作 / admin 导出。
 /// 加载流程：先读 index → 按 order 并行读各 `<id>.json` → 拼成列表。
@@ -17,8 +17,8 @@ import '../models/earbuds.dart';
 class EarbudsChipLoader {
   EarbudsChipLoader._();
 
-  static const String indexAssetPath = 'assets/data/chips_index.json';
-  static const String chipsAssetDir = 'assets/data/chips';
+  static const String indexAssetPath = 'assets/data/chips/earbuds/index.json';
+  static const String chipsAssetDir = 'assets/data/chips/earbuds';
   static const int supportedVersion = 1;
 
   /// 从打包资源装载并解析芯片列表。
@@ -28,19 +28,19 @@ class EarbudsChipLoader {
     final index = jsonDecode(indexRaw);
     if (index is! Map) {
       throw const FormatException(
-          'chips_index.json: root is not an object');
+          'chips/earbuds/index.json: root is not an object');
     }
     final version = index['version'];
     if (version is int && version != supportedVersion) {
       throw FormatException(
-        'chips_index.json: schema version $version not supported '
+        'chips/earbuds/index.json: schema version $version not supported '
         '(expected $supportedVersion)',
       );
     }
     final orderRaw = index['order'];
     if (orderRaw is! List) {
       throw const FormatException(
-          'chips_index.json: "order" is missing or not a list');
+          'chips/earbuds/index.json: "order" is missing or not a list');
     }
     final order = orderRaw.whereType<String>().toList(growable: false);
 

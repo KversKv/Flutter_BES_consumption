@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../state/app_state.dart';
 import '../state/bt_state.dart';
-import '../models/profile_params.dart';
+import '../models/profile_params.dart' show Mode, Phy;
 import '../l10n/app_localizations.dart';
 
 class ConfigPanel extends StatefulWidget {

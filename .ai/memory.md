@@ -69,12 +69,12 @@
 - [事实] 分层：`lib/{models,config,services,state,widgets,pages,theme,l10n}`
 - [事实] 入口：`lib/main.dart`，顶层 `MultiProvider` 注入 `AppState / EarbudsState / ThemeController`
 - [事实] 功耗计算：`lib/services/power_calculator.dart` + `lib/services/earbuds_query.dart`（纯函数）
-- [事实] 芯片数据：`assets/data/earbuds_chips.json`，预置 16 款（id 1306 ~ 1702）
+- [事实] Earbuds 芯片数据：`assets/data/chips/earbuds/index.json` + `assets/data/chips/earbuds/<id>.json`，预置 17 款（id 1306 ~ 1702）
 - [事实] 状态类：`app_state / bt_state / wifi_state / sniffing_state / earbuds_state / theme_controller`
 - [事实] 页面：`home_page / ble_case_page / bt_case_page / bt_page / bt_page_main / bt_pagescan / bt_sniffing / wifi_case_page / earbuds_compare_page / admin_page`
 - [事实] 路由：`/` → `MyHomePage`；`/admin` → `AdminPage`（Web 启用 `usePathUrlStrategy`）
 - [事实] 运行时可变芯片仓储：`lib/services/earbuds_repository.dart`，`EarbudsRepository.instance` 单例 + `MutableXxx` 包装；`EarbudsState.allChips` 经此读取
-- [事实] **芯片数据源**：`assets/data/earbuds_chips.json`（唯一真相源），由 `lib/services/earbuds_chip_loader.dart` 通过 `rootBundle` 装载
+- [事实] **Earbuds 芯片数据源**：`assets/data/chips/earbuds/`（唯一真相源），由 `lib/services/earbuds_chip_loader.dart` 通过 `rootBundle` 装载
 - [事实] 数据持久化：`shared_preferences` 单键 `earbuds_db_v1`；Schema `{ version:1, chips:[EarbudsChip.toJson()...] }`；`main()` 启动时 `await EarbudsRepository.instance.load()`
 - [事实] 主题：`lib/theme/{app_theme,app_colors,app_spacing}.dart`
 - [事实] i18n：自建 `lib/l10n/app_localizations.dart`，仅 zh / en
@@ -95,6 +95,9 @@
 ## 3. Decisions · 关键决策
 
 > 一条决策 = 做了什么 + 为什么 + 放弃了什么。
+
+### 页面域配置
+- [决策] BLE/BT/Wi-Fi 页面只从 `ConfigRepository` 读取各自芯片 seed（`assets/data/chips/{ble,bt,wifi}/index.json` + 单芯片 JSON）；不设 `assets/data/pages` defaults 层，interval/payload/battery 等 UI 初始值保留在 State。
 
 ### 状态管理
 - [决策] 采用 `provider + ChangeNotifier`
@@ -124,7 +127,7 @@
   - 放弃：`go_router`（增加依赖体量，Demo 仅两条路由）
 
 ### 数据库格式 / 持久化（2026-05-09，2026-05-11 拆分）
-- [决策] **芯片数据从 Dart const 迁到 JSON 资源**：单文件 → 拆分为 `assets/data/chips_index.json`（`{version:1, order:[<id>...]}`）+ `assets/data/chips/<id>.json`（每芯片一个 `EarbudsChip.toJson()`），由 `EarbudsChipLoader` 先读 index 再 `Future.wait` 并行读取
+- [决策] **Earbuds 芯片数据从 Dart const 迁到 JSON 资源**：单文件 → 拆分为 `assets/data/chips/earbuds/index.json`（`{version:1, order:[<id>...]}`）+ `assets/data/chips/earbuds/<id>.json`（每芯片一个 `EarbudsChip.toJson()`），由 `EarbudsChipLoader` 先读 index 再 `Future.wait` 并行读取
   - 理由：人类可读 + IDE 友好 + git diff 友好；拆分后多人并行编辑互不冲突，admin 也能整齐导出
   - 放弃：YAML / TOML / CSV / SQLite（理由同前）；放弃单文件聚合（diff 噪声大）
 - [决策] 运行时数据落盘仍走 `shared_preferences ^2.2.0`，整库以单 JSON 字符串落键 `earbuds_db_v1`；Schema 与 asset 单芯片格式共用
@@ -260,7 +263,7 @@
 - [坑] iOS 首次构建需 `cd ios && pod install`
 - [坑] **Web 端 `shared_preferences` 按 origin (scheme+hostname+port) 隔离**(2026-05-11)
   - 现象：`flutter run -d chrome` 每次随机分配端口，导致 admin 改的数据"看着没保存"
-  - 解法：`.vscode/launch.json` 固定 `--web-port=5173 --web-hostname=localhost`；权威数据用 admin 导出 zip 覆写 `assets/data/chips/`，与 SP 解耦
+  - 解法：`.vscode/launch.json` 固定 `--web-port=5174 --web-hostname=localhost`；权威数据用 admin 导出 zip 覆写 `assets/data/chips/`，与 SP 解耦
 
 ### 文档
 - [禁区] 不得再向 `docs/ai/memory.md` 追加事实 / 决策（已降级为导航）

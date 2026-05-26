@@ -1,0 +1,66 @@
+{
+  "id": "1307PH",
+  "process": "ICEM N28",
+  "core": "2*M33",
+  "fullRamKb": 1440,
+  "massProduction": false,
+  "sleep": {
+    "vcoreM": null,
+    "vcoreL": null,
+    "vana": null,
+    "vhppa": null,
+    "pdSleep256": null,
+    "pdSleepFull": null,
+    "deepSleep": null
+  },
+  "mcuRun": [],
+  "scene": {
+    "hotelCal": 3.945,
+    "mute": 3.853,
+    "noisePink": 3.964,
+    "k1Hz": 15.923,
+    "call": 7.04,
+    "sniffPage": 0.8,
+    "powerOff": 0.0035,
+    "hotelCalAncOn": null,
+    "muteAncOn": null,
+    "noisePinkAncOn": null,
+    "k1HzAncOn": null,
+    "callAncOn": null,
+    "sniffPageAncOn": null,
+    "powerOffAncOn": null,
+    "testConfig": {
+      "testPhone": null,
+      "testDate": null,
+      "vbat": null,
+      "audioEncoder": null,
+      "outputLoad": null,
+      "audioOutputPower": null,
+      "softwareVersion": null,
+      "moduleVoltageDetail": null
+    }
+  },
+  "bt": {
+    "btBase": null,
+    "bleAdv500_9": null,
+    "bleConn200_0": null,
+    "bleConn500_0": null,
+    "btPagescan9": null,
+    "btSniff200_0": null,
+    "btSniff500_0": null
+  },
+  "txSweep": [],
+  "rxVana": {
+    "values": {},
+    "vana": null
+  },
+  "rxVsys": {
+    "values": {},
+    "vana": null
+  },
+  "pa": {
+    "db0": null,
+    "dbNeg20": null,
+    "dbNegInf": null
+  }
+}

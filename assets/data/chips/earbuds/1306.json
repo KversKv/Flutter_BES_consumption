@@ -1,0 +1,60 @@
+{
+  "id": "1306",
+  "process": "HLMC N22",
+  "core": "M33*2 + BTC",
+  "fullRamKb": 512.0,
+  "massProduction": true,
+  "sleep": {
+    "vcoreM": 0.675,
+    "vcoreL": null,
+    "vana": 1.3,
+    "vhppa": 1.75,
+    "pdSleep256": null,
+    "pdSleepFull": null,
+    "deepSleep": 190.0
+  },
+  "mcuRun": [
+    {
+      "label": "default",
+      "wfi24M": 2.16,
+      "cm24M": 2.43,
+      "cm48M": 2.88,
+      "cm96M": 4.48,
+      "cm192M": 8.45
+    }
+  ],
+  "scene": {
+    "hotelCal": null,
+    "mute": 4.44,
+    "noisePink": 4.63,
+    "k1Hz": 18.0,
+    "call": 8.62,
+    "sniffPage": 0.41,
+    "powerOff": 0.007,
+    "hotelCalAncOn": null,
+    "muteAncOn": null,
+    "noisePinkAncOn": null,
+    "k1HzAncOn": null,
+    "callAncOn": null,
+    "sniffPageAncOn": null,
+    "powerOffAncOn": null,
+    "testConfig": null
+  },
+  "bt": {
+    "btBase": null,
+    "bleAdv500_9": null,
+    "bleConn200_0": null,
+    "bleConn500_0": null,
+    "btPagescan9": null,
+    "btSniff200_0": null,
+    "btSniff500_0": null
+  },
+  "txSweep": [],
+  "rxVana": null,
+  "rxVsys": null,
+  "pa": {
+    "db0": null,
+    "dbNeg20": null,
+    "dbNegInf": null
+  }
+}

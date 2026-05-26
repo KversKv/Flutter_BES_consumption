@@ -42,7 +42,7 @@ flutter build web
 ## 关键文件
 - 入口：[lib/main.dart](../../lib/main.dart)
 - 主题：[lib/theme/app_theme.dart](../../lib/theme/app_theme.dart)
-- 芯片数据：[assets/data/earbuds_chips.json](../../assets/data/earbuds_chips.json) · [lib/services/earbuds_chip_loader.dart](../../lib/services/earbuds_chip_loader.dart) · [lib/services/earbuds_repository.dart](../../lib/services/earbuds_repository.dart)
+- 芯片数据：[assets/data/chips](../../assets/data/chips) · [lib/services/earbuds_chip_loader.dart](../../lib/services/earbuds_chip_loader.dart) · [lib/services/config/config_repository.dart](../../lib/services/config/config_repository.dart)
 - 功耗算法：[lib/services/power_calculator.dart](../../lib/services/power_calculator.dart)
 - i18n：[lib/l10n/app_localizations.dart](../../lib/l10n/app_localizations.dart)
 
@@ -51,7 +51,7 @@ flutter build web
 
 ## 数据持久化细则（从 project-rules.md 迁出）
 - 唯一入口：`services/earbuds_repository.dart` 的 `EarbudsRepository`。
-- **数据源（种子）**：`assets/data/earbuds_chips.json`，由 `services/earbuds_chip_loader.dart` 装载；新增 / 修改芯片数据请直接改此 JSON。
+- **数据源（种子）**：Earbuds 使用 `assets/data/chips/earbuds/`，BLE/BT/Wi-Fi 使用 `assets/data/chips/{ble,bt,wifi}/`；新增 / 修改芯片数据请改对应域目录下的单芯片 JSON 与 `index.json`。
 - **持久化（用户改动）**：`shared_preferences`，整库以单 JSON 字符串落键 `earbuds_db_v1`。
 - Schema 版本：`{ version, chips:[...] }`；版本号变更必须写迁移分支，禁止悄改字段。
 - 历史 `lib/config/earbuds/chips/*.dart` + `earbuds_chip_registry.dart` + `tool/dump_chips_json.dart` 已全部删除；JSON 资源是唯一真相源。

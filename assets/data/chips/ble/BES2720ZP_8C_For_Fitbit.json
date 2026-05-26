@@ -1,0 +1,32 @@
+{
+  "id": "BES2720ZP_8C_For_Fitbit",
+  "name": "BES2720ZP_8C_For_Fitbit",
+  "vbat": 3.8,
+  "sleepCurrent_uA": 34.319,
+  "rxCurrent_mA": 6.1,
+  "rxCurrent_mA_HDT_2G4": 13.0,
+  "rxCurrent_mA_HDT_5G": 18.0,
+  "rxWindow_us": 300.0,
+  "tifs_us": 112.64,
+  "tifsCurrent_mA": 1.864,
+  "txPowerLevelsDbm": [
+    6.0
+  ],
+  "txCurrent_mA_forDbm": {
+    "6": 9.5
+  },
+  "postProcess_us": 588.8,
+  "postCurrent_mA": 0.826,
+  "preProcess_us": 61.44,
+  "preProcessCurrent_mA": 9.0,
+  "crystalRampUp_us": 580.0,
+  "crystalRampUpCurrent_mA": 0.84,
+  "standby_us": 737.28,
+  "standbyCurrent_mA": 1.226,
+  "startRadio_us": 46.08,
+  "startRadioCurrent_mA": 5.547,
+  "advGap_us": 102.4,
+  "advGapCurrent_mA": 3.502,
+  "description": "BES2720ZP_8C_2POINT: High performance SOC.",
+  "hdtIdleCurrent_mA": 0.04
+}

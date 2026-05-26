@@ -103,7 +103,7 @@ class _SideNav extends StatelessWidget {
   }
 }
 
-/// 自定义垂直导航列表;Earbuds Compare 项支持鼠标悬浮弹出二级菜单。
+/// 自定义垂直导航列表;Earbuds 项支持鼠标悬浮弹出二级菜单。
 class _NavList extends StatelessWidget {
   final bool isWide;
   final int selectedIndex;
@@ -262,7 +262,7 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-/// Earbuds Compare 导航项:鼠标悬浮弹出二级菜单。
+/// Earbuds 导航项:鼠标悬浮弹出二级菜单。
 class _EarbudsNavItem extends StatefulWidget {
   final bool isWide;
   final _NavItemData item;

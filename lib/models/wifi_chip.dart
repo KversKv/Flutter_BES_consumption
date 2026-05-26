@@ -78,6 +78,74 @@ class WifiChip {
     this.rxCurrentByBand,
   });
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'vbat': vbat,
+        'sleepCurrent_uA': sleepCurrent_uA,
+        'rxCurrent_mA': rxCurrent_mA,
+        'rxCurrent_mA_HDT_2G4': rxCurrent_mA_HDT_2G4,
+        'rxCurrent_mA_HDT_5G': rxCurrent_mA_HDT_5G,
+        'rxWindow_us': rxWindow_us,
+        'tifs_us': tifs_us,
+        'tifsCurrent_mA': tifsCurrent_mA,
+        'txPowerLevelsDbm': txPowerLevelsDbm,
+        'txCurrent_mA_forDbm':
+            txCurrent_mA_forDbm.map((k, v) => MapEntry(k.toString(), v)),
+        'postProcess_us': postProcess_us,
+        'postCurrent_mA': postCurrent_mA,
+        'preProcess_us': preProcess_us,
+        'preProcessCurrent_mA': preProcessCurrent_mA,
+        'crystalRampUp_us': crystalRampUp_us,
+        'crystalRampUpCurrent_mA': crystalRampUpCurrent_mA,
+        'standby_us': standby_us,
+        'standbyCurrent_mA': standbyCurrent_mA,
+        'startRadio_us': startRadio_us,
+        'startRadioCurrent_mA': startRadioCurrent_mA,
+        'advGap_us': advGap_us,
+        'advGapCurrent_mA': advGapCurrent_mA,
+        'description': description,
+        'hdtIdleCurrent_mA': hdtIdleCurrent_mA,
+        'txCurrentByBand': txCurrentByBand?.map(
+          (band, values) => MapEntry(
+            band,
+            values.map((k, v) => MapEntry(k.toString(), v)),
+          ),
+        ),
+        'rxCurrentByBand': rxCurrentByBand,
+      };
+
+  factory WifiChip.fromJson(Map<String, dynamic> j) => WifiChip(
+        id: (j['id'] as String?) ?? '',
+        name: (j['name'] as String?) ?? '',
+        vbat: _d(j['vbat']) ?? 0,
+        sleepCurrent_uA: _d(j['sleepCurrent_uA']) ?? 0,
+        rxCurrent_mA: _d(j['rxCurrent_mA']) ?? 0,
+        rxCurrent_mA_HDT_2G4: _d(j['rxCurrent_mA_HDT_2G4']),
+        rxCurrent_mA_HDT_5G: _d(j['rxCurrent_mA_HDT_5G']),
+        rxWindow_us: _d(j['rxWindow_us']) ?? 0,
+        tifs_us: _d(j['tifs_us']) ?? 0,
+        tifsCurrent_mA: _d(j['tifsCurrent_mA']) ?? 0,
+        txPowerLevelsDbm: _doubleList(j['txPowerLevelsDbm']),
+        txCurrent_mA_forDbm: _doubleDoubleMap(j['txCurrent_mA_forDbm']),
+        postProcess_us: _d(j['postProcess_us']) ?? 0,
+        postCurrent_mA: _d(j['postCurrent_mA']) ?? 0,
+        preProcess_us: _d(j['preProcess_us']) ?? 0,
+        preProcessCurrent_mA: _d(j['preProcessCurrent_mA']) ?? 0,
+        crystalRampUp_us: _d(j['crystalRampUp_us']) ?? 0,
+        crystalRampUpCurrent_mA: _d(j['crystalRampUpCurrent_mA']) ?? 0,
+        standby_us: _d(j['standby_us']) ?? 0,
+        standbyCurrent_mA: _d(j['standbyCurrent_mA']) ?? 0,
+        startRadio_us: _d(j['startRadio_us']) ?? 0,
+        startRadioCurrent_mA: _d(j['startRadioCurrent_mA']) ?? 0,
+        advGap_us: _d(j['advGap_us']) ?? 0,
+        advGapCurrent_mA: _d(j['advGapCurrent_mA']) ?? 0,
+        description: (j['description'] as String?) ?? '',
+        hdtIdleCurrent_mA: _d(j['hdtIdleCurrent_mA']) ?? 0,
+        txCurrentByBand: _bandMap(j['txCurrentByBand']),
+        rxCurrentByBand: _stringDoubleMap(j['rxCurrentByBand']),
+      );
+
   double txCurrentForPower(double txPowerDbm, [String? band]) {
     if (band != null && txCurrentByBand != null && txCurrentByBand!.containsKey(band)) {
       final map = txCurrentByBand![band]!;
@@ -128,4 +196,49 @@ class WifiChip {
     }
     return closest;
   }
+}
+
+double? _d(dynamic v) {
+  if (v == null) return null;
+  if (v is double) return v;
+  if (v is int) return v.toDouble();
+  if (v is num) return v.toDouble();
+  if (v is String) return double.tryParse(v);
+  return null;
+}
+
+List<double> _doubleList(dynamic v) {
+  if (v is! List) return const [];
+  return v.map(_d).whereType<double>().toList(growable: false);
+}
+
+Map<double, double> _doubleDoubleMap(dynamic v) {
+  if (v is! Map) return <double, double>{};
+  final out = <double, double>{};
+  v.forEach((k, val) {
+    final key = _d(k);
+    final value = _d(val);
+    if (key != null && value != null) out[key] = value;
+  });
+  return out;
+}
+
+Map<String, double>? _stringDoubleMap(dynamic v) {
+  if (v is! Map) return null;
+  final out = <String, double>{};
+  v.forEach((k, val) {
+    final value = _d(val);
+    if (value != null) out[k.toString()] = value;
+  });
+  return out.isEmpty ? null : out;
+}
+
+Map<String, Map<double, double>>? _bandMap(dynamic v) {
+  if (v is! Map) return null;
+  final out = <String, Map<double, double>>{};
+  v.forEach((band, values) {
+    final mapped = _doubleDoubleMap(values);
+    if (mapped.isNotEmpty) out[band.toString()] = mapped;
+  });
+  return out.isEmpty ? null : out;
 }

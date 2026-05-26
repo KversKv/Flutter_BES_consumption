@@ -2,20 +2,17 @@
 
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../models/ble_chip.dart';
-import '../models/bt_chip.dart';
-import '../config/bt_chip_config.dart';
 import '../models/power_event.dart';
-import 'app_state.dart';
-import '../models/profile_params.dart';
+import '../models/profile_params.dart' show Mode;
+import '../models/wifi_chip.dart';
+import '../services/config/config_repository.dart';
 import '../services/power_calculator.dart';
 
 enum SniffCase { btSniff, btPage, btPagescan, hdt, relay }
 enum HdtModule { source, sink }
 
 class WIFIState extends ChangeNotifier {
-  final List<BleChip> bleChips = AppState().chips;
-  final List<BtChip> btChips = defaultBtChips;
+  final List<WifiChip> wifiChips = ConfigRepository.instance.wifiChips;
 
   late String selectedChipId;
 
@@ -44,16 +41,9 @@ class WIFIState extends ChangeNotifier {
   SniffCase caseType = SniffCase.btSniff;
 
   dynamic get chip {
-    final isBtCase = caseType == SniffCase.btSniff || caseType == SniffCase.btPage || caseType == SniffCase.btPagescan || caseType == SniffCase.relay || caseType == SniffCase.hdt;
-    if (isBtCase) {
-      final matches = btChips.where((c) => c.id == selectedChipId);
-      if (matches.isNotEmpty) return matches.first;
-      return btChips.first;
-    } else {
-      final matches = bleChips.where((c) => c.id == selectedChipId);
-      if (matches.isNotEmpty) return matches.first;
-      return bleChips.first;
-    }
+    final matches = wifiChips.where((c) => c.id == selectedChipId);
+    if (matches.isNotEmpty) return matches.first;
+    return wifiChips.first;
   }
 
   List<PowerEvent> events = [];
@@ -63,7 +53,7 @@ class WIFIState extends ChangeNotifier {
   bool hideLowPowerGaps = true;
 
   WIFIState() {
-    selectedChipId = bleChips.first.id;
+    selectedChipId = wifiChips.first.id;
     recompute();
   }
 
@@ -82,6 +72,7 @@ class WIFIState extends ChangeNotifier {
   void setRelayHopGapUs(double us) { relayHopGapUs = us.clamp(0.0, 100000.0); recompute(); }
   void setBatteryCapacity(double mAh) { batteryCapacity_mAh = mAh; recompute(); }
   void setHdtPhyRate(double mbps) { hdtPhyRateMbps = mbps.clamp(2.0, 15.0); recompute(); }
+  void setHdtPeriodUs(double us) { hdtPeriodUs = us.clamp(100.0, 5000.0); recompute(); }
 
   void setChip(String id) {
     selectedChipId = id;
@@ -90,14 +81,8 @@ class WIFIState extends ChangeNotifier {
 
   void setCase(SniffCase c) {
     caseType = c;
-    if (caseType == SniffCase.btSniff || caseType == SniffCase.btPage || caseType == SniffCase.btPagescan) {
-      if (!btChips.any((b) => b.id == selectedChipId)) {
-        selectedChipId = btChips.first.id;
-      }
-    } else {
-      if (!bleChips.any((b) => b.id == selectedChipId)) {
-        selectedChipId = bleChips.first.id;
-      }
+    if (!wifiChips.any((b) => b.id == selectedChipId)) {
+      selectedChipId = wifiChips.first.id;
     }
     recompute();
   }

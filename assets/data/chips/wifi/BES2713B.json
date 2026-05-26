@@ -1,0 +1,32 @@
+{
+  "id": "BES2713B",
+  "name": "BES2713B",
+  "vbat": 3.0,
+  "sleepCurrent_uA": 3.5,
+  "rxCurrent_mA": 5.2,
+  "rxWindow_us": 120.0,
+  "tifs_us": 150.0,
+  "tifsCurrent_mA": 2.55,
+  "txPowerLevelsDbm": [
+    0.0,
+    8.0
+  ],
+  "txCurrent_mA_forDbm": {
+    "0": 5.1,
+    "8": 12.03
+  },
+  "postProcess_us": 590.0,
+  "postCurrent_mA": 1.03,
+  "preProcess_us": 286.72,
+  "preProcessCurrent_mA": 2.02,
+  "crystalRampUp_us": 635.0,
+  "crystalRampUpCurrent_mA": 0.78,
+  "standby_us": 1229.0,
+  "standbyCurrent_mA": 2.726,
+  "startRadio_us": 82.92,
+  "startRadioCurrent_mA": 2.17,
+  "advGap_us": 100.0,
+  "advGapCurrent_mA": 2.55,
+  "description": "BES2713B: low-power BLE transceiver, demo parameters.",
+  "hdtIdleCurrent_mA": 0.0035
+}

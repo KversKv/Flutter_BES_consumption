@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import '../models/ble_chip.dart';
 import '../models/power_event.dart';
 import '../models/profile_params.dart';
-import '../config/ble_chip_config.dart';
+import '../services/config/config_repository.dart';
 import '../services/power_calculator.dart';
 
 class AppState extends ChangeNotifier {
-  final List<BleChip> chips = defaultBleChips;
+  final List<BleChip> chips = ConfigRepository.instance.bleChips;
 
   late String selectedChipId;
   late ProfileParams params;

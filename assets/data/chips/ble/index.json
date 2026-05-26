@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "BES2710CP",
+      "file": "BES2710CP.json"
+    },
+    {
+      "id": "BES2720YP",
+      "file": "BES2720YP.json"
+    },
+    {
+      "id": "BES2720IMP",
+      "file": "BES2720IMP.json"
+    },
+    {
+      "id": "BES2700IMP",
+      "file": "BES2700IMP.json"
+    },
+    {
+      "id": "BES2610WD",
+      "file": "BES2610WD.json"
+    },
+    {
+      "id": "BES2720BP",
+      "file": "BES2720BP.json"
+    },
+    {
+      "id": "BES2720ZP_8C",
+      "file": "BES2720ZP_8C.json"
+    },
+    {
+      "id": "BES2720ZP_8C_For_Fitbit",
+      "file": "BES2720ZP_8C_For_Fitbit.json"
+    },
+    {
+      "id": "BES2800BP",
+      "file": "BES2800BP.json"
+    },
+    {
+      "id": "BES1505(HDT Demo)",
+      "file": "BES1505_HDT_Demo.json"
+    },
+    {
+      "id": "nrf52832",
+      "file": "nrf52832.json"
+    }
+  ]
+}

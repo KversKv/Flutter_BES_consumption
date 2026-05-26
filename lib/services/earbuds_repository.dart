@@ -527,6 +527,18 @@ class EarbudsRepository extends ChangeNotifier {
     if (oldIndex < 0 || oldIndex >= _records.length) return;
     var target = newIndex;
     if (target > oldIndex) target -= 1;
+    _moveRecord(oldIndex, target);
+  }
+
+  /// 调整芯片顺序(新 Flutter `onReorderItem` 入口)。
+  ///
+  /// `newIndex` 已经是移除 oldIndex 后的真实插入位置，不需要再手动校正。
+  void reorderItem(int oldIndex, int newIndex) {
+    if (oldIndex < 0 || oldIndex >= _records.length) return;
+    _moveRecord(oldIndex, newIndex);
+  }
+
+  void _moveRecord(int oldIndex, int target) {
     if (target < 0) target = 0;
     if (target >= _records.length) target = _records.length - 1;
     if (target == oldIndex) return;
@@ -553,8 +565,8 @@ class EarbudsRepository extends ChangeNotifier {
   /// 把当前内存中的全套芯片数据导出为「拆分文件」格式。
   ///
   /// 返回 `{ 相对路径 -> JSON 字符串 }`，包括：
-  ///   - `chips_index.json`
-  ///   - `chips/<id>.json`（每芯片一个）
+  ///   - `chips/earbuds/index.json`
+  ///   - `chips/earbuds/<id>.json`（每芯片一个）
   ///
   /// 调用方负责把它们打包 / 下载 / 落盘；本方法不触碰 IO。
   Map<String, String> exportAsJsonFiles() {
@@ -565,11 +577,12 @@ class EarbudsRepository extends ChangeNotifier {
       final id = r.id.trim();
       if (id.isEmpty) continue;
       final safe = _safeFileName(id);
-      if (files.containsKey('chips/$safe.json')) continue;
-      files['chips/$safe.json'] = encoder.convert(r.toImmutable().toJson());
+      if (files.containsKey('chips/earbuds/$safe.json')) continue;
+      files['chips/earbuds/$safe.json'] =
+          encoder.convert(r.toImmutable().toJson());
       order.add(safe);
     }
-    files['chips_index.json'] = encoder.convert(<String, Object>{
+    files['chips/earbuds/index.json'] = encoder.convert(<String, Object>{
       'version': _schemaVersion,
       'order': order,
     });

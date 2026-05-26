@@ -1,0 +1,34 @@
+{
+  "id": "BES2710CP",
+  "name": "BES2710CP",
+  "vbat": 3.8,
+  "sleepCurrent_uA": 48.5,
+  "rxCurrent_mA": 6.25,
+  "rxCurrent_mA_HDT_2G4": 13.0,
+  "rxCurrent_mA_HDT_5G": 18.0,
+  "rxWindow_us": 409.6,
+  "tifs_us": 122.88,
+  "tifsCurrent_mA": 2.0,
+  "txPowerLevelsDbm": [
+    0.0,
+    9.0
+  ],
+  "txCurrent_mA_forDbm": {
+    "0": 24.0,
+    "9": 38.7
+  },
+  "preProcess_us": 163.84,
+  "preProcessCurrent_mA": 2.42,
+  "crystalRampUp_us": 1126.0,
+  "crystalRampUpCurrent_mA": 0.913,
+  "standby_us": 1270.0,
+  "standbyCurrent_mA": 1.233,
+  "startRadio_us": 0.0,
+  "startRadioCurrent_mA": 0.0,
+  "advGap_us": 100.0,
+  "advGapCurrent_mA": 1.5,
+  "postProcess_us": 1290.0,
+  "postCurrent_mA": 0.873,
+  "description": "BES2710CP: LTE | BT | BLE High Performance&Low Power SOC.",
+  "hdtIdleCurrent_mA": 0.07
+}

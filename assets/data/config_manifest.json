@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "modules": {
+    "bleCase": {
+      "chips": "assets/data/chips/ble/index.json"
+    },
+    "btCase": {
+      "chips": "assets/data/chips/bt/index.json"
+    },
+    "wifiCase": {
+      "chips": "assets/data/chips/wifi/index.json"
+    },
+    "earbuds": {
+      "index": "assets/data/chips/earbuds/index.json",
+      "chips": "assets/data/chips/earbuds/"
+    }
+  }
+}

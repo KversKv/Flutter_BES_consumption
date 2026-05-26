@@ -103,8 +103,8 @@ class _AdminPageState extends State<AdminPage> {
                 setState(() => _selectedId = c.id);
               },
               onDelete: (id) => _confirmDelete(context, id),
-              onReorder: (oldIndex, newIndex) {
-                repo.reorder(oldIndex, newIndex);
+              onReorderItem: (oldIndex, newIndex) {
+                repo.reorderItem(oldIndex, newIndex);
               },
             ),
           ),
@@ -205,7 +205,7 @@ class _ChipListPanel extends StatelessWidget {
   final VoidCallback onAdd;
   final ValueChanged<String> onDuplicate;
   final ValueChanged<String> onDelete;
-  final void Function(int oldIndex, int newIndex) onReorder;
+  final void Function(int oldIndex, int newIndex) onReorderItem;
 
   const _ChipListPanel({
     required this.chips,
@@ -217,7 +217,7 @@ class _ChipListPanel extends StatelessWidget {
     required this.onAdd,
     required this.onDuplicate,
     required this.onDelete,
-    required this.onReorder,
+    required this.onReorderItem,
   });
 
   @override
@@ -274,7 +274,7 @@ class _ChipListPanel extends StatelessWidget {
                 ? ReorderableListView.builder(
                     buildDefaultDragHandles: false,
                     itemCount: chips.length,
-                    onReorder: onReorder,
+                    onReorderItem: onReorderItem,
                     itemBuilder: (ctx, i) {
                       if (i < 0 || i >= chips.length) {
                         return SizedBox.shrink(

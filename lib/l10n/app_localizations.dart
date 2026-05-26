@@ -13,7 +13,7 @@ class AppLocalizations {
       'appTitle': 'BES CONSUMPTION (Demo)',
       'nav_ble': 'BLE CASE',
       'nav_bt': 'BT CASE',
-      'nav_earbuds': 'Earbuds Compare',
+      'nav_earbuds': 'Earbuds',
       'nav_wifi': 'WiFi CASE',
       'config': 'Configuration',
       'chip': 'Chip',
@@ -80,7 +80,7 @@ class AppLocalizations {
       'theme_toggle_dark': 'Theme: Dark (click to switch)',
       'theme_toggle_light': 'Theme: Light (click to switch)',
 
-      // === Earbuds Compare ===
+      // === Earbuds ===
       'eb_title': 'Earbuds Power Compare',
       'eb_tab_scene': 'Earbuds Scene',
       'eb_tab_bt': 'BT & BLE',
@@ -244,7 +244,7 @@ class AppLocalizations {
           'Clear the search to drag-reorder chips.',
       'admin_export_json': 'Export JSON',
       'admin_export_success':
-          'Exported chips to {location}. Replace assets/data/chips/ to make it the new seed.',
+          'Exported chips to {location}. Replace assets/data/chips/earbuds/ to make it the new seed.',
       'admin_export_failed': 'Export failed: {error}',
       'chart_hide_sleep_gaps': 'Hide sleep/gaps',
       'chart_timeline_compressed': 'Timeline: compressed view (sleep hidden)',
@@ -327,7 +327,7 @@ class AppLocalizations {
       'theme_toggle_dark': '主题：深色（点击切换）',
       'theme_toggle_light': '主题：浅色（点击切换）',
 
-      // === Earbuds Compare ===
+      // === Earbuds ===
       'eb_title': '耳机功耗对比',
       'eb_tab_scene': '耳机场景',
       'eb_tab_bt': 'BT & BLE',
@@ -487,7 +487,7 @@ class AppLocalizations {
       'admin_drag_handle': '拖拽排序',
       'admin_reorder_disabled_in_search': '请先清空搜索,才能拖拽排序。',
       'admin_export_json': '导出 JSON',
-      'admin_export_success': '已导出到 {location}，覆盖 assets/data/chips/ 后即为新的种子数据。',
+      'admin_export_success': '已导出到 {location}，覆盖 assets/data/chips/earbuds/ 后即为新的种子数据。',
       'admin_export_failed': '导出失败：{error}',
       'chart_hide_sleep_gaps': '隐藏睡眠/空隙',
       'chart_timeline_compressed': '时间轴：压缩视图（睡眠已隐藏）',
@@ -582,7 +582,7 @@ class AppLocalizations {
   String get kpiBatteryLifeEst => _t('kpi_battery_life_est');
   String get kpiPeakCurrent => _t('kpi_peak_current');
 
-  // ===== Earbuds Compare =====
+  // ===== Earbuds =====
   String get ebTitle => _t('eb_title');
   String get ebTabScene => _t('eb_tab_scene');
   String get ebTabBt => _t('eb_tab_bt');

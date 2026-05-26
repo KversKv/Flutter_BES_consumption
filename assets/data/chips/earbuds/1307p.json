@@ -1,0 +1,104 @@
+{
+  "id": "1307P",
+  "process": "SIMC N22",
+  "core": "M33*2 + BTC",
+  "fullRamKb": 576.0,
+  "massProduction": true,
+  "sleep": {
+    "vcoreM": 0.625,
+    "vcoreL": null,
+    "vana": 1.3,
+    "vhppa": 1.7,
+    "pdSleep256": null,
+    "pdSleepFull": null,
+    "deepSleep": 149.0
+  },
+  "mcuRun": [
+    {
+      "label": "default",
+      "wfi24M": 1.69,
+      "cm24M": 2.0,
+      "cm48M": 2.433,
+      "cm96M": 3.763,
+      "cm192M": 7.52
+    }
+  ],
+  "scene": {
+    "hotelCal": null,
+    "mute": 4.58,
+    "noisePink": 4.87,
+    "k1Hz": 19.0,
+    "call": 8.57,
+    "sniffPage": 0.3,
+    "powerOff": 0.003,
+    "hotelCalAncOn": null,
+    "muteAncOn": null,
+    "noisePinkAncOn": null,
+    "k1HzAncOn": null,
+    "callAncOn": null,
+    "sniffPageAncOn": null,
+    "powerOffAncOn": null,
+    "testConfig": null
+  },
+  "bt": {
+    "btBase": null,
+    "bleAdv500_9": null,
+    "bleConn200_0": null,
+    "bleConn500_0": null,
+    "btPagescan9": null,
+    "btSniff200_0": null,
+    "btSniff500_0": null
+  },
+  "txSweep": [
+    {
+      "label": "VPA=1.7V",
+      "values": {
+        "-10": 17.4,
+        "-9": 17.4,
+        "-8": 17.5,
+        "-7": 19.1,
+        "-6": 20.6,
+        "-5": 20.0,
+        "-4": 21.6,
+        "-3": 21.2,
+        "-2": 22.8,
+        "-1": 25.1,
+        "0": 24.8,
+        "1": 25.9,
+        "2": 28.3,
+        "3": 27.6,
+        "4": 30.3,
+        "5": 30.9,
+        "6": 32.9,
+        "7": 33.2,
+        "8": 35.1,
+        "9": 36.2,
+        "10": 39.7,
+        "11": 39.1,
+        "12": 44.0,
+        "13": 47.6,
+        "14": 51.5,
+        "15": 56.7
+      }
+    }
+  ],
+  "rxVana": {
+    "values": {
+      "0": 13.66,
+      "1": 15.586,
+      "2": 14.736,
+      "3": 14.0,
+      "4": 11.28,
+      "5": 11.28,
+      "6": 11.28,
+      "7": 11.28
+    },
+    "vana": 1.35
+  },
+  "rxVsys": null,
+  "pa": {
+    "db0": null,
+    "dbNeg20": null,
+    "dbNegInf": null
+  }
+}
