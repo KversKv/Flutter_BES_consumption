@@ -8,7 +8,7 @@
             "name": "bes_consumption",
             "request": "launch",
             "type": "dart",
-            "args": [
+            "toolArgs": [
                 "--web-port=5174",
                 "--web-hostname=localhost"
             ]
@@ -18,7 +18,7 @@
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile",
-            "args": [
+            "toolArgs": [
                 "--web-port=5174",
                 "--web-hostname=localhost"
             ]
@@ -28,7 +28,7 @@
             "request": "launch",
             "type": "dart",
             "flutterMode": "release",
-            "args": [
+            "toolArgs": [
                 "--web-port=5174",
                 "--web-hostname=localhost"
             ]

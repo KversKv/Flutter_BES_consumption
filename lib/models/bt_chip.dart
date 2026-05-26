@@ -10,8 +10,11 @@ class BtChip {
   final double rxCurrent_mA; // 接收电流
   final double? rxCurrent_mA_HDT_2G4;
   final double? rxCurrent_mA_HDT_5G;
-  // 固定接收窗口（单位：us），现在每个芯片可以配置不同的值
-  final double rxWindow_us;
+  final double rxExtWindow_us;
+  final double Rmin_us;
+  final double AttemptWaitTimeUS;
+  final double clockDriftPpm;
+  final BtDefaultConfig? defaultConfig;
   final double tifs_us; // TIFS，典型 150 us
   // TIFS 期间的电流（mA），各芯片可配置
   final double tifsCurrent_mA;
@@ -51,7 +54,11 @@ class BtChip {
     required this.vbat,
     required this.sleepCurrent_uA,
     required this.rxCurrent_mA,
-    required this.rxWindow_us,
+    this.rxExtWindow_us = 780.0,
+    this.Rmin_us = 88.0,
+    this.AttemptWaitTimeUS = 450.0,
+    this.clockDriftPpm = 50.0,
+    this.defaultConfig,
     required this.tifs_us,
     required this.tifsCurrent_mA,
     required this.txPowerLevelsDbm,
@@ -83,7 +90,11 @@ class BtChip {
         'rxCurrent_mA': rxCurrent_mA,
         'rxCurrent_mA_HDT_2G4': rxCurrent_mA_HDT_2G4,
         'rxCurrent_mA_HDT_5G': rxCurrent_mA_HDT_5G,
-        'rxWindow_us': rxWindow_us,
+        'rxExtWindow_us': rxExtWindow_us,
+        'Rmin_us': Rmin_us,
+        'AttemptWaitTimeUS': AttemptWaitTimeUS,
+        'clockDriftPpm': clockDriftPpm,
+        'defaultConfig': effectiveDefaultConfig.toJson(),
         'tifs_us': tifs_us,
         'tifsCurrent_mA': tifsCurrent_mA,
         'txPowerLevelsDbm': txPowerLevelsDbm,
@@ -119,7 +130,11 @@ class BtChip {
         rxCurrent_mA: _d(j['rxCurrent_mA']) ?? 0,
         rxCurrent_mA_HDT_2G4: _d(j['rxCurrent_mA_HDT_2G4']),
         rxCurrent_mA_HDT_5G: _d(j['rxCurrent_mA_HDT_5G']),
-        rxWindow_us: _d(j['rxWindow_us']) ?? 0,
+        rxExtWindow_us: _d(j['rxExtWindow_us']) ?? 780.0,
+        Rmin_us: _d(j['Rmin_us']) ?? 88.0,
+        AttemptWaitTimeUS: _d(j['AttemptWaitTimeUS']) ?? 450.0,
+        clockDriftPpm: _d(j['clockDriftPpm']) ?? 50.0,
+        defaultConfig: BtDefaultConfig.fromJson(j['defaultConfig']),
         tifs_us: _d(j['tifs_us']) ?? 0,
         tifsCurrent_mA: _d(j['tifsCurrent_mA']) ?? 0,
         txPowerLevelsDbm: _doubleList(j['txPowerLevelsDbm']),
@@ -141,8 +156,24 @@ class BtChip {
         rxCurrentByBand: _stringDoubleMap(j['rxCurrentByBand']),
       );
 
+  BtDefaultConfig get effectiveDefaultConfig =>
+      defaultConfig ??
+      BtDefaultConfig(
+        attempt: 1,
+        preProcessLength_us: preProcess_us,
+        crystalRampUpLength_us: crystalRampUp_us,
+        standbyLength_us: standby_us,
+        windowWideningLength_us: 25.0,
+        mainRxLength_us: rxExtWindow_us + Rmin_us,
+        tifsLength_us: tifs_us,
+        txLength_us: Rmin_us,
+        postProcessLength_us: postProcess_us,
+      );
+
   double txCurrentForPower(double txPowerDbm, [String? band]) {
-    if (band != null && txCurrentByBand != null && txCurrentByBand!.containsKey(band)) {
+    if (band != null &&
+        txCurrentByBand != null &&
+        txCurrentByBand!.containsKey(band)) {
       final map = txCurrentByBand![band]!;
       if (map.containsKey(txPowerDbm)) return map[txPowerDbm]!;
       double closest = map.keys.first;
@@ -173,7 +204,9 @@ class BtChip {
   }
 
   double rxCurrentForBand([String? band]) {
-    if (band != null && rxCurrentByBand != null && rxCurrentByBand!.containsKey(band)) {
+    if (band != null &&
+        rxCurrentByBand != null &&
+        rxCurrentByBand!.containsKey(band)) {
       return rxCurrentByBand![band]!;
     }
     return rxCurrent_mA;
@@ -190,6 +223,57 @@ class BtChip {
       }
     }
     return closest;
+  }
+}
+
+class BtDefaultConfig {
+  final int attempt;
+  final double preProcessLength_us;
+  final double crystalRampUpLength_us;
+  final double standbyLength_us;
+  final double windowWideningLength_us;
+  final double mainRxLength_us;
+  final double tifsLength_us;
+  final double txLength_us;
+  final double postProcessLength_us;
+
+  const BtDefaultConfig({
+    this.attempt = 1,
+    required this.preProcessLength_us,
+    required this.crystalRampUpLength_us,
+    required this.standbyLength_us,
+    required this.windowWideningLength_us,
+    required this.mainRxLength_us,
+    required this.tifsLength_us,
+    required this.txLength_us,
+    required this.postProcessLength_us,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'attempt': attempt,
+        'preProcessLength_us': preProcessLength_us,
+        'crystalRampUpLength_us': crystalRampUpLength_us,
+        'standbyLength_us': standbyLength_us,
+        'windowWideningLength_us': windowWideningLength_us,
+        'mainRxLength_us': mainRxLength_us,
+        'tifsLength_us': tifsLength_us,
+        'txLength_us': txLength_us,
+        'postProcessLength_us': postProcessLength_us,
+      };
+
+  static BtDefaultConfig? fromJson(dynamic value) {
+    if (value is! Map) return null;
+    return BtDefaultConfig(
+      attempt: (_d(value['attempt']) ?? 1).round(),
+      preProcessLength_us: _d(value['preProcessLength_us']) ?? 0,
+      crystalRampUpLength_us: _d(value['crystalRampUpLength_us']) ?? 0,
+      standbyLength_us: _d(value['standbyLength_us']) ?? 0,
+      windowWideningLength_us: _d(value['windowWideningLength_us']) ?? 0,
+      mainRxLength_us: _d(value['mainRxLength_us']) ?? 0,
+      tifsLength_us: _d(value['tifsLength_us']) ?? 0,
+      txLength_us: _d(value['txLength_us']) ?? 0,
+      postProcessLength_us: _d(value['postProcessLength_us']) ?? 0,
+    );
   }
 }
 

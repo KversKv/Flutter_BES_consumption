@@ -263,7 +263,7 @@
 - [坑] iOS 首次构建需 `cd ios && pod install`
 - [坑] **Web 端 `shared_preferences` 按 origin (scheme+hostname+port) 隔离**(2026-05-11)
   - 现象：`flutter run -d chrome` 每次随机分配端口，导致 admin 改的数据"看着没保存"
-  - 解法：`.vscode/launch.json` 固定 `--web-port=5174 --web-hostname=localhost`；权威数据用 admin 导出 zip 覆写 `assets/data/chips/`，与 SP 解耦
+  - 解法：`.vscode/launch.json` 通过 `toolArgs` 固定 `--web-port=5174 --web-hostname=localhost`；权威数据用 admin 导出 zip 覆写 `assets/data/chips/`，与 SP 解耦
 
 ### 文档
 - [禁区] 不得再向 `docs/ai/memory.md` 追加事实 / 决策（已降级为导航）

@@ -6,6 +6,10 @@ class PowerEvent {
   final double currentMa;
   final String label;
   final Color color;
+  final String? previewLabel;
+  final double? totalLengthUs;
+  final double? windowWideningLengthUs;
+  final double? occupiedLengthUs;
 
   PowerEvent({
     required this.startUs,
@@ -13,11 +17,14 @@ class PowerEvent {
     required this.currentMa,
     required this.label,
     required this.color,
+    this.previewLabel,
+    this.totalLengthUs,
+    this.windowWideningLengthUs,
+    this.occupiedLengthUs,
   });
 
   double get endUs => startUs + durationUs;
 
   bool get isSleepOrGap =>
-    label.toLowerCase() == 'sleep' ||
-    label.toLowerCase() == 'gap';
+      label.toLowerCase() == 'sleep' || label.toLowerCase() == 'gap';
 }

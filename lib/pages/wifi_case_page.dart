@@ -47,7 +47,8 @@ class _WifiCaseViewState extends State<_WifiCaseView> {
           decoration: BoxDecoration(
             border: Border(
               right: BorderSide(
-                color: _panelExpanded ? palette.borderSubtle : Colors.transparent,
+                color:
+                    _panelExpanded ? palette.borderSubtle : Colors.transparent,
               ),
             ),
           ),
@@ -89,7 +90,8 @@ class _WifiCaseViewState extends State<_WifiCaseView> {
                         periodUs: wifi.periodUs,
                         maxCurrent: wifi.maxCurrent_mA,
                         hideLowPowerGaps: wifi.hideLowPowerGaps,
-                        onToggleHideGaps: (val) => wifi.setHideLowPowerGaps(val),
+                        onToggleHideGaps: (val) =>
+                            wifi.setHideLowPowerGaps(val),
                       ),
                     ),
                   ),
@@ -141,7 +143,8 @@ class _WifiConfigPanel extends StatelessWidget {
           isExpanded: true,
           items: [
             const DropdownMenuItem(value: SniffCase.hdt, child: Text('HDT')),
-            DropdownMenuItem(value: SniffCase.btSniff, child: Text(l10n.btSniff)),
+            DropdownMenuItem(
+                value: SniffCase.btSniff, child: Text(l10n.btSniff)),
             DropdownMenuItem(value: SniffCase.btPage, child: Text(l10n.btPage)),
             DropdownMenuItem(
               value: SniffCase.btPagescan,
@@ -173,7 +176,10 @@ class _WifiConfigPanel extends StatelessWidget {
           isExpanded: true,
           items: levels
               .map<DropdownMenuItem<double>>(
-                (lv) => DropdownMenuItem(value: lv, child: Text(lv.toString())),
+                (lv) => DropdownMenuItem<double>(
+                  value: lv,
+                  child: Text(lv.toString()),
+                ),
               )
               .toList(),
           onChanged: (v) {
@@ -189,7 +195,8 @@ class _WifiConfigPanel extends StatelessWidget {
             max: 5000,
             onChanged: (v) => context.read<WIFIState>().setHdtPeriodUs(v),
           ),
-          Text('${l10n.hdtPhyRate} ${st.hdtPhyRateMbps.toStringAsFixed(1)} Mbps'),
+          Text(
+              '${l10n.hdtPhyRate} ${st.hdtPhyRateMbps.toStringAsFixed(1)} Mbps'),
           Slider(
             value: st.hdtPhyRateMbps.clamp(2.0, 15.0).toDouble(),
             min: 2,
@@ -198,14 +205,16 @@ class _WifiConfigPanel extends StatelessWidget {
             onChanged: (v) => context.read<WIFIState>().setHdtPhyRate(v),
           ),
         ] else ...[
-          Text('${l10n.listeningInterval} ${st.sniffIntervalMs.toStringAsFixed(0)} ms'),
+          Text(
+              '${l10n.listeningInterval} ${st.sniffIntervalMs.toStringAsFixed(0)} ms'),
           Slider(
             value: st.sniffIntervalMs.clamp(10.0, 5000.0).toDouble(),
             min: 10,
             max: 5000,
             onChanged: (v) => context.read<WIFIState>().setSniffIntervalMs(v),
           ),
-          Text('${l10n.listeningWindow} ${st.sniffWindowUs.toStringAsFixed(0)} us'),
+          Text(
+              '${l10n.listeningWindow} ${st.sniffWindowUs.toStringAsFixed(0)} us'),
           Slider(
             value: st.sniffWindowUs.clamp(50.0, 50000.0).toDouble(),
             min: 50,
@@ -233,7 +242,8 @@ class _WifiConfigPanel extends StatelessWidget {
           ),
         ],
         const SizedBox(height: AppSpacing.x3),
-        Text('${l10n.batteryCapacityLabel} ${st.batteryCapacity_mAh.toStringAsFixed(0)}'),
+        Text(
+            '${l10n.batteryCapacityLabel} ${st.batteryCapacity_mAh.toStringAsFixed(0)}'),
         Slider(
           value: st.batteryCapacity_mAh,
           min: 50,

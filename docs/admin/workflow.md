@@ -22,7 +22,7 @@ Web 端 `shared_preferences` 实际是 `localStorage`，按 `(scheme, hostname, 
 VS Code 调试配置已经固定：
 
 ```json
-"args": [
+"toolArgs": [
   "--web-port=5174",
   "--web-hostname=localhost"
 ]
@@ -73,7 +73,7 @@ python -m http.server 5174 -d build/web
 
 **Q：为什么 Web 端昨天的修改今天看不到？**
 
-A：通常是端口变了，导致 localStorage origin 变了。固定使用 `--web-port=5174`，并养成修改完成后导出 JSON 的习惯。
+A：通常是端口变了，导致 localStorage origin 变了。VS Code Debug 需要通过 `toolArgs` 固定 `--web-port=5174`，并养成修改完成后导出 JSON 的习惯。
 
 **Q：为什么浏览器不能直接写回 `assets/data/`？**
 

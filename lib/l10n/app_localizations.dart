@@ -27,7 +27,8 @@ class AppLocalizations {
       'conn_interval_label': 'Conn interval (ms)',
       'battery_capacity_label': 'Battery capacity (mAh):',
       'chip_specs_title': 'Chip specs & features',
-      'chip_specs_description': 'Description: shows key chip parameters for quick comparison.',
+      'chip_specs_description':
+          'Description: shows key chip parameters for quick comparison.',
       'model': 'Model',
       'vbat': 'VBAT',
       'rx': 'RX',
@@ -54,9 +55,11 @@ class AppLocalizations {
       'bt_page_config': 'BT Page configuration',
       'bt_page_placeholder': 'Placeholder area — BT Page specific params',
       'bt_pagescan_config': 'BT PageScan configuration',
-      'bt_pagescan_placeholder': 'Placeholder area — BT PageScan specific params',
+      'bt_pagescan_placeholder':
+          'Placeholder area — BT PageScan specific params',
       'bt_sniffing_config': 'BT Sniffing configuration',
-      'bt_sniffing_placeholder': 'Placeholder — add sniffing related parameters',
+      'bt_sniffing_placeholder':
+          'Placeholder — add sniffing related parameters',
       'sniffing_interval_label': 'Sniffing interval (ms)',
       'power_waveform': 'Power waveform',
       'kpi_title': 'KPI metrics',
@@ -66,6 +69,14 @@ class AppLocalizations {
       'listening_interval': 'Listening interval (ms):',
       'channels_label': 'Channels per cycle:',
       'channel_gap': 'Channel gap (µs):',
+      'bt_packet_type_label': 'Packet type',
+      'bt_voltage_label': 'Voltage:',
+      'bt_rx_payload_label': 'RX Payload:',
+      'bt_tx_payload_label': 'TX Payload:',
+      'bt_connect_interval_label': 'Connect interval:',
+      'bt_default_config_label': 'Default Config',
+      'bt_attempt_label': 'Attempt:',
+      'bt_clock_drift_label': 'Clock drift:',
       'default_note': '(set by code, default 150 µs, not editable)',
       'module_role': 'Module role',
       'sink': 'Sink',
@@ -249,9 +260,13 @@ class AppLocalizations {
       'chart_hide_sleep_gaps': 'Hide sleep/gaps',
       'chart_timeline_compressed': 'Timeline: compressed view (sleep hidden)',
       'chart_timeline_full': 'Timeline: full period view',
-      'chart_hover_hint': 'Hover over the chart to view phase name, duration, and current info',
+      'chart_hover_hint':
+          'Hover over the chart to view phase name, length, and current info',
       'chart_phase': 'Phase',
-      'chart_duration': 'Duration',
+      'chart_length': 'Length',
+      'chart_total_rx_time': 'Total RX time',
+      'chart_window_widening_length': 'Window widening Length',
+      'chart_radio_rx_length': 'Radio RX Length',
       'chart_current': 'Current',
       'collapse_panel': 'Collapse panel',
       'expand_panel': 'Expand panel',
@@ -295,7 +310,7 @@ class AppLocalizations {
       'power_off': 'Power Off',
       'kpi_period': '周期',
       'kpi_avg_current': '平均电流',
-      'kpi_sleep_current':'睡眠电流',
+      'kpi_sleep_current': '睡眠电流',
       'kpi_battery_life_est': '电池寿命(估)',
       'kpi_peak_current': '峰值电流',
       'bt_page_config': 'BT Page 配置',
@@ -313,6 +328,14 @@ class AppLocalizations {
       'listening_interval': '侦听间隔 (ms):',
       'channels_label': '侦听信道数:',
       'channel_gap': '信道间隙 (µs):',
+      'bt_packet_type_label': 'Packet type',
+      'bt_voltage_label': '电压:',
+      'bt_rx_payload_label': 'RX Payload:',
+      'bt_tx_payload_label': 'TX Payload:',
+      'bt_connect_interval_label': '连接间隔:',
+      'bt_default_config_label': '默认配置',
+      'bt_attempt_label': '尝试次数:',
+      'bt_clock_drift_label': '时钟漂移:',
       'default_note': '（由代码变量指定，默认 150 µs，不可交互修改）',
       'module_role': '模块角色',
       'sink': 'Sink',
@@ -487,14 +510,18 @@ class AppLocalizations {
       'admin_drag_handle': '拖拽排序',
       'admin_reorder_disabled_in_search': '请先清空搜索,才能拖拽排序。',
       'admin_export_json': '导出 JSON',
-      'admin_export_success': '已导出到 {location}，覆盖 assets/data/chips/earbuds/ 后即为新的种子数据。',
+      'admin_export_success':
+          '已导出到 {location}，覆盖 assets/data/chips/earbuds/ 后即为新的种子数据。',
       'admin_export_failed': '导出失败：{error}',
       'chart_hide_sleep_gaps': '隐藏睡眠/空隙',
       'chart_timeline_compressed': '时间轴：压缩视图（睡眠已隐藏）',
       'chart_timeline_full': '时间轴：完整周期视图',
-      'chart_hover_hint': '悬浮在图表上可查看阶段名、持续时间、电流信息',
+      'chart_hover_hint': '悬浮在图表上可查看阶段名、长度、电流信息',
       'chart_phase': '阶段',
-      'chart_duration': '持续',
+      'chart_length': '长度',
+      'chart_total_rx_time': '总 RX 时间',
+      'chart_window_widening_length': 'Window widening 长度',
+      'chart_radio_rx_length': 'Radio RX 长度',
       'chart_current': '电流',
       'collapse_panel': '收起面板',
       'expand_panel': '展开面板',
@@ -563,6 +590,14 @@ class AppLocalizations {
   String get listeningInterval => _t('listening_interval');
   String get channelsLabel => _t('channels_label');
   String get channelGap => _t('channel_gap');
+  String get btPacketTypeLabel => _t('bt_packet_type_label');
+  String get btVoltageLabel => _t('bt_voltage_label');
+  String get btRxPayloadLabel => _t('bt_rx_payload_label');
+  String get btTxPayloadLabel => _t('bt_tx_payload_label');
+  String get btConnectIntervalLabel => _t('bt_connect_interval_label');
+  String get btDefaultConfigLabel => _t('bt_default_config_label');
+  String get btAttemptLabel => _t('bt_attempt_label');
+  String get btClockDriftLabel => _t('bt_clock_drift_label');
   String get defaultNote => _t('default_note');
   String get moduleRole => _t('module_role');
   String get sink => _t('sink');
@@ -600,7 +635,8 @@ class AppLocalizations {
   String get ebFilterSortDesc => _t('eb_filter_sort_desc');
   String get ebFilterSortOrig => _t('eb_filter_sort_orig');
   String get ebSelectChipsHint => _t('eb_select_chips_hint');
-  String ebSelectedCount(int n) => _t('eb_selected_count').replaceFirst('{n}', '$n');
+  String ebSelectedCount(int n) =>
+      _t('eb_selected_count').replaceFirst('{n}', '$n');
   String get ebChipNotApplicable => _t('eb_chip_not_applicable');
   String get ebUnitMa => _t('eb_unit_ma');
   String get ebUnitUa => _t('eb_unit_ua');
@@ -755,13 +791,17 @@ class AppLocalizations {
   String get chartTimelineFull => _t('chart_timeline_full');
   String get chartHoverHint => _t('chart_hover_hint');
   String get chartPhase => _t('chart_phase');
-  String get chartDuration => _t('chart_duration');
+  String get chartLength => _t('chart_length');
+  String get chartTotalRxTime => _t('chart_total_rx_time');
+  String get chartWindowWideningLength => _t('chart_window_widening_length');
+  String get chartRadioRxLength => _t('chart_radio_rx_length');
   String get chartCurrent => _t('chart_current');
   String get collapsePanel => _t('collapse_panel');
   String get expandPanel => _t('expand_panel');
 
   static AppLocalizations of(BuildContext context) {
-    final instance = Localizations.of<AppLocalizations>(context, AppLocalizations);
+    final instance =
+        Localizations.of<AppLocalizations>(context, AppLocalizations);
     if (instance == null) {
       // Fallback: return English
       return AppLocalizations(const Locale('en'));
@@ -770,7 +810,8 @@ class AppLocalizations {
   }
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -782,7 +823,9 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool shouldReload(covariant LocalizationsDelegate<AppLocalizations> old) => false;
+  bool shouldReload(covariant LocalizationsDelegate<AppLocalizations> old) =>
+      false;
 }
 
-const LocalizationsDelegate<AppLocalizations> appLocalizationsDelegate = _AppLocalizationsDelegate();
+const LocalizationsDelegate<AppLocalizations> appLocalizationsDelegate =
+    _AppLocalizationsDelegate();

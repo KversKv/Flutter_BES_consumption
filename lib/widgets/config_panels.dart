@@ -37,8 +37,8 @@ class _ConfigPanelState extends State<ConfigPanel> {
     if (_connIntervalCtrl.text != s) {
       _syncingConn = true;
       _connIntervalCtrl.text = s;
-      _connIntervalCtrl.selection =
-          TextSelection.fromPosition(TextPosition(offset: _connIntervalCtrl.text.length));
+      _connIntervalCtrl.selection = TextSelection.fromPosition(
+          TextPosition(offset: _connIntervalCtrl.text.length));
       _syncingConn = false;
     }
   }
@@ -47,7 +47,8 @@ class _ConfigPanelState extends State<ConfigPanel> {
   Widget build(BuildContext context) {
     // Try to sync BTState with AppState if provider is present.
     final theme = Theme.of(context);
-    Widget sectionCard({required String title, required Widget child, required Color color}) {
+    Widget sectionCard(
+        {required String title, required Widget child, required Color color}) {
       return Container(
         width: double.infinity,
         margin: const EdgeInsets.symmetric(vertical: 6),
@@ -55,18 +56,22 @@ class _ConfigPanelState extends State<ConfigPanel> {
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.6)),
+          border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.6)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+            Text(title,
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             child,
           ],
         ),
       );
     }
+
     final app = context.watch<AppState>();
     List<double> levels;
     double currentTx;
@@ -83,13 +88,15 @@ class _ConfigPanelState extends State<ConfigPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(AppLocalizations.of(context).config, style: theme.textTheme.titleLarge),
+        Text(AppLocalizations.of(context).config,
+            style: theme.textTheme.titleLarge),
         const SizedBox(height: 12),
 
         // Chip settings card (single bordered section)
         sectionCard(
           title: 'Chip settings',
-          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.06),
+          color:
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.06),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -136,11 +143,22 @@ class _ConfigPanelState extends State<ConfigPanel> {
                   initialSelection: app.params.mode,
                   expandedInsets: EdgeInsets.zero,
                   dropdownMenuEntries: [
-                    DropdownMenuEntry(value: Mode.advertisingTxRx, label: AppLocalizations.of(context).advertisingTxRx),
-                    DropdownMenuEntry(value: Mode.advertisingTxOnly, label: AppLocalizations.of(context).advertisingTxOnly),
-                    DropdownMenuEntry(value: Mode.bleConnectionPeripheral, label: AppLocalizations.of(context).bleConnectionPeripheral),
-                    DropdownMenuEntry(value: Mode.bleConnectionCentral, label: AppLocalizations.of(context).bleConnectionCentral),
-                    if (app.chip.supportsHDT) DropdownMenuEntry(value: Mode.hdt, label: 'HDT'),
+                    DropdownMenuEntry(
+                        value: Mode.advertisingTxRx,
+                        label: AppLocalizations.of(context).advertisingTxRx),
+                    DropdownMenuEntry(
+                        value: Mode.advertisingTxOnly,
+                        label: AppLocalizations.of(context).advertisingTxOnly),
+                    DropdownMenuEntry(
+                        value: Mode.bleConnectionPeripheral,
+                        label: AppLocalizations.of(context)
+                            .bleConnectionPeripheral),
+                    DropdownMenuEntry(
+                        value: Mode.bleConnectionCentral,
+                        label:
+                            AppLocalizations.of(context).bleConnectionCentral),
+                    if (app.chip.supportsHDT)
+                      DropdownMenuEntry(value: Mode.hdt, label: 'HDT'),
                   ],
                   onSelected: (v) {
                     if (v != null) context.read<AppState>().setMode(v);
@@ -166,28 +184,33 @@ class _ConfigPanelState extends State<ConfigPanel> {
               ),
               const SizedBox(height: 12),
 
-              Text('${AppLocalizations.of(context).payloadBytesLabel} ${app.params.payloadBytes}'),
+              Text(
+                  '${AppLocalizations.of(context).payloadBytesLabel} ${app.params.payloadBytes}'),
               Slider(
                 value: app.params.payloadBytes.toDouble(),
                 min: 0,
                 max: 251,
                 divisions: 251,
-                onChanged: (v) => context.read<AppState>().setPayloadBytes(v.round()),
+                onChanged: (v) =>
+                    context.read<AppState>().setPayloadBytes(v.round()),
               ),
               const SizedBox(height: 12),
 
               // Interval controls (advertising vs connection)
-              if (app.params.mode == Mode.advertisingTxOnly || app.params.mode == Mode.advertisingTxRx)
+              if (app.params.mode == Mode.advertisingTxOnly ||
+                  app.params.mode == Mode.advertisingTxRx)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${AppLocalizations.of(context).advIntervalLabel} ${app.params.advIntervalMs.toStringAsFixed(0)}'),
+                    Text(
+                        '${AppLocalizations.of(context).advIntervalLabel} ${app.params.advIntervalMs.toStringAsFixed(0)}'),
                     Slider(
                       value: app.params.advIntervalMs,
                       min: 20,
                       max: 2000,
                       divisions: 198,
-                      onChanged: (v) => context.read<AppState>().setAdvInterval(v),
+                      onChanged: (v) =>
+                          context.read<AppState>().setAdvInterval(v),
                     ),
                   ],
                 )
@@ -203,8 +226,12 @@ class _ConfigPanelState extends State<ConfigPanel> {
                           child: TextField(
                             controller: _connIntervalCtrl,
                             // Use a numeric keyboard with decimal support and filter input to digits and dot.
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9\.]'))],
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                  RegExp(r'[0-9\.]'))
+                            ],
                             decoration: const InputDecoration(
                               border: OutlineInputBorder(),
                               isDense: true,
@@ -220,7 +247,9 @@ class _ConfigPanelState extends State<ConfigPanel> {
                               final v = double.tryParse(txt.trim());
                               if (v != null) {
                                 final snapped = _quantizeConn(v);
-                                context.read<AppState>().setConnInterval(snapped);
+                                context
+                                    .read<AppState>()
+                                    .setConnInterval(snapped);
                                 _setConnText(snapped);
                               } else {
                                 _setConnText(app.params.connIntervalMs);
@@ -233,7 +262,9 @@ class _ConfigPanelState extends State<ConfigPanel> {
                               final v = double.tryParse(txt.trim());
                               if (v != null) {
                                 final snapped = _quantizeConn(v);
-                                context.read<AppState>().setConnInterval(snapped);
+                                context
+                                    .read<AppState>()
+                                    .setConnInterval(snapped);
                                 _setConnText(snapped);
                               } else {
                                 _setConnText(app.params.connIntervalMs);
@@ -264,7 +295,9 @@ class _ConfigPanelState extends State<ConfigPanel> {
         const SizedBox(height: 12),
 
         // Advanced card (visible for connection modes and HDT)
-        if (app.params.mode == Mode.bleConnectionCentral || app.params.mode == Mode.bleConnectionPeripheral || app.params.mode == Mode.hdt)
+        if (app.params.mode == Mode.bleConnectionCentral ||
+            app.params.mode == Mode.bleConnectionPeripheral ||
+            app.params.mode == Mode.hdt)
           sectionCard(
             title: 'Advanced',
             color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.06),
@@ -279,7 +312,8 @@ class _ConfigPanelState extends State<ConfigPanel> {
                     segments: const [
                       ButtonSegment(value: Phy.le1M, label: Text('1M')),
                       ButtonSegment(value: Phy.le2M, label: Text('2M')),
-                      ButtonSegment(value: Phy.leCodedS8, label: Text('Coded S=8')),
+                      ButtonSegment(
+                          value: Phy.leCodedS8, label: Text('Coded S=8')),
                     ],
                     selected: {app.params.phy},
                     onSelectionChanged: (s) {
@@ -301,8 +335,13 @@ class _ConfigPanelState extends State<ConfigPanel> {
                           value: btState.hdtModule,
                           isExpanded: true,
                           items: [
-                            DropdownMenuItem(value: HdtModule.sink, child: Text(AppLocalizations.of(context).sink)),
-                            DropdownMenuItem(value: HdtModule.source, child: Text(AppLocalizations.of(context).source)),
+                            DropdownMenuItem(
+                                value: HdtModule.sink,
+                                child: Text(AppLocalizations.of(context).sink)),
+                            DropdownMenuItem(
+                                value: HdtModule.source,
+                                child:
+                                    Text(AppLocalizations.of(context).source)),
                           ],
                           onChanged: (v) {
                             if (v == null) return;
@@ -319,7 +358,8 @@ class _ConfigPanelState extends State<ConfigPanel> {
                           value: btState.band,
                           isExpanded: true,
                           items: const [
-                            DropdownMenuItem(value: '2.4G', child: Text('2.4G')),
+                            DropdownMenuItem(
+                                value: '2.4G', child: Text('2.4G')),
                             DropdownMenuItem(value: '5G', child: Text('5G')),
                           ],
                           onChanged: (v) {
@@ -337,7 +377,8 @@ class _ConfigPanelState extends State<ConfigPanel> {
 
         const SizedBox(height: 12),
 
-        Text('${AppLocalizations.of(context).batteryCapacityLabel} ${app.batteryCapacity_mAh.toStringAsFixed(0)}'),
+        Text(
+            '${AppLocalizations.of(context).batteryCapacityLabel} ${app.batteryCapacity_mAh.toStringAsFixed(0)}'),
         Slider(
           value: app.batteryCapacity_mAh,
           min: 50,
@@ -358,29 +399,31 @@ class SniffingConfigPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final st = context.watch<BTState>();
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(AppLocalizations.of(context).config, style: Theme.of(context).textTheme.titleLarge),
+        Text(l10n.config, style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
 
-        Text(AppLocalizations.of(context).chip),
+        Text(l10n.chip),
         const SizedBox(height: 6),
         Builder(builder: (ctx) {
           final isBtCase = st.caseType == BTCase.btSniff ||
               st.caseType == BTCase.btPage ||
-              st.caseType == BTCase.btPagescan;
+              st.caseType == BTCase.btPagescan ||
+              st.caseType == BTCase.relay;
           final chipsList = isBtCase ? st.btChips : st.bleChips;
           return DropdownButton<String>(
             value: st.selectedChipId,
             isExpanded: true,
             items: chipsList
-              .map<DropdownMenuItem<String>>((c) => DropdownMenuItem<String>(
-                  value: (c as dynamic).id as String,
-                  child: Text((c as dynamic).name as String),
-                ))
-              .toList(),
+                .map<DropdownMenuItem<String>>((c) => DropdownMenuItem<String>(
+                      value: (c as dynamic).id as String,
+                      child: Text((c as dynamic).name as String),
+                    ))
+                .toList(),
             onChanged: (v) {
               if (v != null) context.read<BTState>().setChip(v);
             },
@@ -388,19 +431,21 @@ class SniffingConfigPanel extends StatelessWidget {
         }),
         const SizedBox(height: 12),
 
-        Text(AppLocalizations.of(context).listeningCase),
+        Text(l10n.listeningCase),
         const SizedBox(height: 6),
         SizedBox(
           width: double.infinity,
           child: DropdownButton<BTCase>(
             value: st.caseType,
             isExpanded: true,
-              items: [
-                DropdownMenuItem(value: BTCase.btSniff, child: Text(AppLocalizations.of(context).btSniff)),
-                DropdownMenuItem(value: BTCase.btPage, child: Text(AppLocalizations.of(context).btPage)),
-                DropdownMenuItem(value: BTCase.btPagescan, child: Text(AppLocalizations.of(context).btPagescan)),
-                DropdownMenuItem(value: BTCase.relay, child: const Text('Relay')),
-              ],
+            items: [
+              DropdownMenuItem(
+                  value: BTCase.btSniff, child: Text(l10n.btSniff)),
+              DropdownMenuItem(value: BTCase.btPage, child: Text(l10n.btPage)),
+              DropdownMenuItem(
+                  value: BTCase.btPagescan, child: Text(l10n.btPagescan)),
+              DropdownMenuItem(value: BTCase.relay, child: Text(l10n.relay)),
+            ],
             onChanged: (v) {
               if (v != null) context.read<BTState>().setCase(v);
             },
@@ -416,16 +461,17 @@ class SniffingConfigPanel extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('${AppLocalizations.of(context).txPowerLabel} $currentTx'),
+              Text('${l10n.txPowerLabel} $currentTx'),
               const SizedBox(height: 6),
               DropdownButton<double>(
                 value: currentTx,
                 isExpanded: true,
                 items: levels
-                    .map<DropdownMenuItem<double>>((lv) => DropdownMenuItem<double>(
-                          value: lv,
-                          child: Text(lv.toString()),
-                        ))
+                    .map<DropdownMenuItem<double>>(
+                        (lv) => DropdownMenuItem<double>(
+                              value: lv,
+                              child: Text(lv.toString()),
+                            ))
                     .toList(),
                 onChanged: (v) {
                   if (v != null) context.read<BTState>().setTxPower(v);
@@ -435,49 +481,95 @@ class SniffingConfigPanel extends StatelessWidget {
             ],
           );
         }),
+        _NumberSliderInput(
+          label: l10n.btVoltageLabel,
+          value: st.supplyVoltage_V,
+          min: 1.8,
+          max: 5.5,
+          divisions: 37,
+          decimals: 2,
+          suffixText: 'V',
+          onChanged: (v) => context.read<BTState>().setSupplyVoltage(v),
+        ),
+        const SizedBox(height: 12),
+
+        _ConnectIntervalInput(
+          label: l10n.btConnectIntervalLabel,
+          valueMs: st.connectIntervalMs,
+          slots: st.connectIntervalSlots,
+          onChanged: (ms) => context.read<BTState>().setConnectIntervalMs(ms),
+        ),
+        const SizedBox(height: 12),
+
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.btDefaultConfigLabel),
+          value: st.useDefaultConfig,
+          onChanged: (v) => context.read<BTState>().setUseDefaultConfig(v),
+        ),
+        const SizedBox(height: 12),
+
+        if (!st.useDefaultConfig) ...[
+          Text(l10n.btPacketTypeLabel),
+          const SizedBox(height: 6),
+          DropdownButton<BtPacketType>(
+            value: st.packetType,
+            isExpanded: true,
+            items: BTState.packetTypes
+                .map((type) => DropdownMenuItem<BtPacketType>(
+                      value: type,
+                      child: Text(type.label),
+                    ))
+                .toList(),
+            onChanged: (v) {
+              if (v != null) context.read<BTState>().setPacketType(v);
+            },
+          ),
+          const SizedBox(height: 12),
+          _IntegerInputField(
+            label: l10n.btRxPayloadLabel,
+            value: st.rxPayloadBytes,
+            suffixText: 'bytes',
+            onSubmitted: (v) => context.read<BTState>().setRxPayloadBytes(v),
+          ),
+          const SizedBox(height: 12),
+          _IntegerInputField(
+            label: l10n.btTxPayloadLabel,
+            value: st.txPayloadBytes,
+            suffixText: 'bytes',
+            onSubmitted: (v) => context.read<BTState>().setTxPayloadBytes(v),
+          ),
+          const SizedBox(height: 12),
+          _IntegerInputField(
+            label: l10n.btAttemptLabel,
+            value: st.attemptCount,
+            onSubmitted: (v) => context.read<BTState>().setAttemptCount(v),
+          ),
+          const SizedBox(height: 12),
+          _NumberSliderInput(
+            label: l10n.btClockDriftLabel,
+            value: st.clockDriftPpm,
+            min: 20,
+            max: 500,
+            divisions: 480,
+            decimals: 0,
+            suffixText: 'ppm',
+            onChanged: (v) => context.read<BTState>().setClockDriftPpm(v),
+          ),
+          const SizedBox(height: 12),
+        ],
 
         // Case-specific panel
         Builder(builder: (ctx) {
           switch (st.caseType) {
             case BTCase.btSniff:
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-
-                  const SizedBox(height: 6),
-                    Text('${AppLocalizations.of(context).hdtPeriod} ${st.hdtPeriodUs.toStringAsFixed(0)}'),
-                      const SizedBox(height: 6),
-                      Text('${AppLocalizations.of(context).listeningWindow} ${st.sniffWindowUs.toStringAsFixed(0)}'),
-                  Slider(
-                    value: st.sniffWindowUs.clamp(50.0, 3000.0),
-                    min: 50.0,
-                    max: 3000.0,
-                    onChanged: (v) => context.read<BTState>().setSniffWindowUs(v),
-                  ),
-                ],
-              );
+              return const SizedBox.shrink();
 
             case BTCase.btPage:
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(AppLocalizations.of(context).btPage),
-                  const SizedBox(height: 6),
-                  Text('${AppLocalizations.of(context).listeningInterval} ${st.sniffIntervalMs.toStringAsFixed(2)}'),
-                  Slider(
-                    value: st.sniffIntervalMs,
-                    min: 10,
-                    max: 5000,
-                    onChanged: (v) => context.read<BTState>().setSniffIntervalMs(v),
-                  ),
-                  const SizedBox(height: 12),
-                  Text('${AppLocalizations.of(context).listeningWindow} ${st.sniffWindowUs.toStringAsFixed(0)}'),
-                  Slider(
-                    value: st.sniffWindowUs.clamp(50.0, 50000.0),
-                    min: 50.0,
-                    max: 50000.0,
-                    onChanged: (v) => context.read<BTState>().setSniffWindowUs(v),
-                  ),
+                  Text(l10n.btPage),
                 ],
               );
 
@@ -485,68 +577,42 @@ class SniffingConfigPanel extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(AppLocalizations.of(context).btPagescan),
+                  Text(l10n.btPagescan),
                   const SizedBox(height: 6),
-                  Text('${AppLocalizations.of(context).listeningInterval} ${st.sniffIntervalMs.toStringAsFixed(2)}'),
-                  Slider(
-                    value: st.sniffIntervalMs,
-                    min: 10,
-                    max: 5000,
-                    onChanged: (v) => context.read<BTState>().setSniffIntervalMs(v),
-                  ),
-                  const SizedBox(height: 12),
-                  Text('${AppLocalizations.of(context).listeningWindow} ${st.sniffWindowUs.toStringAsFixed(0)}'),
-                  Slider(
-                    value: st.sniffWindowUs.clamp(50.0, 50000.0),
-                    min: 50.0,
-                    max: 50000.0,
-                    onChanged: (v) => context.read<BTState>().setSniffWindowUs(v),
-                  ),
-                  const SizedBox(height: 12),
-                  Text('${AppLocalizations.of(context).channelsLabel} ${st.channelsPerCycle}'),
-                  Slider(
+                  _NumberSliderInput(
+                    label: l10n.channelsLabel,
                     value: st.channelsPerCycle.toDouble(),
                     min: 1,
                     max: 3,
                     divisions: 2,
-                    onChanged: (v) => context.read<BTState>().setChannels(v.round()),
+                    decimals: 0,
+                    onChanged: (v) =>
+                        context.read<BTState>().setChannels(v.round()),
                   ),
                   const SizedBox(height: 12),
-                  Text('${AppLocalizations.of(context).channelGap} ${st.channelGapUs.toStringAsFixed(0)}'),
+                  Text(
+                      '${l10n.channelGap} ${st.channelGapUs.toStringAsFixed(0)}'),
                   const SizedBox(height: 6),
-                  Text(AppLocalizations.of(context).defaultNote, style: Theme.of(context).textTheme.bodySmall),
+                  Text(l10n.defaultNote,
+                      style: Theme.of(context).textTheme.bodySmall),
                 ],
               );
-
 
             case BTCase.relay:
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(AppLocalizations.of(context).relay),
+                  Text(l10n.relay),
                   const SizedBox(height: 6),
-                  Text('${AppLocalizations.of(context).listeningInterval} ${st.sniffIntervalMs.toStringAsFixed(2)}'),
-                  Slider(
-                    value: st.sniffIntervalMs,
-                    min: 10,
-                    max: 5000,
-                    onChanged: (v) => context.read<BTState>().setSniffIntervalMs(v),
-                  ),
-                  const SizedBox(height: 12),
-                  Text('${AppLocalizations.of(context).listeningWindow} ${st.sniffWindowUs.toStringAsFixed(0)}'),
-                  Slider(
-                    value: st.sniffWindowUs.clamp(50.0, 50000.0),
-                    min: 50.0,
-                    max: 50000.0,
-                    onChanged: (v) => context.read<BTState>().setSniffWindowUs(v),
-                  ),
-                  const SizedBox(height: 12),
-                  Text('${AppLocalizations.of(context).relayHopGap} ${st.relayHopGapUs.toStringAsFixed(0)}'),
-                  Slider(
-                    value: st.relayHopGapUs.clamp(0.0, 100000.0),
+                  _NumberSliderInput(
+                    label: l10n.relayHopGap,
+                    value: st.relayHopGapUs.clamp(0.0, 100000.0).toDouble(),
                     min: 0.0,
                     max: 100000.0,
-                    onChanged: (v) => context.read<BTState>().setRelayHopGapUs(v),
+                    decimals: 0,
+                    suffixText: 'µs',
+                    onChanged: (v) =>
+                        context.read<BTState>().setRelayHopGapUs(v),
                   ),
                 ],
               );
@@ -554,16 +620,364 @@ class SniffingConfigPanel extends StatelessWidget {
         }),
         const SizedBox(height: 12),
 
-        Text('${AppLocalizations.of(context).batteryCapacityLabel} ${st.batteryCapacity_mAh.toStringAsFixed(0)}'),
-        Slider(
+        _NumberSliderInput(
+          label: l10n.batteryCapacityLabel,
           value: st.batteryCapacity_mAh,
           min: 50,
           max: 1200,
           divisions: 115,
+          decimals: 0,
+          suffixText: 'mAh',
           onChanged: (v) => context.read<BTState>().setBatteryCapacity(v),
         ),
         const SizedBox(height: 12),
         ChipInfoCard(chip: st.chip),
+      ],
+    );
+  }
+}
+
+class _IntegerInputField extends StatefulWidget {
+  final String label;
+  final int value;
+  final String? suffixText;
+  final ValueChanged<int> onSubmitted;
+
+  const _IntegerInputField({
+    required this.label,
+    required this.value,
+    required this.onSubmitted,
+    this.suffixText,
+  });
+
+  @override
+  State<_IntegerInputField> createState() => _IntegerInputFieldState();
+}
+
+class _IntegerInputFieldState extends State<_IntegerInputField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.value.toString());
+  }
+
+  @override
+  void didUpdateWidget(covariant _IntegerInputField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != oldWidget.value &&
+        _controller.text != widget.value.toString()) {
+      _controller.text = widget.value.toString();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    void submit(String text) {
+      final parsed = int.tryParse(text.trim());
+      if (parsed != null) {
+        widget.onSubmitted(parsed);
+      } else {
+        _controller.text = widget.value.toString();
+      }
+      FocusScope.of(context).unfocus();
+    }
+
+    return Row(
+      children: [
+        Text('${widget.label} ${widget.value}'),
+        const SizedBox(width: 12),
+        SizedBox(
+          width: 120,
+          child: TextFormField(
+            controller: _controller,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              isDense: true,
+              suffixText: widget.suffixText,
+            ),
+            textAlign: TextAlign.right,
+            onFieldSubmitted: submit,
+            onEditingComplete: () {
+              submit(_controller.text);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ConnectIntervalInput extends StatefulWidget {
+  final String label;
+  final double valueMs;
+  final int slots;
+  final ValueChanged<double> onChanged;
+
+  const _ConnectIntervalInput({
+    required this.label,
+    required this.valueMs,
+    required this.slots,
+    required this.onChanged,
+  });
+
+  @override
+  State<_ConnectIntervalInput> createState() => _ConnectIntervalInputState();
+}
+
+class _ConnectIntervalInputState extends State<_ConnectIntervalInput> {
+  late final TextEditingController _controller;
+  bool _syncing = false;
+
+  static const double _minMs = 10.0;
+  static const double _maxMs = 5000.0;
+  static const double _stepMs = 0.625;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: _formatMs(widget.valueMs));
+  }
+
+  @override
+  void didUpdateWidget(covariant _ConnectIntervalInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if ((widget.valueMs - oldWidget.valueMs).abs() > 0.0001) {
+      _setText(widget.valueMs);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String _formatMs(double value) => value.toStringAsFixed(3);
+
+  double _snapMs(double value) {
+    final clamped = value.clamp(_minMs, _maxMs).toDouble();
+    final snapped = (clamped / _stepMs).round() * _stepMs;
+    return double.parse(snapped.toStringAsFixed(3));
+  }
+
+  void _setText(double value) {
+    final text = _formatMs(value);
+    if (_controller.text == text) return;
+    _syncing = true;
+    _controller.text = text;
+    _controller.selection =
+        TextSelection.fromPosition(TextPosition(offset: text.length));
+    _syncing = false;
+  }
+
+  void _submit(String text) {
+    if (_syncing) return;
+    final parsed = double.tryParse(text.trim());
+    if (parsed == null) {
+      _setText(widget.valueMs);
+    } else {
+      final snapped = _snapMs(parsed);
+      widget.onChanged(snapped);
+      _setText(snapped);
+    }
+    FocusScope.of(context).unfocus();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '${widget.label} ${_formatMs(widget.valueMs)} ms '
+          '(${widget.slots} slots)',
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(
+              child: Slider(
+                value: widget.valueMs,
+                min: _minMs,
+                max: _maxMs,
+                divisions: ((_maxMs - _minMs) / _stepMs).round(),
+                onChanged: (v) {
+                  final snapped = _snapMs(v);
+                  widget.onChanged(snapped);
+                  _setText(snapped);
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 120,
+              child: TextField(
+                controller: _controller,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                ],
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                  suffixText: 'ms',
+                ),
+                textAlign: TextAlign.right,
+                onSubmitted: _submit,
+                onEditingComplete: () => _submit(_controller.text),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _NumberSliderInput extends StatefulWidget {
+  final String label;
+  final double value;
+  final double min;
+  final double max;
+  final int? divisions;
+  final int decimals;
+  final String? suffixText;
+  final ValueChanged<double> onChanged;
+
+  const _NumberSliderInput({
+    required this.label,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+    this.divisions,
+    this.decimals = 0,
+    this.suffixText,
+  });
+
+  @override
+  State<_NumberSliderInput> createState() => _NumberSliderInputState();
+}
+
+class _NumberSliderInputState extends State<_NumberSliderInput> {
+  late final TextEditingController _controller;
+  bool _syncing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: _format(widget.value));
+  }
+
+  @override
+  void didUpdateWidget(covariant _NumberSliderInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if ((widget.value - oldWidget.value).abs() > 0.0001 ||
+        widget.decimals != oldWidget.decimals) {
+      _setText(widget.value);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String _format(double value) => value.toStringAsFixed(widget.decimals);
+
+  double _snap(double value) {
+    final clamped = value.clamp(widget.min, widget.max).toDouble();
+    final divisions = widget.divisions;
+    if (divisions == null || divisions <= 0) {
+      return double.parse(clamped.toStringAsFixed(widget.decimals));
+    }
+    final step = (widget.max - widget.min) / divisions;
+    final snapped = widget.min + ((clamped - widget.min) / step).round() * step;
+    return double.parse(snapped.toStringAsFixed(widget.decimals));
+  }
+
+  void _setText(double value) {
+    final text = _format(value);
+    if (_controller.text == text) return;
+    _syncing = true;
+    _controller.text = text;
+    _controller.selection =
+        TextSelection.fromPosition(TextPosition(offset: text.length));
+    _syncing = false;
+  }
+
+  void _submit(String text) {
+    if (_syncing) return;
+    final parsed = double.tryParse(text.trim());
+    if (parsed == null) {
+      _setText(widget.value);
+    } else {
+      final snapped = _snap(parsed);
+      widget.onChanged(snapped);
+      _setText(snapped);
+    }
+    FocusScope.of(context).unfocus();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final value = widget.value.clamp(widget.min, widget.max).toDouble();
+    final display = _format(value);
+    final suffix = widget.suffixText == null ? '' : ' ${widget.suffixText}';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('${widget.label} $display$suffix'),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(
+              child: Slider(
+                value: value,
+                min: widget.min,
+                max: widget.max,
+                divisions: widget.divisions,
+                onChanged: (v) {
+                  final snapped = _snap(v);
+                  widget.onChanged(snapped);
+                  _setText(snapped);
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 120,
+              child: TextField(
+                controller: _controller,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                ],
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  isDense: true,
+                  suffixText: widget.suffixText,
+                ),
+                textAlign: TextAlign.right,
+                onSubmitted: _submit,
+                onEditingComplete: () => _submit(_controller.text),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -584,18 +998,26 @@ class ChipInfoCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(AppLocalizations.of(context).chipSpecsTitle, style: theme.textTheme.titleSmall),
+            Text(AppLocalizations.of(context).chipSpecsTitle,
+                style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
             Wrap(
               spacing: 12,
               runSpacing: 8,
               children: [
-                _specItem(context, AppLocalizations.of(context).model, chip.name),
-                _specItem(context, AppLocalizations.of(context).vbat, '${chip.vbat} V'),
+                _specItem(
+                    context, AppLocalizations.of(context).model, chip.name),
+                _specItem(context, AppLocalizations.of(context).vbat,
+                    '${chip.vbat} V'),
                 // _specItem('Sleep', '${chip.sleepCurrent_uA} µA'),
-                _specItem(context, AppLocalizations.of(context).rx, '${chip.rxCurrent_mA} mA'),
-                _specItem(context, AppLocalizations.of(context).tx, '${chip.txCurrent_mA_forDbm[chip.txPowerLevelsDbm.first]} mA'),
-                _specItem(context, AppLocalizations.of(context).descriptionLabel, '${chip.description}'),
+                _specItem(context, AppLocalizations.of(context).rx,
+                    '${chip.rxCurrent_mA} mA'),
+                _specItem(context, AppLocalizations.of(context).tx,
+                    '${chip.txCurrent_mA_forDbm[chip.txPowerLevelsDbm.first]} mA'),
+                _specItem(
+                    context,
+                    AppLocalizations.of(context).descriptionLabel,
+                    '${chip.description}'),
               ],
             ),
             const SizedBox(height: 8),
@@ -615,15 +1037,16 @@ class ChipInfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          Text(title,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
   }
 }
-
-
 
 // class description extends StatelessWidget {
 //   const description({super.key});

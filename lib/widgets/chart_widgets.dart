@@ -64,7 +64,6 @@ class _UnifiedPowerChartState extends State<UnifiedPowerChart> {
           ],
         ),
         const SizedBox(height: 8),
-
         Expanded(
           child: RepaintBoundary(
             child: TimelineChartInteractive(
@@ -76,7 +75,6 @@ class _UnifiedPowerChartState extends State<UnifiedPowerChart> {
             ),
           ),
         ),
-
         const SizedBox(height: 8),
         EventLegendPanel(
           events: widget.hideLowPowerGaps
@@ -122,8 +120,7 @@ class _TimelineChartInteractiveState extends State<TimelineChartInteractive> {
   Offset? pointerLocalPos;
 
   void _recomputeRects(Size size) {
-    if (size == _lastSize &&
-        _rects.isNotEmpty) {
+    if (size == _lastSize && _rects.isNotEmpty) {
       return;
     }
     _lastSize = size;
@@ -238,7 +235,10 @@ class _ChartTooltip extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     const tooltipWidth = 180.0;
-    const tooltipHeight = 72.0;
+    final hasRxBreakdown = event.totalLengthUs != null &&
+        event.windowWideningLengthUs != null &&
+        event.occupiedLengthUs != null;
+    final tooltipHeight = hasRxBreakdown ? 116.0 : 72.0;
     const gap = 12.0;
 
     double left = pointer.dx + gap;
@@ -271,17 +271,31 @@ class _ChartTooltip extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  event.label,
+                  event.previewLabel ?? event.label,
                   style: Theme.of(context)
                       .textTheme
                       .bodyMedium
                       ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '${l10n.chartDuration}: ${event.durationUs.toStringAsFixed(0)} µs',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                if (hasRxBreakdown) ...[
+                  Text(
+                    '${l10n.chartTotalRxTime}: ${event.totalLengthUs!.toStringAsFixed(0)} µs',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  Text(
+                    '${l10n.chartWindowWideningLength}: ${event.windowWideningLengthUs!.toStringAsFixed(0)} µs',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  Text(
+                    '${l10n.chartRadioRxLength}: ${event.occupiedLengthUs!.toStringAsFixed(0)} µs',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ] else
+                  Text(
+                    '${l10n.chartLength}: ${event.durationUs.toStringAsFixed(0)} µs',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 Text(
                   '${l10n.chartCurrent}: ${event.currentMa.toStringAsFixed(3)} mA',
                   style: Theme.of(context).textTheme.bodySmall,
@@ -326,7 +340,7 @@ List<_EventRect> _computeEventRects({
     final endUs = startUs + e.durationUs;
     final x1 = origin.dx + (startUs / viewPeriodUs) * w;
     final x2 = origin.dx + (endUs / viewPeriodUs) * w;
-    
+
     // 对Sleep状态进行高度放大，放大5倍
     final displayCurrent = e.isSleepOrGap ? e.currentMa * 5.0 : e.currentMa;
     final yTop = origin.dy - (displayCurrent / maxCurrent) * h;
@@ -369,8 +383,9 @@ class _TimelinePainter extends CustomPainter {
     final h = size.height - padding * 2;
     if (w <= 0 || h <= 0 || periodUs <= 0) return;
 
-    final drawEvents =
-        hideLowPowerGaps ? events.where((e) => !e.isSleepOrGap).toList() : events;
+    final drawEvents = hideLowPowerGaps
+        ? events.where((e) => !e.isSleepOrGap).toList()
+        : events;
     if (drawEvents.isEmpty) return;
 
     final viewPeriodUs = hideLowPowerGaps
@@ -450,7 +465,8 @@ class _TimelinePainter extends CustomPainter {
         ),
       );
       textPainter.layout();
-      textPainter.paint(canvas, Offset(x - textPainter.width / 2, origin.dy + 4));
+      textPainter.paint(
+          canvas, Offset(x - textPainter.width / 2, origin.dy + 4));
     }
 
     // X label
@@ -464,8 +480,8 @@ class _TimelinePainter extends CustomPainter {
       ),
     );
     textPainter.layout();
-    textPainter.paint(
-        canvas, Offset(origin.dx + w / 2 - textPainter.width / 2, origin.dy + 20));
+    textPainter.paint(canvas,
+        Offset(origin.dx + w / 2 - textPainter.width / 2, origin.dy + 20));
 
     // Draw events
     double tAccUs = 0.0;
@@ -474,7 +490,7 @@ class _TimelinePainter extends CustomPainter {
       final endUs = startUs + e.durationUs;
       final x1 = origin.dx + (startUs / viewPeriodUs) * w;
       final x2 = origin.dx + (endUs / viewPeriodUs) * w;
-      
+
       // 对Sleep状态进行高度放大，放大5倍
       final displayCurrent = e.isSleepOrGap ? e.currentMa * 5.0 : e.currentMa;
       final yTop = origin.dy - (displayCurrent / maxCurrent) * h;

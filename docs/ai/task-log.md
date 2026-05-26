@@ -280,3 +280,137 @@
   3. `.ai/memory.md` 的 Web origin 隔离坑位同步改为 5174。
 - **影响**：后续 Web 调试与服务器访问都应固定 5174；历史 5173 origin 下的浏览器本地存档不会自动迁移。
 - **后续**：若项目后续加入 nginx/Docker/systemd 配置，监听或外部映射端口也应使用 5174。
+
+## 2026-05-26 - 修正 VS Code Web 端口参数传递方式
+- **类型**：fix / docs
+- **范围**：`.vscode/launch.json`、`docs/admin/workflow.md`、`.ai/memory.md`
+- **动因**：Dart/Flutter VS Code 调试中 `args` 传给应用本身，`--web-port` 应作为 Flutter tool 参数传递；写在 `args` 会导致 Debug 仍使用随机端口。
+- **变更**：将三套启动配置中的 `args` 改为 `toolArgs`，并同步文档和 memory。
+- **影响**：从 VS Code 选择这些 launch 配置启动 Web Debug 时，应固定访问 `http://localhost:5174/`。
+## 2026-05-26 - BT CASE timing controls
+- **类型**：feature / fix
+- **范围**：`lib/state/bt_state.dart`、`lib/widgets/config_panels.dart`、`lib/l10n/app_localizations.dart`
+- **动因**：BT CASE 需要移除误露出的 HDT period / Listening window / Timeout，并补齐 Connect Interval、Voltage、Attempt、Clock drift、RX/TX Payload 控件。
+- **变更**：
+  1. 移除 BT CASE 面板中的 HDT period 展示与 `BTState.hdtPeriodUs` 字段。
+  2. 新增 BT Connect Interval 滑块，按 625us slot 整数倍配置；该 interval 只改变周期尾部 Sleep，不改变 RX/TX/Post/TIFS 等事件时长。
+  3. 新增 Voltage、Attempt、Clock drift、RX Payload、TX Payload 控件；Attempt 为普通数字输入框，Clock drift 作为 RX 前 window widening 事件，Payload 影响对应 RX/TX 时长。
+  4. 修正 Relay case 选芯片列表与 `BTState.chip` 的 BT 芯片归属一致性。
+- **验证**：`flutter analyze` 通过；`flutter test` 未通过，失败来自既有 `wifi_case_page.dart` Dropdown 类型异常、默认 counter smoke test 断言和小尺寸布局 overflow，非本次 BT CASE 改动路径。
+
+## 2026-05-26 - BT CASE packet type and interval input
+- **类型**：feature / fix
+- **范围**：`lib/state/bt_state.dart`、`lib/widgets/config_panels.dart`、`lib/l10n/app_localizations.dart`
+- **动因**：BT CASE 需要支持 Packet type，并让 Connect Interval 同时支持输入框和滑条且保持 625us slot 吸附。
+- **变更**：
+  1. 新增 Packet type 下拉，支持 DM1、2-DH1。
+  2. Packet type 按 slot 数和 payload rate 影响 RX/TX payload airtime，上限不超过该包型 slot 时长。
+  3. Connect Interval 改为输入框 + 滑条组合控件；输入和拖动都统一吸附到 0.625ms 整数倍并同步显示 slot 数。
+- **验证**：`flutter analyze` 通过；`flutter test` 未通过，仍为既有 `wifi_case_page.dart` Dropdown 类型异常、默认 counter smoke test 断言和小尺寸布局 overflow。
+
+## 2026-05-26 - BT sniff attempt 与 clock drift ppm 修正
+- **类型**：fix / data / test
+- **范围**：`lib/state/bt_state.dart`、`lib/widgets/config_panels.dart`、`lib/l10n/app_localizations.dart`、`assets/data/chips/bt/*.json`、`test/bt_state_test.dart`、`test/widget_test.dart`
+- **动因**：按 `docs/admin/BT_SniffConsumption.md` 修正 BT CASE 中 sniff 单周期模型；Clock drift 应按 ppm 配置并由 Connect Interval 换算 guard。
+- **变更**：
+  1. BT sniff 的 `Attempt=N` 改为 1 次 Main RX + 1 次 TX + `N-1` 次 TX 后 RXmin，不再重复追加 TX。
+  2. Clock drift UI 从 µs 改为 ppm；guard 使用 `Connect Interval * ppm / 1e6` 计算。
+  3. 所有 BT 芯片 JSON 补 `clockDriftPpm: 50.0`，与 `BtChip` 默认值一致。
+  4. 补 BTState 单元测试覆盖 Attempt/RXmin 和 ppm guard；修正 Wi-Fi TX power Dropdown 泛型和默认 widget smoke test，使全量测试可通过。
+- **验证**：`flutter analyze` 通过；`flutter test` 全量通过。
+
+## 2026-05-26 - BT sniff RXmin 与 attempt wait 参数化
+- **类型**：fix / data / test
+- **范围**：`lib/models/bt_chip.dart`、`lib/state/bt_state.dart`、`assets/data/chips/bt/*.json`、`test/bt_state_test.dart`
+- **动因**：BT sniff 后续 RXmin 与首次 Main RX 的波形宽度需要拆开建模；TX 到每个 RXmin 前存在独立 idle wait 时序。
+- **变更**：
+  1. BT 芯片模型和所有 BT JSON 新增 `Rmin_us`（默认 88us）与 `AttemptWaitTimeUS`（默认 450us）。
+  2. BT sniff Main RX 宽度改为 `Rmin_us + RX Payload airtime + Window Widening`。
+  3. TX 后每个后续 RXmin 前新增 `Attempt wait` idle 事件，持续 `AttemptWaitTimeUS`；后续 RXmin 宽度固定为 `Rmin_us`。
+  4. 更新 BTState 单元测试覆盖 attempt wait 数量与 Main RX 宽度公式。
+- **验证**：`flutter analyze` 通过；`flutter test` 全量通过。
+
+## 2026-05-26 - BT sniff Window widening 与 Attempt wait 电流修正
+- **类型**：fix / test
+- **范围**：`lib/state/bt_state.dart`、`test/bt_state_test.dart`
+- **动因**：Window widening 需要保留独立波形效果；`AttemptWaitTimeUS` 对应 Standby 阶段而非 Sleep。
+- **变更**：
+  1. BT sniff 恢复独立 `Window widening` 事件，Main RX 自身宽度为 `Rmin_us + RX Payload airtime`。
+  2. TX 后每个 `Attempt wait standby` 事件使用 `standbyCurrent_mA`，不再使用 sleep current。
+  3. 更新 BTState 测试覆盖独立 window widening 和 attempt wait standby 电流。
+- **验证**：`flutter analyze` 通过；`flutter test` 全量通过。
+
+## 2026-05-26 - Clock drift 下限调整为 20ppm
+- **类型**：fix / test
+- **范围**：`lib/state/bt_state.dart`、`lib/widgets/config_panels.dart`、`test/bt_state_test.dart`
+- **动因**：BT CASE 的 Clock drift 参数最小值需要限制为 20ppm。
+- **变更**：状态层 `setClockDriftPpm` 与 UI slider 下限同步改为 20ppm，并补充 clamp 单元测试。
+- **验证**：`flutter analyze` 通过；`flutter test` 全量通过。
+
+## 2026-05-26 - BT 滑条输入框同步与 rxExtWindow 参数
+- **类型**：feature / data / fix
+- **范围**：`lib/widgets/config_panels.dart`、`lib/models/bt_chip.dart`、`lib/state/bt_state.dart`、`lib/config/bt_chip_config.dart`、`assets/data/chips/bt/*.json`、`test/bt_state_test.dart`
+- **动因**：BT 面板中的滑条需要配套输入框并与状态双向同步；BT 首次 RX 需要使用新的扩展窗口字段。
+- **变更**：
+  1. 新增 `_NumberSliderInput`，用于 Voltage、Clock drift、PageScan channels、Relay hop gap、Battery capacity 的滑条 + 输入框同步。
+  2. BT 芯片字段由 `rxWindow_us` 迁移为 `rxExtWindow_us`，BT JSON 与 fallback config 默认值统一写为 780us；模型保留旧字段读取兼容。
+  3. BT sniff 的 Main RX 宽度改为 `rxExtWindow_us + Rmin_us + RX Payload airtime`（其中 packet airtime 仍受 packet type slot 上限限制）。
+- **验证**：`flutter analyze` 通过；`flutter test` 全量通过。
+
+## 2026-05-26 - 移除 BT rxWindow_us 兼容读取
+- **类型**：cleanup / test
+- **范围**：`lib/models/bt_chip.dart`
+- **动因**：BT 数据已统一迁移到 `rxExtWindow_us`，不再需要兼容旧 `rxWindow_us`。
+- **变更**：`BtChip.fromJson` 仅读取 `rxExtWindow_us`，缺省仍为 780us。
+- **验证**：`flutter analyze` 通过；`flutter test` 全量通过。
+
+## 2026-05-26 - BT 首个 RX 预览拆分总时间与占用时间
+- **类型**：fix / ui / test
+- **范围**：`lib/models/power_event.dart`、`lib/state/bt_state.dart`、`lib/widgets/chart_widgets.dart`、`lib/widgets/legend_hover_widgets.dart`、`lib/l10n/app_localizations.dart`、`test/bt_state_test.dart`
+- **动因**：首个 RX 窗口预览需要同时表达包含 Window widening 的总 RX 时间，以及 Main RX 独立占用时间。
+- **变更**：
+  1. `PowerEvent` 新增可选 `totalDurationUs` / `occupiedDurationUs`。
+  2. BT sniff 的 `Main RX` 事件写入总 RX 时间（Window widening + Main RX）和独立占用时间（Main RX）。
+  3. 图表 tooltip 与 hover 信息栏在存在拆分数据时展示“总 RX 时间 / 独立占用时间”。
+- **验证**：`flutter analyze` 通过；`flutter test` 全量通过。
+
+## 2026-05-26 - BT 首个 RX 预览同屏展示 Window widening 与 Radio RX
+- **类型**：fix / ui / test
+- **范围**：`lib/models/power_event.dart`、`lib/state/bt_state.dart`、`lib/widgets/chart_widgets.dart`、`lib/widgets/legend_hover_widgets.dart`、`lib/l10n/app_localizations.dart`、`test/bt_state_test.dart`
+- **动因**：鼠标悬浮在 `Window widening` 或 `Main RX` 上时，都应展示同一个 Main RX 窗口的完整拆分信息。
+- **变更**：
+  1. `PowerEvent` 新增 `previewLabel` 与 `windowWideningDurationUs`。
+  2. `Window widening` 与 `Main RX` 事件均写入 `previewLabel: Main RX`、`totalDurationUs`、`windowWideningDurationUs`、`occupiedDurationUs`。
+  3. tooltip / hover 信息栏展示为 `Main RX`、`Total RX time`、`Window widening Length`、`Radio RX Length`、`Current`。
+- **验证**：`flutter analyze` 通过；`flutter test` 全量通过。
+
+## 2026-05-26 - 预览命名从 Duration 统一为 Length
+- **类型**：cleanup / ui / test
+- **范围**：`lib/models/power_event.dart`、`lib/state/bt_state.dart`、`lib/widgets/chart_widgets.dart`、`lib/widgets/legend_hover_widgets.dart`、`lib/l10n/app_localizations.dart`、`test/bt_state_test.dart`
+- **动因**：参数预览中应统一使用 Length 命名，避免 Duration 与 Length 混用。
+- **变更**：
+  1. 用户可见文案 `Duration` / `持续时间` 改为 `Length` / `长度`。
+  2. RX 预览元数据字段从 `totalDurationUs` / `windowWideningDurationUs` / `occupiedDurationUs` 改为 `totalLengthUs` / `windowWideningLengthUs` / `occupiedLengthUs`。
+  3. 检查 assets JSON，无 `duration/Duration` 键需要迁移。
+- **验证**：`flutter analyze` 通过；`flutter test` 全量通过。
+
+## 2026-05-26 - BT 默认 Vbat 从芯片数据同步
+- **类型**：fix / test
+- **范围**：`lib/state/bt_state.dart`、`test/bt_state_test.dart`
+- **动因**：BT 页面打开时默认电压仍为硬编码 3.7V，未读取 BT JSON 中的 `vbat`，例如 `BES2711IUC2/3` 应为 3.8V。
+- **变更**：
+  1. 初始化、切换芯片、切换 Case 时统一同步当前 BT 芯片的 `vbat` 与 `clockDriftPpm` 默认值。
+  2. 保留用户手动修改电压后的状态，不在普通重算中覆盖。
+  3. 新增 BTState 单元测试覆盖初始电压与切换到 `nrf52832` 后同步 3.0V。
+- **验证**：`flutter analyze` 通过；`flutter test` 全量通过。
+
+## 2026-05-26 - BT CASE Default Config 波形长度
+- **类型**：feature / data / test
+- **范围**：`lib/models/bt_chip.dart`、`lib/state/bt_state.dart`、`lib/widgets/config_panels.dart`、`lib/l10n/app_localizations.dart`、`assets/data/chips/bt/*.json`、`test/bt_state_test.dart`
+- **动因**：BT CASE 需要默认使用芯片 JSON 中的 Attempt=1 固定阶段 Length；只有关闭 Default Config 后才按窗口参数实时计算。
+- **变更**：
+  1. `BtChip` 新增 `defaultConfig`，包含 Attempt=1 下 Pre-processing、Crystal ramp-up、Standby、Window widening、Main RX、TIFS、TX、Post 的 `*Length_us`。
+  2. 所有 BT JSON 增加 `defaultConfig`；缺省时模型可由现有芯片字段推导 fallback 默认配置。
+  3. `BTState.useDefaultConfig` 默认开启；开启时 BT Sniff 直接使用 JSON Length 生成波形，只有 Sleep Length 随 Connect Interval 剩余时间变化；关闭后恢复 packet/payload/attempt/clock drift 公式计算。
+  4. BT 配置面板将 Connect Interval 移到 Voltage 下方，并在其下新增 Default Config 开关；开启时隐藏后续手动长度参数。
+- **验证**：`flutter analyze` 通过；`flutter test` 全量通过。

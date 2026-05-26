@@ -23,15 +23,36 @@ class HoverInfoBar extends StatelessWidget {
     }
 
     final durMs = event!.durationUs / 1000.0;
+    final totalMs =
+        event!.totalLengthUs == null ? null : event!.totalLengthUs! / 1000.0;
+    final windowMs = event!.windowWideningLengthUs == null
+        ? null
+        : event!.windowWideningLengthUs! / 1000.0;
+    final radioMs = event!.occupiedLengthUs == null
+        ? null
+        : event!.occupiedLengthUs! / 1000.0;
+    final phaseLabel = event!.previewLabel ?? event!.label;
     return Align(
       alignment: Alignment.centerLeft,
       child: Wrap(
         spacing: 16,
         runSpacing: 8,
         children: [
-          Text('${l10n.chartPhase}: ${event!.label}', style: textStyle),
-          Text('${l10n.chartDuration}: ${durMs.toStringAsFixed(3)} ms', style: textStyle),
-          Text('${l10n.chartCurrent}: ${event!.currentMa.toStringAsFixed(3)} mA', style: textStyle),
+          Text('${l10n.chartPhase}: $phaseLabel', style: textStyle),
+          if (totalMs != null && windowMs != null && radioMs != null) ...[
+            Text('${l10n.chartTotalRxTime}: ${totalMs.toStringAsFixed(3)} ms',
+                style: textStyle),
+            Text(
+                '${l10n.chartWindowWideningLength}: ${windowMs.toStringAsFixed(3)} ms',
+                style: textStyle),
+            Text('${l10n.chartRadioRxLength}: ${radioMs.toStringAsFixed(3)} ms',
+                style: textStyle),
+          ] else
+            Text('${l10n.chartLength}: ${durMs.toStringAsFixed(3)} ms',
+                style: textStyle),
+          Text(
+              '${l10n.chartCurrent}: ${event!.currentMa.toStringAsFixed(3)} mA',
+              style: textStyle),
         ],
       ),
     );
@@ -44,7 +65,8 @@ class EventLegendPanel extends StatelessWidget {
   final PowerEvent? hovered;
   final ValueChanged<PowerEvent?>? onHover;
 
-  const EventLegendPanel({super.key, required this.events, required this.hovered, this.onHover});
+  const EventLegendPanel(
+      {super.key, required this.events, required this.hovered, this.onHover});
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +93,9 @@ class EventLegendPanel extends StatelessWidget {
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: isHovered ? theme.colorScheme.primary : palette.borderSubtle,
+                  color: isHovered
+                      ? theme.colorScheme.primary
+                      : palette.borderSubtle,
                   width: isHovered ? 2 : 1,
                 ),
               ),

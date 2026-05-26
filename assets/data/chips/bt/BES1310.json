@@ -1,8 +1,8 @@
 {
-  "id": "BES2711IUC2/3",
-  "name": "BES2711IUC2/3",
+  "id": "BES1310",
+  "name": "BES1310",
   "vbat": 3.8,
-  "sleepCurrent_uA": 88.5,
+  "sleepCurrent_uA": 25,
   "rxCurrent_mA": 6.3672,
   "rxExtWindow_us": 818,
   "Rmin_us": 88,

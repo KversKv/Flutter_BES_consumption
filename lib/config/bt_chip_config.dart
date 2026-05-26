@@ -1,24 +1,46 @@
-﻿// BT 芯片参数配置（独立文件）
+// BT 芯片参数配置（独立文件）
 // 该文件保存 BT 场景下的芯片参数。当前默认复用 BLE 列表，
 // 若需 BT 独立参数，可在此处替换为专门的 `List<BleChip>`。
 
 import '../models/bt_chip.dart';
 
 final List<BtChip> defaultBtChips = [
-
   BtChip(
     id: 'BES2720YP',
     name: 'BES2720YP',
     vbat: 3.8,
     sleepCurrent_uA: 116.5,
     rxCurrent_mA: 5.11,
-    rxWindow_us: 184.32,
+    rxExtWindow_us: 780.0,
     tifs_us: 150,
     tifsCurrent_mA: 2.953,
     txPowerLevelsDbm: [
-      -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-      10, 11, 12, 13, 14, 15
+      -10,
+      -9,
+      -8,
+      -7,
+      -6,
+      -5,
+      -4,
+      -3,
+      -2,
+      -1,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
     ],
     txCurrent_mA_forDbm: {
       -10: 15.0,
@@ -64,20 +86,42 @@ final List<BtChip> defaultBtChips = [
     advGapCurrent_mA: 1.5, // 1.5mA
     description: 'BES2720YP: high performance SOC for BT&BLE.',
   ),
-
   BtChip(
     id: 'BES2720IMP',
     name: 'BES2720IMP',
     vbat: 3.8,
     sleepCurrent_uA: 25.0,
     rxCurrent_mA: 9.0,
-    rxWindow_us: 300.0,
+    rxExtWindow_us: 780.0,
     tifs_us: 150,
     tifsCurrent_mA: 1.5,
     txPowerLevelsDbm: [
-      -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-      10, 11, 12, 13, 14, 15
+      -10,
+      -9,
+      -8,
+      -7,
+      -6,
+      -5,
+      -4,
+      -3,
+      -2,
+      -1,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
     ],
     txCurrent_mA_forDbm: {
       -10: 15.0,
@@ -123,22 +167,44 @@ final List<BtChip> defaultBtChips = [
     advGapCurrent_mA: 1.5, // 1.5mA
     description: 'BES2720IMP: low-power BLE transceiver, demo parameters.',
   ),
-
   BtChip(
     id: 'BES2700IMP',
     name: 'BES2700IMP',
     vbat: 3.8,
     sleepCurrent_uA: 18.2,
     rxCurrent_mA: 5.3,
-    rxWindow_us: 200.0,
+    rxExtWindow_us: 780.0,
     txPowerLevelsDbm: [
-      -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-      10, 11, 12, 13, 14, 15
+      -10,
+      -9,
+      -8,
+      -7,
+      -6,
+      -5,
+      -4,
+      -3,
+      -2,
+      -1,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
     ],
     txCurrent_mA_forDbm: {
       -10: 5.0,
-      -9:  5.0,
+      -9: 5.0,
       -8: 5.0,
       -7: 6.0,
       -6: 7.0,
@@ -180,17 +246,31 @@ final List<BtChip> defaultBtChips = [
     advGapCurrent_mA: 2.004, // 2.004mA
     postProcess_us: 900.0,
     postCurrent_mA: 0.7,
-    description: 'BES2700IMP: 1503 : The most outstanding low-power chip to date from BES.',
+    description:
+        'BES2700IMP: 1503 : The most outstanding low-power chip to date from BES.',
   ),
-
   BtChip(
     id: 'BES2610WD',
     name: 'BES2610WD',
     vbat: 3.8,
     txPowerLevelsDbm: [
-      -4, -3, -2, -1,
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-      10, 11, 12
+      -4,
+      -3,
+      -2,
+      -1,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
     ],
     txCurrent_mA_forDbm: {
       -4: 13.2,
@@ -222,7 +302,7 @@ final List<BtChip> defaultBtChips = [
     startRadio_us: 100.0,
     startRadioCurrent_mA: 1.591,
     rxCurrent_mA: 5.834,
-    rxWindow_us: 300.0,
+    rxExtWindow_us: 780.0,
     tifs_us: 150,
     tifsCurrent_mA: 1.591,
     // 广播通道间固定 ADV GAP（示例：5ms，电流取近似低功耗）
@@ -232,34 +312,32 @@ final List<BtChip> defaultBtChips = [
     postCurrent_mA: 1.29,
     description: 'BES2610WD: compact BLE SoC, balanced RX/TX currents.',
   ),
-
   BtChip(
     id: 'BES2720BP',
     name: 'BES2720BP',
     vbat: 3.8,
     sleepCurrent_uA: 40.0,
     rxCurrent_mA: 8.0,
-    rxWindow_us: 300.0,
+    rxExtWindow_us: 780.0,
     tifs_us: 150,
     tifsCurrent_mA: 0.2 * 8.0,
-    txPowerLevelsDbm: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-      10, 11, 12, 13, 14],
-    txCurrent_mA_forDbm: {    
+    txPowerLevelsDbm: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+    txCurrent_mA_forDbm: {
       14: 40.0,
       13: 35.0,
       12: 31.0,
       11: 27.0,
       10: 24.0,
-      9:  21.0,
-      8:  18.7,
-      7:  17.6,
-      6:  16.5,
-      5:  15.8,
-      4:  11.0,
-      3:  10.7,
-      2:  10.5,
-      1:  10.3,
-      0:  10.1,
+      9: 21.0,
+      8: 18.7,
+      7: 17.6,
+      6: 16.5,
+      5: 15.8,
+      4: 11.0,
+      3: 10.7,
+      2: 10.5,
+      1: 10.3,
+      0: 10.1,
     },
     postProcess_us: 1000.0,
     postCurrent_mA: 4.0,
@@ -276,14 +354,13 @@ final List<BtChip> defaultBtChips = [
     advGapCurrent_mA: 0.040, // 40 µA
     description: 'BES_2800BP: low-power BLE chip, example parameters.',
   ),
-
   BtChip(
     id: 'BES2800BP',
     name: 'BES2800BP',
     vbat: 3.8,
     sleepCurrent_uA: 40.0,
     rxCurrent_mA: 8.0,
-    rxWindow_us: 300.0,
+    rxExtWindow_us: 780.0,
     tifs_us: 150,
     tifsCurrent_mA: 0.2 * 8.0,
     txPowerLevelsDbm: [-20, -12, -8, -4, 0, 4, 8],
@@ -311,14 +388,13 @@ final List<BtChip> defaultBtChips = [
     advGapCurrent_mA: 0.040, // 40 µA
     description: 'BES_2800BP: low-power BLE chip, example parameters.',
   ),
-
   BtChip(
     id: 'nrf52832',
     name: 'nRF52832 (demo)',
     vbat: 3.0,
     sleepCurrent_uA: 1.8,
     rxCurrent_mA: 5.5,
-    rxWindow_us: 300.0,
+    rxExtWindow_us: 780.0,
     tifs_us: 150,
     tifsCurrent_mA: 0.2 * 5.5,
     txPowerLevelsDbm: [-20, -16, -12, -8, -4, 0, 4],
