@@ -14,6 +14,7 @@ import 'state/theme_controller.dart';
 import 'pages/admin_page.dart';
 import 'pages/home_page.dart';
 import 'theme/app_theme.dart';
+import 'widgets/material_icon_font_anchor.dart';
 
 // Toggle this flag to choose the UI language for the whole app.
 // Set to `true` to force Chinese (Simplified), `false` for English.
@@ -25,8 +26,10 @@ Future<void> main() async {
   if (kIsWeb) {
     usePathUrlStrategy();
   }
-  await ConfigRepository.instance.load();
-  await EarbudsRepository.instance.load();
+  await Future.wait([
+    ConfigRepository.instance.load(),
+    EarbudsRepository.instance.load(),
+  ]);
   await ChipJsonRepository.instance.load();
   const appLocale = useChinese ? Locale('zh') : Locale('en');
   runApp(MyApp(locale: appLocale));
@@ -64,6 +67,9 @@ class MyApp extends StatelessWidget {
           theme: AppTheme.buildLight(),
           darkTheme: AppTheme.buildDark(),
           themeMode: themeCtrl.mode,
+          builder: (context, child) => MaterialIconFontAnchor(
+            child: child ?? const SizedBox.shrink(),
+          ),
           initialRoute: '/',
           routes: {
             '/': (_) => const MyHomePage(),

@@ -13,16 +13,15 @@
     "pdSleepFull": 63.3,
     "deepSleep": 116.0
   },
-  "mcuRun": [
-    {
-      "label": "default",
+  "mcuRun": {
+    "default": {
       "wfi24M": null,
       "cm24M": null,
       "cm48M": null,
       "cm96M": null,
       "cm192M": null
     }
-  ],
+  },
   "scene": {
     "hotelCal": null,
     "mute": 3.45,
@@ -49,9 +48,8 @@
     "btSniff200_0": null,
     "btSniff500_0": 58.0
   },
-  "txSweep": [
-    {
-      "label": "2point",
+  "txSweep": {
+    "2point": {
       "values": {
         "0": 5.1,
         "1": 5.2,
@@ -70,8 +68,7 @@
         "14": 34.0
       }
     },
-    {
-      "label": "polar",
+    "polar": {
       "values": {
         "0": 10.1,
         "1": 10.3,
@@ -90,7 +87,7 @@
         "14": 40.0
       }
     }
-  ],
+  },
   "rxVana": {
     "values": {
       "0": 17.2,

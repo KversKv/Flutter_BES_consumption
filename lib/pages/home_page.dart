@@ -19,14 +19,26 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  static const int _pageCount = 4;
   int selectedIndex = 0;
+  final List<bool> _visited = List<bool>.filled(_pageCount, false);
+  final List<Widget?> _pages = List<Widget?>.filled(_pageCount, null);
 
-  static const _pages = <Widget>[
-    BleCasePage(),
-    BTPage(),
-    EarbudsComparePage(),
-    WifiPage(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _visited[selectedIndex] = true;
+  }
+
+  Widget _pageAt(int index) {
+    return _pages[index] ??= switch (index) {
+      0 => const BleCasePage(),
+      1 => const BTPage(),
+      2 => const EarbudsComparePage(),
+      3 => const WifiPage(),
+      _ => const SizedBox.shrink(),
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,13 +53,19 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: _SideNav(
                   isWide: isWide,
                   selectedIndex: selectedIndex,
-                  onSelect: (v) => setState(() => selectedIndex = v),
+                  onSelect: (v) => setState(() {
+                    selectedIndex = v;
+                    _visited[v] = true;
+                  }),
                 ),
               ),
               Expanded(
                 child: IndexedStack(
                   index: selectedIndex,
-                  children: _pages,
+                  children: List.generate(
+                    _pageCount,
+                    (i) => _visited[i] ? _pageAt(i) : const SizedBox.shrink(),
+                  ),
                 ),
               ),
             ],
@@ -181,9 +199,8 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     final color = selected ? palette.accent : palette.textSecondary;
-    final bg = selected
-        ? palette.accent.withValues(alpha: 0.10)
-        : Colors.transparent;
+    final bg =
+        selected ? palette.accent.withValues(alpha: 0.10) : Colors.transparent;
 
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -213,8 +230,9 @@ class _NavItem extends StatelessWidget {
                               item.label,
                               style: TextStyle(
                                 fontSize: 13,
-                                fontWeight:
-                                    selected ? FontWeight.w600 : FontWeight.w400,
+                                fontWeight: selected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
                                 color: color,
                               ),
                               overflow: TextOverflow.ellipsis,

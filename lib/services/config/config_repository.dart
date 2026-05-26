@@ -33,21 +33,26 @@ class ConfigRepository extends ChangeNotifier {
 
   Future<void> load() async {
     if (_loaded) return;
-    _bleChips = await _loadIndexedList<BleChip>(
-      bleChipsDir,
-      (j) => BleChip.fromJson(j),
-      defaultBleChips,
-    );
-    _btChips = await _loadIndexedList<BtChip>(
-      btChipsDir,
-      (j) => BtChip.fromJson(j),
-      defaultBtChips,
-    );
-    _wifiChips = await _loadIndexedList<WifiChip>(
-      wifiChipsDir,
-      (j) => WifiChip.fromJson(j),
-      defaultWifiChips,
-    );
+    final loaded = await Future.wait<Object>([
+      _loadIndexedList<BleChip>(
+        bleChipsDir,
+        (j) => BleChip.fromJson(j),
+        defaultBleChips,
+      ),
+      _loadIndexedList<BtChip>(
+        btChipsDir,
+        (j) => BtChip.fromJson(j),
+        defaultBtChips,
+      ),
+      _loadIndexedList<WifiChip>(
+        wifiChipsDir,
+        (j) => WifiChip.fromJson(j),
+        defaultWifiChips,
+      ),
+    ]);
+    _bleChips = loaded[0] as List<BleChip>;
+    _btChips = loaded[1] as List<BtChip>;
+    _wifiChips = loaded[2] as List<WifiChip>;
     _loaded = true;
     notifyListeners();
   }
@@ -64,16 +69,20 @@ class ConfigRepository extends ChangeNotifier {
       final index = jsonDecode(indexRaw);
       final items = index is Map ? index['items'] : null;
       if (items is! List) return List<T>.unmodifiable(fallback);
-      final chips = <T>[];
+      final futures = <Future<T?>>[];
       for (final item in items) {
         final file = _indexFileName(item);
         if (file == null || file.isEmpty) continue;
-        final raw = await rootBundle.loadString('$assetDir/$file');
-        final decoded = jsonDecode(raw);
-        if (decoded is Map) {
-          chips.add(decode(Map<String, dynamic>.from(decoded)));
-        }
+        futures.add(rootBundle.loadString('$assetDir/$file').then((raw) {
+          final decoded = jsonDecode(raw);
+          if (decoded is Map) {
+            return decode(Map<String, dynamic>.from(decoded));
+          }
+          return null;
+        }));
       }
+      final chips =
+          (await Future.wait(futures)).whereType<T>().toList(growable: false);
       return List<T>.unmodifiable(chips);
     } catch (e, st) {
       debugPrint('[ConfigRepository] load $assetDir failed: $e\n$st');

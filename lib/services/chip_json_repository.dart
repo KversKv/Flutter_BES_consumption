@@ -74,8 +74,10 @@ class ChipJsonRepository extends ChangeNotifier {
   };
 
   bool _loaded = false;
+  ChipJsonDomain? _lastChangedDomain;
 
   bool get isLoaded => _loaded;
+  ChipJsonDomain? get lastChangedDomain => _lastChangedDomain;
 
   List<ChipJsonRecord> records(ChipJsonDomain domain) =>
       List.unmodifiable(_records[domain] ?? const <ChipJsonRecord>[]);
@@ -89,18 +91,29 @@ class ChipJsonRepository extends ChangeNotifier {
 
   Future<void> load() async {
     if (_loaded) return;
-    for (final domain in ChipJsonDomain.values) {
-      _records[domain]!
+    final sp = await SharedPreferences.getInstance();
+    final loaded = await Future.wait(
+      ChipJsonDomain.values.map((domain) async {
+        return MapEntry(domain, await _loadDomain(domain, sp));
+      }),
+    );
+    for (final entry in loaded) {
+      _records[entry.key]!
         ..clear()
-        ..addAll(await _loadDomain(domain));
+        ..addAll(entry.value);
+    }
+    for (final domain in ChipJsonDomain.values) {
       _applyDomain(domain);
     }
     _loaded = true;
+    _lastChangedDomain = null;
     notifyListeners();
   }
 
-  Future<List<ChipJsonRecord>> _loadDomain(ChipJsonDomain domain) async {
-    final sp = await SharedPreferences.getInstance();
+  Future<List<ChipJsonRecord>> _loadDomain(
+    ChipJsonDomain domain,
+    SharedPreferences sp,
+  ) async {
     final saved = sp.getString('$_storagePrefix${domain.key}');
     if (saved != null && saved.isNotEmpty) {
       try {
@@ -127,16 +140,18 @@ class ChipJsonRepository extends ChangeNotifier {
     final indexRaw = await rootBundle.loadString('$dir/index.json');
     final index = jsonDecode(indexRaw);
     final entries = _indexEntries(index, domain);
-    final out = <ChipJsonRecord>[];
-    for (final entry in entries) {
+    final futures = entries.map((entry) async {
       final raw = await rootBundle.loadString('$dir/${entry.file}');
       final decoded = jsonDecode(raw);
       if (decoded is Map) {
         final data = _canonicalData(domain, Map<String, dynamic>.from(decoded));
         data['id'] ??= entry.id;
-        out.add(ChipJsonRecord(data));
+        return ChipJsonRecord(data);
       }
-    }
+      return null;
+    });
+    final out =
+        (await Future.wait(futures)).whereType<ChipJsonRecord>().toList();
     return out;
   }
 
@@ -221,6 +236,7 @@ class ChipJsonRepository extends ChangeNotifier {
       ..addAll(await _loadSeed(domain));
     await _persist(domain);
     _applyDomain(domain);
+    _lastChangedDomain = domain;
     notifyListeners();
   }
 
@@ -265,6 +281,7 @@ class ChipJsonRepository extends ChangeNotifier {
 
   void _commit(ChipJsonDomain domain) {
     _applyDomain(domain);
+    _lastChangedDomain = domain;
     notifyListeners();
     unawaited(_persist(domain));
   }
@@ -345,9 +362,36 @@ class ChipJsonRepository extends ChangeNotifier {
         data.remove('txPowerLevelsDbm');
         break;
       case ChipJsonDomain.earbuds:
+        data['mcuRun'] = _labeledListToMap(data['mcuRun']);
+        data['txSweep'] = _labeledListToMap(data['txSweep']);
         break;
     }
     return data;
+  }
+
+  static dynamic _labeledListToMap(dynamic value) {
+    if (value is Map) return value;
+    if (value is! List) return value;
+    final out = <String, dynamic>{};
+    for (var i = 0; i < value.length; i++) {
+      final item = value[i];
+      if (item is! Map) continue;
+      final data = Map<String, dynamic>.from(item);
+      final rawLabel = data.remove('label')?.toString().trim();
+      final label =
+          rawLabel == null || rawLabel.isEmpty ? 'variant_${i + 1}' : rawLabel;
+      out[_uniqueLabel(out, label)] = data;
+    }
+    return out;
+  }
+
+  static String _uniqueLabel(Map<String, dynamic> existing, String label) {
+    if (!existing.containsKey(label)) return label;
+    var i = 2;
+    while (existing.containsKey('${label}_$i')) {
+      i++;
+    }
+    return '${label}_$i';
   }
 }
 

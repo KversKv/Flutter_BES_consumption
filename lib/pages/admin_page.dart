@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../services/chip_json_repository.dart';
 import '../services/chips_export_service.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
 class AdminPage extends StatefulWidget {
@@ -38,108 +39,121 @@ class _AdminPageState extends State<AdminPage> {
     return DefaultTabController(
       length: 6,
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(t.adminTitle),
-          leading: IconButton(
-            tooltip: t.adminBackHome,
-            icon: const Icon(Icons.home_outlined),
-            onPressed: () => Navigator.of(context).pushReplacementNamed('/'),
-          ),
-          actions: [
-            TextButton.icon(
-              onPressed: _exportAll,
-              icon: const Icon(Icons.file_download_outlined),
-              label: Text(t.adminExportAll),
-            ),
-            TextButton.icon(
-              onPressed: () => setState(() => _authed = false),
-              icon: const Icon(Icons.logout),
-              label: Text(t.adminLogout),
-            ),
-            const SizedBox(width: AppSpacing.x2),
-          ],
-          bottom: TabBar(
-            isScrollable: true,
-            tabs: [
-              Tab(text: t.adminBleCase),
-              Tab(text: t.adminBtCase),
-              Tab(text: t.adminEarbuds),
-              Tab(text: t.adminWifi),
-              Tab(text: t.adminOps),
-              Tab(text: t.adminHeat),
+        body: SafeArea(
+          child: Column(
+            children: [
+              _AdminTopBar(
+                title: t.adminTitle,
+                onBackHome: () =>
+                    Navigator.of(context).pushReplacementNamed('/'),
+                onExportAll: _exportAll,
+                onLogout: () => setState(() => _authed = false),
+              ),
+              const _AdminTabStrip(),
+              Expanded(
+                child: _LazyAdminTabView(
+                  children: [
+                    _DomainAdminTab(domain: ChipJsonDomain.ble),
+                    _DomainAdminTab(domain: ChipJsonDomain.bt),
+                    _DomainAdminTab(domain: ChipJsonDomain.earbuds),
+                    _DomainAdminTab(domain: ChipJsonDomain.wifi),
+                    _InfoPanel(
+                      icon: Icons.settings_outlined,
+                      title: t.adminOps,
+                      body: t.adminOpsHint,
+                    ),
+                    _InfoPanel(
+                      icon: Icons.local_fire_department_outlined,
+                      title: t.adminHeat,
+                      body: t.adminHeatHint,
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
-        ),
-        body: TabBarView(
-          children: [
-            _DomainAdminTab(domain: ChipJsonDomain.ble),
-            _DomainAdminTab(domain: ChipJsonDomain.bt),
-            _DomainAdminTab(domain: ChipJsonDomain.earbuds),
-            _DomainAdminTab(domain: ChipJsonDomain.wifi),
-            _InfoPanel(
-              icon: Icons.settings_outlined,
-              title: t.adminOps,
-              body: t.adminOpsHint,
-            ),
-            _InfoPanel(
-              icon: Icons.local_fire_department_outlined,
-              title: t.adminHeat,
-              body: t.adminHeatHint,
-            ),
-          ],
         ),
       ),
     );
   }
 
   Widget _loginView(AppLocalizations t) {
+    final palette = AppPalette.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(t.adminLoginTitle),
-        leading: IconButton(
-          tooltip: t.adminBackHome,
-          icon: const Icon(Icons.home_outlined),
-          onPressed: () => Navigator.of(context).pushReplacementNamed('/'),
-        ),
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.x3),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.x3),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      t.adminLoginTitle,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: AppSpacing.x3),
-                    TextField(
-                      controller: _secretCtrl,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        labelText: t.adminSecret,
-                        border: const OutlineInputBorder(),
-                        errorText: _loginError,
-                      ),
-                      onSubmitted: (_) => _tryLogin(t),
-                    ),
-                    const SizedBox(height: AppSpacing.x3),
-                    FilledButton.icon(
-                      onPressed: () => _tryLogin(t),
-                      icon: const Icon(Icons.lock_open_outlined),
-                      label: Text(t.adminLogin),
-                    ),
-                  ],
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      palette.bgBase,
+                      palette.bgElevated1,
+                      palette.bgBase,
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
+            Positioned(
+              left: AppSpacing.x3,
+              top: AppSpacing.x3,
+              child: IconButton.filledTonal(
+                tooltip: t.adminBackHome,
+                icon: const Icon(Icons.home_outlined),
+                onPressed: () =>
+                    Navigator.of(context).pushReplacementNamed('/'),
+              ),
+            ),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.x4),
+                  child: _AdminPanel(
+                    padding: const EdgeInsets.all(AppSpacing.x6),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Icon(
+                          Icons.admin_panel_settings_outlined,
+                          size: 40,
+                          color: palette.accent,
+                        ),
+                        const SizedBox(height: AppSpacing.x3),
+                        Text(
+                          t.adminLoginTitle,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        const SizedBox(height: AppSpacing.x5),
+                        TextField(
+                          controller: _secretCtrl,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            labelText: t.adminSecret,
+                            prefixIcon: const Icon(Icons.key_outlined),
+                            errorText: _loginError,
+                          ),
+                          onSubmitted: (_) => _tryLogin(t),
+                        ),
+                        const SizedBox(height: AppSpacing.x4),
+                        FilledButton.icon(
+                          onPressed: () => _tryLogin(t),
+                          icon: const Icon(Icons.lock_open_outlined),
+                          label: Text(t.adminLogin),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -172,6 +186,247 @@ class _AdminPageState extends State<AdminPage> {
   }
 }
 
+class _LazyAdminTabView extends StatefulWidget {
+  final List<Widget> children;
+
+  const _LazyAdminTabView({required this.children});
+
+  @override
+  State<_LazyAdminTabView> createState() => _LazyAdminTabViewState();
+}
+
+class _LazyAdminTabViewState extends State<_LazyAdminTabView> {
+  TabController? _controller;
+  late List<bool> _visited;
+  int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _visited = List<bool>.filled(widget.children.length, false);
+    if (_visited.isNotEmpty) _visited[0] = true;
+  }
+
+  @override
+  void didUpdateWidget(covariant _LazyAdminTabView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.children.length != widget.children.length) {
+      _visited = List<bool>.generate(
+        widget.children.length,
+        (i) => i < _visited.length && _visited[i],
+      );
+      if (_index >= widget.children.length) _index = 0;
+      if (_visited.isNotEmpty) _visited[_index] = true;
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final next = DefaultTabController.of(context);
+    if (_controller == next) return;
+    _controller?.removeListener(_onTabChanged);
+    _controller = next;
+    _index = next.index;
+    if (_index >= 0 && _index < _visited.length) {
+      _visited[_index] = true;
+    }
+    next.addListener(_onTabChanged);
+  }
+
+  @override
+  void dispose() {
+    _controller?.removeListener(_onTabChanged);
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    final controller = _controller;
+    if (controller == null || controller.index == _index) return;
+    setState(() {
+      _index = controller.index;
+      if (_index >= 0 && _index < _visited.length) {
+        _visited[_index] = true;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IndexedStack(
+      index: _index,
+      children: List.generate(widget.children.length, (i) {
+        return _visited[i] ? widget.children[i] : const SizedBox.shrink();
+      }),
+    );
+  }
+}
+
+class _AdminTopBar extends StatelessWidget {
+  final String title;
+  final VoidCallback onBackHome;
+  final VoidCallback onExportAll;
+  final VoidCallback onLogout;
+
+  const _AdminTopBar({
+    required this.title,
+    required this.onBackHome,
+    required this.onExportAll,
+    required this.onLogout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final palette = AppPalette.of(context);
+    return Material(
+      color: palette.bgElevated1,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: palette.borderSubtle)),
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.x4,
+          vertical: AppSpacing.x3,
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 680;
+            return Row(
+              children: [
+                IconButton.filledTonal(
+                  tooltip: t.adminBackHome,
+                  onPressed: onBackHome,
+                  icon: const Icon(Icons.home_outlined),
+                ),
+                const SizedBox(width: AppSpacing.x3),
+                if (!compact) ...[
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: palette.accentMuted,
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                      border: Border.all(color: palette.borderStrong),
+                    ),
+                    child: Icon(
+                      Icons.memory_outlined,
+                      size: 20,
+                      color: palette.accent,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.x3),
+                ],
+                Expanded(
+                  child: Text(
+                    title,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.x3),
+                if (compact) ...[
+                  IconButton.filledTonal(
+                    tooltip: t.adminExportAll,
+                    onPressed: onExportAll,
+                    icon: const Icon(Icons.file_download_outlined),
+                  ),
+                  const SizedBox(width: AppSpacing.x1),
+                  IconButton(
+                    tooltip: t.adminLogout,
+                    onPressed: onLogout,
+                    icon: const Icon(Icons.logout),
+                  ),
+                ] else ...[
+                  OutlinedButton.icon(
+                    onPressed: onExportAll,
+                    icon: const Icon(Icons.file_download_outlined),
+                    label: Text(t.adminExportAll),
+                  ),
+                  const SizedBox(width: AppSpacing.x2),
+                  TextButton.icon(
+                    onPressed: onLogout,
+                    icon: const Icon(Icons.logout),
+                    label: Text(t.adminLogout),
+                  ),
+                ],
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _AdminTabStrip extends StatelessWidget {
+  const _AdminTabStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final palette = AppPalette.of(context);
+    return Material(
+      color: palette.bgElevated2,
+      child: Container(
+        alignment: Alignment.centerLeft,
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: palette.borderSubtle)),
+        ),
+        child: TabBar(
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          labelColor: palette.accent,
+          unselectedLabelColor: palette.textSecondary,
+          indicatorColor: palette.accent,
+          indicatorWeight: 3,
+          tabs: [
+            Tab(icon: const Icon(Icons.bluetooth), text: t.adminBleCase),
+            Tab(
+              icon: const Icon(Icons.headphones_outlined),
+              text: t.adminBtCase,
+            ),
+            Tab(icon: const Icon(Icons.earbuds_outlined), text: t.adminEarbuds),
+            Tab(icon: const Icon(Icons.wifi), text: t.adminWifi),
+            Tab(icon: const Icon(Icons.settings_outlined), text: t.adminOps),
+            Tab(
+              icon: const Icon(Icons.local_fire_department_outlined),
+              text: t.adminHeat,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdminPanel extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  const _AdminPanel({
+    required this.child,
+    this.padding = const EdgeInsets.all(AppSpacing.x3),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: palette.bgElevated2,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        border: Border.all(color: palette.borderSubtle),
+        boxShadow: AppElevation.card,
+      ),
+      child: Padding(
+        padding: padding,
+        child: child,
+      ),
+    );
+  }
+}
+
 class _DomainAdminTab extends StatefulWidget {
   final ChipJsonDomain domain;
 
@@ -200,6 +455,8 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
 
   void _onRepoChanged() {
     if (!mounted) return;
+    final changedDomain = ChipJsonRepository.instance.lastChangedDomain;
+    if (changedDomain != null && changedDomain != widget.domain) return;
     setState(_pickFirst);
   }
 
@@ -224,45 +481,59 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
         ? null
         : repo.recordById(widget.domain, _selectedId!);
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(
-          width: 300,
-          child: _RecordList(
-            records: filtered,
-            total: all.length,
-            selectedId: _selectedId,
-            canReorder: query.isEmpty,
-            onSearch: (value) => setState(() => _query = value),
-            onSelect: (id) => setState(() => _selectedId = id),
-            onAdd: () {
-              final record = repo.add(widget.domain);
-              setState(() => _selectedId = record.id);
-            },
-            onDuplicate: (id) {
-              final record = repo.duplicate(widget.domain, id);
-              setState(() => _selectedId = record.id);
-            },
-            onDelete: (id) => _confirmDelete(id),
-            onReorder: (oldIndex, newIndex) =>
-                repo.reorder(widget.domain, oldIndex, newIndex),
-            onMoveUp: (index) => repo.reorder(widget.domain, index, index - 1),
-            onMoveDown: (index) =>
-                repo.reorder(widget.domain, index, index + 1),
-          ),
-        ),
-        const VerticalDivider(width: 1),
-        Expanded(
-          child: selected == null
-              ? Center(child: Text(t.adminNoChipSelected))
-              : _JsonRecordEditor(
-                  key: ValueKey('${widget.domain.key}_${selected.id}'),
-                  domain: widget.domain,
-                  record: selected,
-                ),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 780;
+        final list = _RecordList(
+          records: filtered,
+          total: all.length,
+          selectedId: _selectedId,
+          canReorder: query.isEmpty,
+          onSearch: (value) => setState(() => _query = value),
+          onSelect: (id) => setState(() => _selectedId = id),
+          onAdd: () {
+            final record = repo.add(widget.domain);
+            setState(() => _selectedId = record.id);
+          },
+          onDuplicate: (id) {
+            final record = repo.duplicate(widget.domain, id);
+            setState(() => _selectedId = record.id);
+          },
+          onDelete: (id) => _confirmDelete(id),
+          onReorder: (oldIndex, newIndex) =>
+              repo.reorder(widget.domain, oldIndex, newIndex),
+          onMoveUp: (index) => repo.reorder(widget.domain, index, index - 1),
+          onMoveDown: (index) => repo.reorder(widget.domain, index, index + 1),
+        );
+        final editor = selected == null
+            ? Center(child: Text(t.adminNoChipSelected))
+            : _JsonRecordEditor(
+                key: ValueKey('${widget.domain.key}_${selected.id}'),
+                domain: widget.domain,
+                record: selected,
+              );
+
+        if (compact) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: 300, child: list),
+              const Divider(height: 1),
+              Expanded(child: editor),
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+                width: constraints.maxWidth < 1120 ? 320 : 360, child: list),
+            const VerticalDivider(width: 1),
+            Expanded(child: editor),
+          ],
+        );
+      },
     );
   }
 
@@ -323,105 +594,236 @@ class _RecordList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.x2),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          TextField(
-            decoration: InputDecoration(
-              hintText: t.adminSearchChip,
-              prefixIcon: const Icon(Icons.search, size: 18),
-              border: const OutlineInputBorder(),
-              isDense: true,
-            ),
-            onChanged: onSearch,
-          ),
-          const SizedBox(height: AppSpacing.x2),
-          FilledButton.icon(
-            onPressed: onAdd,
-            icon: const Icon(Icons.add),
-            label: Text(t.adminAddChip),
-          ),
-          const SizedBox(height: AppSpacing.x1),
-          Text(t.adminTotalChips(total)),
-          Text(
-            t.adminSortHint,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          if (!canReorder)
-            Text(
-              t.adminReorderDisabledInSearch,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          const Divider(),
-          Expanded(
-            child: canReorder
-                ? ReorderableListView.builder(
-                    buildDefaultDragHandles: false,
-                    itemCount: records.length,
-                    onReorderItem: onReorder,
-                    itemBuilder: (context, index) =>
-                        _tile(context, records[index], index),
-                  )
-                : ListView.builder(
-                    itemCount: records.length,
-                    itemBuilder: (context, index) =>
-                        _tile(context, records[index], null),
+    final palette = AppPalette.of(context);
+    return ColoredBox(
+      color: palette.bgElevated1,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.x3),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    t.adminJsonEditor,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-          ),
-        ],
+                ),
+                _CountPill(text: t.adminTotalChips(total)),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.x3),
+            TextField(
+              decoration: InputDecoration(
+                hintText: t.adminSearchChip,
+                prefixIcon: const Icon(Icons.search, size: 18),
+                suffixIcon: records.isEmpty
+                    ? null
+                    : Icon(
+                        Icons.filter_list_outlined,
+                        size: 18,
+                        color: palette.textMuted,
+                      ),
+              ),
+              onChanged: onSearch,
+            ),
+            const SizedBox(height: AppSpacing.x2),
+            FilledButton.icon(
+              onPressed: onAdd,
+              icon: const Icon(Icons.add),
+              label: Text(t.adminAddChip),
+            ),
+            const SizedBox(height: AppSpacing.x3),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.x2),
+              decoration: BoxDecoration(
+                color: palette.bgElevated2,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                border: Border.all(color: palette.borderSubtle),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: palette.accent),
+                  const SizedBox(width: AppSpacing.x2),
+                  Expanded(
+                    child: Text(
+                      canReorder
+                          ? t.adminSortHint
+                          : t.adminReorderDisabledInSearch,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: palette.textSecondary,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.x3),
+            Expanded(
+              child: canReorder
+                  ? ReorderableListView.builder(
+                      buildDefaultDragHandles: false,
+                      itemCount: records.length,
+                      onReorderItem: onReorder,
+                      itemBuilder: (context, index) =>
+                          _tile(context, records[index], index),
+                    )
+                  : ListView.builder(
+                      itemCount: records.length,
+                      itemBuilder: (context, index) =>
+                          _tile(context, records[index], null),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _tile(BuildContext context, ChipJsonRecord record, int? dragIndex) {
     final t = AppLocalizations.of(context);
+    final palette = AppPalette.of(context);
+    final selected = record.id == selectedId;
     return Material(
       key: ValueKey(record.id),
-      type: MaterialType.transparency,
-      child: ListTile(
-        dense: true,
-        selected: record.id == selectedId,
-        leading: dragIndex == null
-            ? null
-            : ReorderableDragStartListener(
-                index: dragIndex,
-                child: Semantics(
-                  label: t.adminDragHandle,
-                  button: true,
-                  child: const Icon(Icons.drag_indicator, size: 18),
-                ),
+      color: Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.x2),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          onTap: () => onSelect(record.id),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.x2,
+              vertical: AppSpacing.x2,
+            ),
+            decoration: BoxDecoration(
+              color: selected ? palette.accentMuted : palette.bgElevated2,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              border: Border.all(
+                color: selected ? palette.accent : palette.borderSubtle,
               ),
-        title: Text(record.id),
-        subtitle: Text(
-          (record.data['name'] ?? record.data['description'] ?? '').toString(),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: PopupMenuButton<String>(
-          onSelected: (value) {
-            if (value == 'up' && dragIndex != null) onMoveUp(dragIndex);
-            if (value == 'down' && dragIndex != null) onMoveDown(dragIndex);
-            if (value == 'duplicate') onDuplicate(record.id);
-            if (value == 'delete') onDelete(record.id);
-          },
-          itemBuilder: (_) => [
-            PopupMenuItem(
-              value: 'up',
-              enabled: dragIndex != null && dragIndex > 0,
-              child: Text(t.adminMoveUp),
             ),
-            PopupMenuItem(
-              value: 'down',
-              enabled: dragIndex != null && dragIndex < records.length - 1,
-              child: Text(t.adminMoveDown),
+            child: Row(
+              children: [
+                if (dragIndex != null) ...[
+                  ReorderableDragStartListener(
+                    index: dragIndex,
+                    child: Semantics(
+                      label: t.adminDragHandle,
+                      button: true,
+                      child: Icon(
+                        Icons.drag_indicator,
+                        size: 20,
+                        color: palette.textMuted,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.x1),
+                ],
+                Container(
+                  width: 30,
+                  height: 30,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: selected ? palette.accent : palette.bgElevated3,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                  ),
+                  child: Icon(
+                    Icons.memory_outlined,
+                    size: 16,
+                    color: selected ? palette.accentOn : palette.textSecondary,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.x2),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        record.id,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      Text(
+                        (record.data['name'] ??
+                                record.data['description'] ??
+                                '')
+                            .toString(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: palette.textSecondary,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (dragIndex != null) ...[
+                  IconButton(
+                    tooltip: t.adminMoveUp,
+                    onPressed: dragIndex > 0 ? () => onMoveUp(dragIndex) : null,
+                    icon: const Icon(Icons.keyboard_arrow_up),
+                  ),
+                  IconButton(
+                    tooltip: t.adminMoveDown,
+                    onPressed: dragIndex < records.length - 1
+                        ? () => onMoveDown(dragIndex)
+                        : null,
+                    icon: const Icon(Icons.keyboard_arrow_down),
+                  ),
+                ],
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_horiz),
+                  onSelected: (value) {
+                    if (value == 'duplicate') onDuplicate(record.id);
+                    if (value == 'delete') onDelete(record.id);
+                  },
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 'duplicate',
+                      child: Text(t.adminDuplicate),
+                    ),
+                    PopupMenuItem(value: 'delete', child: Text(t.adminDelete)),
+                  ],
+                ),
+              ],
             ),
-            PopupMenuItem(value: 'duplicate', child: Text(t.adminDuplicate)),
-            PopupMenuItem(value: 'delete', child: Text(t.adminDelete)),
-          ],
+          ),
         ),
-        onTap: () => onSelect(record.id),
+      ),
+    );
+  }
+}
+
+class _CountPill extends StatelessWidget {
+  final String text;
+
+  const _CountPill({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.x2,
+        vertical: AppSpacing.x1,
+      ),
+      decoration: BoxDecoration(
+        color: palette.bgElevated3,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: palette.borderSubtle),
+      ),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: palette.textSecondary,
+            ),
       ),
     );
   }
@@ -434,13 +836,25 @@ class _FieldDraft {
   String value;
   _FieldType type;
   List<_FieldDraft> children;
+  bool expanded;
+  dynamic rawValue;
 
   _FieldDraft({
     required this.name,
     required this.value,
     required this.type,
-    this.children = const [],
-  });
+    this.rawValue,
+  })  : children = <_FieldDraft>[],
+        expanded = false;
+
+  int get childCount {
+    if (children.isNotEmpty) return children.length;
+    final raw = rawValue;
+    if (raw is Map) return raw.length;
+    return 0;
+  }
+
+  bool get hasObjectChildren => type == _FieldType.json && childCount > 0;
 }
 
 class _JsonRecordEditor extends StatefulWidget {
@@ -472,53 +886,140 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final palette = AppPalette.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Material(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.x3,
-              vertical: AppSpacing.x2,
+          color: palette.bgElevated2,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: palette.borderSubtle)),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.record.id,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: _addField,
-                  icon: const Icon(Icons.add),
-                  label: Text(t.adminAddField),
-                ),
-                const SizedBox(width: AppSpacing.x2),
-                FilledButton.icon(
-                  onPressed: _save,
-                  icon: const Icon(Icons.save_outlined),
-                  label: Text(t.adminSave),
-                ),
-              ],
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.x4,
+              vertical: AppSpacing.x3,
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final narrow = constraints.maxWidth < 560;
+                final title = Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: palette.accentMuted,
+                        borderRadius:
+                            BorderRadius.circular(AppSpacing.radiusMd),
+                        border: Border.all(color: palette.borderStrong),
+                      ),
+                      child: Icon(
+                        Icons.data_object_outlined,
+                        size: 20,
+                        color: palette.accent,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.x3),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.record.id,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          Text(
+                            t.adminJsonEditor,
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: palette.textSecondary,
+                                    ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+                final actions = Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextButton.icon(
+                      onPressed: _addField,
+                      icon: const Icon(Icons.add),
+                      label: Text(t.adminAddField),
+                    ),
+                    const SizedBox(width: AppSpacing.x2),
+                    FilledButton.icon(
+                      onPressed: _save,
+                      icon: const Icon(Icons.save_outlined),
+                      label: Text(t.adminSave),
+                    ),
+                  ],
+                );
+
+                if (narrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      title,
+                      const SizedBox(height: AppSpacing.x3),
+                      Align(alignment: Alignment.centerRight, child: actions),
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: title),
+                    const SizedBox(width: AppSpacing.x3),
+                    actions,
+                  ],
+                );
+              },
             ),
           ),
         ),
         if (_error != null)
           Padding(
-            padding: const EdgeInsets.all(AppSpacing.x2),
-            child: Text(
-              _error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.x4,
+              AppSpacing.x3,
+              AppSpacing.x4,
+              0,
+            ),
+            child: Material(
+              color: palette.danger.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.x3),
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline, color: palette.danger),
+                    const SizedBox(width: AppSpacing.x2),
+                    Expanded(
+                      child: Text(
+                        _error!,
+                        style: TextStyle(color: palette.danger),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.all(AppSpacing.x3),
-            itemCount: _fields.length,
-            separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.x2),
-            itemBuilder: (context, index) => _fieldRow(t, index, _fields),
+          child: ColoredBox(
+            color: palette.bgBase,
+            child: ListView.separated(
+              padding: const EdgeInsets.all(AppSpacing.x4),
+              itemCount: _fields.length,
+              separatorBuilder: (_, __) =>
+                  const SizedBox(height: AppSpacing.x3),
+              itemBuilder: (context, index) => _fieldRow(t, index, _fields),
+            ),
           ),
         ),
       ],
@@ -526,11 +1027,17 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
   }
 
   Widget _fieldRow(AppLocalizations t, int index, List<_FieldDraft> fields) {
+    final palette = AppPalette.of(context);
     final field = fields[index];
-    final isObject = field.type == _FieldType.json && field.children.isNotEmpty;
-    return Card(
+    final isObject = field.hasObjectChildren;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: palette.bgElevated2,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        border: Border.all(color: palette.borderSubtle),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.x2),
+        padding: const EdgeInsets.all(AppSpacing.x3),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -544,8 +1051,7 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                       initialValue: field.name,
                       decoration: InputDecoration(
                         labelText: t.adminFieldName,
-                        border: const OutlineInputBorder(),
-                        isDense: true,
+                        prefixIcon: const Icon(Icons.label_outline, size: 18),
                       ),
                       onChanged: (value) => field.name = value,
                     ),
@@ -556,8 +1062,7 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                       initialValue: field.type,
                       decoration: InputDecoration(
                         labelText: t.adminFieldType,
-                        border: const OutlineInputBorder(),
-                        isDense: true,
+                        prefixIcon: const Icon(Icons.tune_outlined, size: 18),
                       ),
                       items: [
                         DropdownMenuItem(
@@ -581,9 +1086,13 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                         if (value == null) return;
                         setState(() {
                           field.type = value;
-                          if (value != _FieldType.json) field.children = [];
+                          if (value != _FieldType.json) {
+                            field.children = [];
+                            field.rawValue = null;
+                          }
                           if (value == _FieldType.json &&
                               field.children.isEmpty &&
+                              field.rawValue == null &&
                               field.value.trim().isEmpty) {
                             field.value = '{}';
                           }
@@ -593,20 +1102,24 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                   ),
                   Expanded(
                     child: isObject
-                        ? Text(t.adminNestedFields)
+                        ? _NestedFieldsBadge(
+                            label: t.adminNestedFields,
+                            childCount: field.childCount,
+                            expanded: field.expanded,
+                            onToggle: () => _toggleExpanded(field),
+                          )
                         : TextFormField(
                             initialValue: field.value,
                             minLines: field.type == _FieldType.json ? 3 : 1,
                             maxLines: field.type == _FieldType.json ? 8 : 1,
                             decoration: InputDecoration(
                               labelText: t.adminFieldValue,
-                              border: const OutlineInputBorder(),
-                              isDense: true,
+                              prefixIcon: const Icon(Icons.edit_note, size: 18),
                             ),
                             onChanged: (value) => field.value = value,
                           ),
                   ),
-                  IconButton(
+                  IconButton.filledTonal(
                     tooltip: t.adminRemoveRow,
                     onPressed: () => setState(() => fields.removeAt(index)),
                     icon: const Icon(Icons.delete_outline),
@@ -637,7 +1150,7 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                 );
               },
             ),
-            if (isObject) ...[
+            if (isObject && field.expanded) ...[
               const SizedBox(height: AppSpacing.x2),
               Padding(
                 padding: const EdgeInsets.only(left: AppSpacing.x2),
@@ -653,6 +1166,7 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                       alignment: Alignment.centerLeft,
                       child: TextButton.icon(
                         onPressed: () => setState(() {
+                          _ensureChildren(field);
                           field.children = [
                             ...field.children,
                             _FieldDraft(
@@ -681,92 +1195,123 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
     List<_FieldDraft> fields,
     int index,
   ) {
+    final palette = AppPalette.of(context);
     final field = fields[index];
-    final isObject = field.type == _FieldType.json && field.children.isNotEmpty;
+    final isObject = field.hasObjectChildren;
     return Material(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(6),
+      color: palette.bgElevated1,
+      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.x2),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 220,
-                  child: TextFormField(
-                    initialValue: field.name,
-                    decoration: InputDecoration(
-                      labelText: t.adminFieldName,
-                      border: const OutlineInputBorder(),
-                      isDense: true,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final narrow = constraints.maxWidth < 680;
+                final controls = [
+                  SizedBox(
+                    width: narrow ? double.infinity : 220,
+                    child: TextFormField(
+                      initialValue: field.name,
+                      decoration: InputDecoration(
+                        labelText: t.adminFieldName,
+                        prefixIcon: const Icon(Icons.label_outline, size: 18),
+                      ),
+                      onChanged: (value) => field.name = value,
                     ),
-                    onChanged: (value) => field.name = value,
                   ),
-                ),
-                const SizedBox(width: AppSpacing.x2),
-                SizedBox(
-                  width: 150,
-                  child: DropdownButtonFormField<_FieldType>(
-                    initialValue: field.type,
-                    decoration: InputDecoration(
-                      labelText: t.adminFieldType,
-                      border: const OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                    items: [
-                      DropdownMenuItem(
-                        value: _FieldType.string,
-                        child: Text(t.adminTypeString),
+                  SizedBox(
+                    width: narrow ? double.infinity : 150,
+                    child: DropdownButtonFormField<_FieldType>(
+                      initialValue: field.type,
+                      decoration: InputDecoration(
+                        labelText: t.adminFieldType,
+                        prefixIcon: const Icon(Icons.tune_outlined, size: 18),
                       ),
-                      DropdownMenuItem(
-                        value: _FieldType.number,
-                        child: Text(t.adminTypeNumber),
-                      ),
-                      DropdownMenuItem(
-                        value: _FieldType.boolean,
-                        child: Text(t.adminTypeBool),
-                      ),
-                      DropdownMenuItem(
-                        value: _FieldType.json,
-                        child: Text(t.adminTypeJson),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() {
-                        field.type = value;
-                        if (value != _FieldType.json) field.children = [];
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.x2),
-                Expanded(
-                  child: isObject
-                      ? Text(t.adminNestedFields)
-                      : TextFormField(
-                          initialValue: field.value,
-                          minLines: field.type == _FieldType.json ? 2 : 1,
-                          maxLines: field.type == _FieldType.json ? 6 : 1,
-                          decoration: InputDecoration(
-                            labelText: t.adminFieldValue,
-                            border: const OutlineInputBorder(),
-                            isDense: true,
-                          ),
-                          onChanged: (value) => field.value = value,
+                      items: [
+                        DropdownMenuItem(
+                          value: _FieldType.string,
+                          child: Text(t.adminTypeString),
                         ),
-                ),
-                IconButton(
-                  tooltip: t.adminRemoveRow,
-                  onPressed: () => setState(() => fields.removeAt(index)),
-                  icon: const Icon(Icons.delete_outline),
-                ),
-              ],
+                        DropdownMenuItem(
+                          value: _FieldType.number,
+                          child: Text(t.adminTypeNumber),
+                        ),
+                        DropdownMenuItem(
+                          value: _FieldType.boolean,
+                          child: Text(t.adminTypeBool),
+                        ),
+                        DropdownMenuItem(
+                          value: _FieldType.json,
+                          child: Text(t.adminTypeJson),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() {
+                          field.type = value;
+                          if (value != _FieldType.json) {
+                            field.children = [];
+                            field.rawValue = null;
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: isObject
+                        ? _NestedFieldsBadge(
+                            label: t.adminNestedFields,
+                            childCount: field.childCount,
+                            expanded: field.expanded,
+                            onToggle: () => _toggleExpanded(field),
+                          )
+                        : TextFormField(
+                            initialValue: field.value,
+                            minLines: field.type == _FieldType.json ? 2 : 1,
+                            maxLines: field.type == _FieldType.json ? 6 : 1,
+                            decoration: InputDecoration(
+                              labelText: t.adminFieldValue,
+                              prefixIcon: const Icon(Icons.edit_note, size: 18),
+                            ),
+                            onChanged: (value) => field.value = value,
+                          ),
+                  ),
+                  IconButton.filledTonal(
+                    tooltip: t.adminRemoveRow,
+                    onPressed: () => setState(() => fields.removeAt(index)),
+                    icon: const Icon(Icons.delete_outline),
+                  ),
+                ];
+
+                if (narrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: controls
+                        .map((child) => Padding(
+                              padding:
+                                  const EdgeInsets.only(bottom: AppSpacing.x2),
+                              child: child,
+                            ))
+                        .toList(),
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    controls[0],
+                    const SizedBox(width: AppSpacing.x2),
+                    controls[1],
+                    const SizedBox(width: AppSpacing.x2),
+                    controls[2],
+                    controls[3],
+                  ],
+                );
+              },
             ),
-            if (isObject) ...[
+            if (isObject && field.expanded) ...[
               const SizedBox(height: AppSpacing.x2),
               Padding(
                 padding: const EdgeInsets.only(left: AppSpacing.x2),
@@ -781,6 +1326,7 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                       alignment: Alignment.centerLeft,
                       child: TextButton.icon(
                         onPressed: () => setState(() {
+                          _ensureChildren(field);
                           field.children = [
                             ...field.children,
                             _FieldDraft(
@@ -812,6 +1358,24 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
         type: _FieldType.string,
       ));
     });
+  }
+
+  void _toggleExpanded(_FieldDraft field) {
+    setState(() {
+      _ensureChildren(field);
+      field.expanded = !field.expanded;
+    });
+  }
+
+  static void _ensureChildren(_FieldDraft field) {
+    if (field.children.isNotEmpty) return;
+    final raw = field.rawValue;
+    if (raw is! Map) return;
+    field.children = raw.entries
+        .map((entry) => _fieldFromValue(entry.key.toString(), entry.value))
+        .toList();
+    field.rawValue = null;
+    field.value = '';
   }
 
   void _save() {
@@ -855,16 +1419,18 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
 
   static _FieldDraft _fieldFromValue(String name, dynamic value) {
     final type = _typeOf(value);
-    final children = value is Map
-        ? value.entries
-            .map((entry) => _fieldFromValue(entry.key.toString(), entry.value))
-            .toList()
-        : <_FieldDraft>[];
+    if (value is Map) {
+      return _FieldDraft(
+        name: name,
+        value: '',
+        type: type,
+        rawValue: Map<String, dynamic>.from(value),
+      );
+    }
     return _FieldDraft(
       name: name,
-      value: children.isEmpty ? _formatValue(value) : '',
+      value: _formatValue(value),
       type: type,
-      children: children,
     );
   }
 
@@ -889,6 +1455,9 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
   }
 
   static dynamic _valueFromField(_FieldDraft field) {
+    if (field.type == _FieldType.json && field.rawValue is Map) {
+      return Map<String, dynamic>.from(field.rawValue as Map);
+    }
     if (field.type == _FieldType.json && field.children.isNotEmpty) {
       final map = <String, dynamic>{};
       for (final child in field.children) {
@@ -899,6 +1468,68 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
       return map;
     }
     return _parseValue(field);
+  }
+}
+
+class _NestedFieldsBadge extends StatelessWidget {
+  final String label;
+  final int childCount;
+  final bool expanded;
+  final VoidCallback onToggle;
+
+  const _NestedFieldsBadge({
+    required this.label,
+    required this.childCount,
+    required this.expanded,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return Material(
+      color: palette.bgElevated1,
+      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        onTap: onToggle,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 48),
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            border: Border.all(color: palette.borderSubtle),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                expanded
+                    ? Icons.keyboard_arrow_down
+                    : Icons.keyboard_arrow_right,
+                size: 20,
+                color: palette.textSecondary,
+              ),
+              const SizedBox(width: AppSpacing.x1),
+              Icon(
+                Icons.account_tree_outlined,
+                size: 18,
+                color: palette.accent,
+              ),
+              const SizedBox(width: AppSpacing.x2),
+              Expanded(
+                child: Text(
+                  '$label · $childCount',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: palette.textSecondary,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

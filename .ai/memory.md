@@ -117,6 +117,7 @@
 
 ### 芯片参数建模
 - [决策] BLE/BT/Wi-Fi TX power levels derive from sorted `txCurrent_mA_forDbm` keys; `txPowerLevelsDbm` is only a legacy read fallback and is omitted from seed/export JSON.
+- [决策] Earbuds `mcuRun` and `txSweep` seed/export JSON use label-keyed maps, with legacy list-form reads retained for compatibility.
 - [决策] 芯片数据存为 JSON 资源（`assets/data/earbuds_chips.json`），运行时由 `EarbudsChipLoader` 装载
   - 理由：人类可读、IDE 友好、与平台无关、易于 diff / review；改数据不必动 Dart
   - 放弃：每颗芯片一个 dart const 文件（已删除 `lib/config/earbuds/chips/*` 与 `earbuds_chip_registry.dart`）/ YAML / TOML / SQLite
@@ -267,6 +268,7 @@
 - [坑] **Web 端 `shared_preferences` 按 origin (scheme+hostname+port) 隔离**(2026-05-11)
   - 现象：`flutter run -d chrome` 每次随机分配端口，导致 admin 改的数据"看着没保存"
   - 解法：`.vscode/launch.json` 通过 `toolArgs` 固定 `--web-port=5174 --web-hostname=localhost`；权威数据用 admin 导出 zip 覆写 `assets/data/chips/`，与 SP 解耦
+- [坑] Flutter Web release 若出现服务器部署后图标缺失，优先检查 `uses-material-design`、`cupertino_icons` 字体依赖和 icon tree-shake；本项目用 `MaterialIconFontAnchor` 显式保留 Material glyph。
 
 ### 文档
 - [禁区] 不得再向 `docs/ai/memory.md` 追加事实 / 决策（已降级为导航）

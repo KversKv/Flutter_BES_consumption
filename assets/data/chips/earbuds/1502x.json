@@ -13,16 +13,15 @@
     "pdSleepFull": 72.4,
     "deepSleep": 127.0
   },
-  "mcuRun": [
-    {
-      "label": "default",
+  "mcuRun": {
+    "default": {
       "wfi24M": 1.47,
       "cm24M": 1.72,
       "cm48M": 2.23,
       "cm96M": 3.22,
       "cm192M": 7.0
     }
-  ],
+  },
   "scene": {
     "hotelCal": null,
     "mute": 4.45,
@@ -49,7 +48,7 @@
     "btSniff200_0": null,
     "btSniff500_0": null
   },
-  "txSweep": [],
+  "txSweep": {},
   "rxVana": null,
   "rxVsys": null,
   "pa": {

@@ -350,10 +350,10 @@ class EarbudsChip {
         'fullRamKb': fullRamKb,
         'massProduction': massProduction,
         'sleep': sleep.toJson(),
-        'mcuRun': mcuRun.map((e) => e.toJson()).toList(),
+        'mcuRun': _runCurrentMap(mcuRun),
         'scene': scene.toJson(),
         'bt': bt.toJson(),
-        'txSweep': txSweep.map((e) => e.toJson()).toList(),
+        'txSweep': _txSweepMap(txSweep),
         'rxVana': rxVana?.toJson(),
         'rxVsys': rxVsys?.toJson(),
         'pa': pa.toJson(),
@@ -369,11 +369,7 @@ class EarbudsChip {
             ? const SleepCurrent()
             : SleepCurrent.fromJson(
                 Map<String, dynamic>.from(j['sleep'] as Map)),
-        mcuRun: (j['mcuRun'] as List?)
-                ?.map((e) =>
-                    RunCurrent.fromJson(Map<String, dynamic>.from(e as Map)))
-                .toList() ??
-            const [],
+        mcuRun: _runCurrentList(j['mcuRun']),
         scene: j['scene'] == null
             ? const EarbudsScene()
             : EarbudsScene.fromJson(
@@ -381,11 +377,7 @@ class EarbudsChip {
         bt: j['bt'] == null
             ? const BtScene()
             : BtScene.fromJson(Map<String, dynamic>.from(j['bt'] as Map)),
-        txSweep: (j['txSweep'] as List?)
-                ?.map((e) => TxSweepVariant.fromJson(
-                    Map<String, dynamic>.from(e as Map)))
-                .toList() ??
-            const [],
+        txSweep: _txSweepList(j['txSweep']),
         rxVana: j['rxVana'] == null
             ? null
             : RxSweep.fromJson(Map<String, dynamic>.from(j['rxVana'] as Map)),
@@ -416,4 +408,75 @@ Map<int, double> _intDoubleMap(dynamic v) {
     if (ki != null && vd != null) out[ki] = vd;
   });
   return out;
+}
+
+Map<String, dynamic> _runCurrentMap(List<RunCurrent> values) {
+  final out = <String, dynamic>{};
+  for (var i = 0; i < values.length; i++) {
+    final item = values[i];
+    final label = item.label.trim().isEmpty ? 'variant_${i + 1}' : item.label;
+    final data = item.toJson()..remove('label');
+    out[_uniqueLabel(out, label)] = data;
+  }
+  return out;
+}
+
+List<RunCurrent> _runCurrentList(dynamic value) {
+  if (value is List) {
+    return value
+        .whereType<Map>()
+        .map((e) => RunCurrent.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+  if (value is Map) {
+    final out = <RunCurrent>[];
+    value.forEach((label, data) {
+      if (data is! Map) return;
+      final json = Map<String, dynamic>.from(data);
+      json['label'] ??= label.toString();
+      out.add(RunCurrent.fromJson(json));
+    });
+    return out;
+  }
+  return const [];
+}
+
+Map<String, dynamic> _txSweepMap(List<TxSweepVariant> values) {
+  final out = <String, dynamic>{};
+  for (var i = 0; i < values.length; i++) {
+    final item = values[i];
+    final label = item.label.trim().isEmpty ? 'variant_${i + 1}' : item.label;
+    final data = item.toJson()..remove('label');
+    out[_uniqueLabel(out, label)] = data;
+  }
+  return out;
+}
+
+List<TxSweepVariant> _txSweepList(dynamic value) {
+  if (value is List) {
+    return value
+        .whereType<Map>()
+        .map((e) => TxSweepVariant.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+  if (value is Map) {
+    final out = <TxSweepVariant>[];
+    value.forEach((label, data) {
+      if (data is! Map) return;
+      final json = Map<String, dynamic>.from(data);
+      json['label'] ??= label.toString();
+      out.add(TxSweepVariant.fromJson(json));
+    });
+    return out;
+  }
+  return const [];
+}
+
+String _uniqueLabel(Map<String, dynamic> existing, String label) {
+  if (!existing.containsKey(label)) return label;
+  var i = 2;
+  while (existing.containsKey('${label}_$i')) {
+    i++;
+  }
+  return '${label}_$i';
 }

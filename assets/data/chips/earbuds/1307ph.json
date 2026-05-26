@@ -13,7 +13,7 @@
     "pdSleepFull": null,
     "deepSleep": null
   },
-  "mcuRun": [],
+  "mcuRun": {},
   "scene": {
     "hotelCal": 3.945,
     "mute": 3.853,
@@ -49,7 +49,7 @@
     "btSniff200_0": null,
     "btSniff500_0": null
   },
-  "txSweep": [],
+  "txSweep": {},
   "rxVana": {
     "values": {},
     "vana": null

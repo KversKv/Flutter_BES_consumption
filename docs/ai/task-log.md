@@ -436,3 +436,51 @@
 - **Reason**: `txPowerLevelsDbm` duplicated the keys of `txCurrent_mA_forDbm`, so admin edits had two sources of truth for the same TX power table.
 - **Change**: BLE/BT/Wi-Fi models now derive `txPowerLevelsDbm` from sorted `txCurrent_mA_forDbm` keys, keep the legacy list only as a read fallback, and omit it from `toJson()`; admin repository canonicalizes BLE/BT/Wi-Fi records by removing `txPowerLevelsDbm`; seed JSON and Dart fallback configs were cleaned to store only the dBm -> mA map.
 - **Verification**: `flutter analyze` passed; `flutter test` passed; local `http://localhost:54542/admin` returned 200.
+## 2026-05-26 - Admin interface visual refresh
+- **Type**: ui / admin
+- **Scope**: `lib/pages/admin_page.dart`
+- **Reason**: `/admin` needed a more polished, dense, professional management interface while preserving the generic JSON editor workflow.
+- **Change**: Reworked the login view, top toolbar, tab strip, chip record sidebar, responsive split layout, editor header, error banner, field cards, and nested-field rows using existing theme/palette tokens; kept all visible text routed through `AppLocalizations` and preserved the ReorderableListView drag-handle Semantics workaround.
+- **Verification**: `flutter analyze` passed; `flutter test` passed; `flutter build web` passed. Browser plugin preview was attempted but local navigation was blocked with `ERR_BLOCKED_BY_CLIENT`, so verification used Flutter analyzer/tests/build.
+
+## 2026-05-26 - Earbuds labeled lists migrated to maps
+- **Type**: cleanup / data / ui / test
+- **Scope**: `lib/models/earbuds.dart`, `lib/services/chip_json_repository.dart`, `lib/pages/admin_page.dart`, `assets/data/chips/earbuds/*.json`, `test/earbuds_labeled_map_test.dart`
+- **Reason**: `mcuRun` still used a list of labeled objects, so admin could only show it as raw JSON; the same labeled-list shape also existed in `txSweep`.
+- **Change**: `mcuRun` and `txSweep` now export as label-keyed maps while keeping legacy list-form reads compatible; admin canonicalizes saved Earbuds records to map form; all Earbuds seed JSON has no remaining array fields; nested object rows in admin can be collapsed/expanded.
+- **Verification**: `flutter analyze` passed; `flutter test` passed; local `http://localhost:54542/admin` returned 200.
+
+## 2026-05-26 - Admin reorder buttons exposed on chip rows
+- **Type**: ui
+- **Scope**: `lib/pages/admin_page.dart`
+- **Reason**: Move up / Move down inside the row overflow menu was too slow for repeated manual sorting.
+- **Change**: Chip rows now show direct up/down icon buttons with localized tooltips; the overflow menu keeps Duplicate and Delete only.
+- **Verification**: `flutter analyze` passed; `flutter test` passed.
+
+## 2026-05-26 - Web release icon font deployment fix
+- **Type**: fix / infra
+- **Scope**: `pubspec.yaml`, `pubspec.lock`, `lib/main.dart`, `lib/widgets/material_icon_font_anchor.dart`, `.ai/memory.md`
+- **Reason**: Server deployment showed many missing icons while local debug was fine; release Web builds tree-shake icon fonts and the build warned that Cupertino icon font assets were not declared.
+- **Change**: Added `cupertino_icons` so Flutter can package Cupertino fallback glyphs, and added `MaterialIconFontAnchor` at the app builder layer to keep all Material glyphs used by Dart pages in the release font subset.
+- **Verification**: `flutter pub get` passed; `flutter analyze` passed; `flutter test` passed; `flutter build web --release` passed; local static check confirmed `assets/fonts/MaterialIcons-Regular.otf` and `assets/FontManifest.json` return HTTP 200.
+
+## 2026-05-26 - Debug startup and admin performance diagnosis
+- **Type**: analysis / performance
+- **Scope**: `lib/main.dart`, `lib/services/{config,chip_json,earbuds}_repository.dart`, `lib/pages/home_page.dart`, `lib/pages/admin_page.dart`
+- **Reason**: Debug mode first page open and `/admin` felt visibly janky.
+- **Finding**: Startup currently awaits three repository loads before `runApp`, with duplicated chip asset/JSON work; the home shell eagerly mounts all four main pages through `IndexedStack`; admin login mounts all domain tabs and each tab listens to the same repository, causing broad rebuilds after edits.
+- **Verification**: `flutter analyze` passed; `flutter test` passed.
+
+## 2026-05-26 - Startup and admin performance optimization
+- **Type**: performance / ui
+- **Scope**: `lib/main.dart`, `lib/services/config/config_repository.dart`, `lib/services/chip_json_repository.dart`, `lib/pages/home_page.dart`, `lib/pages/admin_page.dart`
+- **Reason**: Reduce Debug-mode first-open and `/admin` jank without changing persisted admin data semantics.
+- **Change**: Config and Earbuds startup loads now run in parallel; Config and ChipJson repositories read indexed JSON files/domains with `Future.wait`; home uses a lazy `IndexedStack` that only mounts pages after first visit; admin repository notifications expose the changed domain so inactive/unrelated domain tabs skip rebuilds.
+- **Verification**: `flutter analyze` passed; `flutter test` passed; `flutter build web` passed.
+
+## 2026-05-26 - Admin tab and JSON editor switch performance
+- **Type**: performance / admin
+- **Scope**: `lib/pages/admin_page.dart`
+- **Reason**: Switching admin chip records and BLE/BT/Earbuds/Wi-Fi domains still felt janky in Debug mode.
+- **Change**: Replaced admin `TabBarView` with a lazy `IndexedStack` tied to the existing `TabController`, so domain pages mount only after first visit; JSON object fields now keep raw map values and generate nested field rows only when expanded, so chip selection no longer recursively builds collapsed object editors.
+- **Verification**: `flutter analyze` passed; `flutter test` passed; `flutter build web` passed.

@@ -13,16 +13,15 @@
     "pdSleepFull": null,
     "deepSleep": null
   },
-  "mcuRun": [
-    {
-      "label": "default",
+  "mcuRun": {
+    "default": {
       "wfi24M": null,
       "cm24M": null,
       "cm48M": null,
       "cm96M": null,
       "cm192M": null
     }
-  ],
+  },
   "scene": {
     "hotelCal": null,
     "mute": 4.55,
@@ -49,9 +48,8 @@
     "btSniff200_0": null,
     "btSniff500_0": 96.66
   },
-  "txSweep": [
-    {
-      "label": "VPA=1.7V",
+  "txSweep": {
+    "VPA=1.7V": {
       "values": {
         "-1": 21.0,
         "0": 22.0,
@@ -70,8 +68,7 @@
         "13": 42.0
       }
     },
-    {
-      "label": "VPA=1.2V",
+    "VPA=1.2V": {
       "values": {
         "0": 12.1,
         "1": 12.7,
@@ -88,7 +85,7 @@
         "12": 25.0
       }
     }
-  ],
+  },
   "rxVana": {
     "values": {
       "0": 12.15,
