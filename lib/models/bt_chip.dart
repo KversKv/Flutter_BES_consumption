@@ -11,7 +11,8 @@ class BtChip {
   final double? rxCurrent_mA_HDT_2G4;
   final double? rxCurrent_mA_HDT_5G;
   final double rxExtWindow_us;
-  final double Rmin_us;
+  final double RX_min_us;
+  final double TX_min_us;
   final double AttemptWaitTimeUS;
   final double clockDriftPpm;
   final BtDefaultConfig? defaultConfig;
@@ -55,7 +56,8 @@ class BtChip {
     required this.sleepCurrent_uA,
     required this.rxCurrent_mA,
     this.rxExtWindow_us = 780.0,
-    this.Rmin_us = 88.0,
+    this.RX_min_us = 88.0,
+    this.TX_min_us = 120.0,
     this.AttemptWaitTimeUS = 450.0,
     this.clockDriftPpm = 50.0,
     this.defaultConfig,
@@ -97,7 +99,8 @@ class BtChip {
         'rxCurrent_mA_HDT_2G4': rxCurrent_mA_HDT_2G4,
         'rxCurrent_mA_HDT_5G': rxCurrent_mA_HDT_5G,
         'rxExtWindow_us': rxExtWindow_us,
-        'Rmin_us': Rmin_us,
+        'RX_min_us': RX_min_us,
+        'TX_min_us': TX_min_us,
         'AttemptWaitTimeUS': AttemptWaitTimeUS,
         'clockDriftPpm': clockDriftPpm,
         'defaultConfig': effectiveDefaultConfig.toJson(),
@@ -136,7 +139,8 @@ class BtChip {
         rxCurrent_mA_HDT_2G4: _d(j['rxCurrent_mA_HDT_2G4']),
         rxCurrent_mA_HDT_5G: _d(j['rxCurrent_mA_HDT_5G']),
         rxExtWindow_us: _d(j['rxExtWindow_us']) ?? 780.0,
-        Rmin_us: _d(j['Rmin_us']) ?? 88.0,
+        RX_min_us: _d(j['RX_min_us']) ?? 88.0,
+        TX_min_us: _d(j['TX_min_us']) ?? 120.0,
         AttemptWaitTimeUS: _d(j['AttemptWaitTimeUS']) ?? 450.0,
         clockDriftPpm: _d(j['clockDriftPpm']) ?? 50.0,
         defaultConfig: BtDefaultConfig.fromJson(j['defaultConfig']),
@@ -169,9 +173,9 @@ class BtChip {
         crystalRampUpLength_us: crystalRampUp_us,
         standbyLength_us: standby_us,
         windowWideningLength_us: 25.0,
-        mainRxLength_us: rxExtWindow_us + Rmin_us,
+        mainRxLength_us: rxExtWindow_us + RX_min_us,
         tifsLength_us: tifs_us,
-        txLength_us: Rmin_us,
+        txLength_us: TX_min_us,
         postProcessLength_us: postProcess_us,
       );
 

@@ -261,9 +261,16 @@ class AppLocalizations {
       'admin_export_success':
           'Exported chips to {location}. Replace assets/data/chips/ to make it the new seed.',
       'admin_export_failed': 'Export failed: {error}',
-      'admin_login_title': 'Admin login',
-      'admin_secret': 'Secret key',
+      'admin_login_title': 'Welcome to BES Admin',
+      'admin_login_subtitle':
+          'Enter your administrator credentials to continue (Demo).',
+      'admin_login_badge': 'Secure admin verification',
+      'admin_secret': 'Access key',
+      'admin_secret_hint': 'Enter administrator access key',
       'admin_login': 'Login',
+      'admin_login_checking': 'Verifying...',
+      'admin_show_secret': 'Show access key',
+      'admin_hide_secret': 'Hide access key',
       'admin_logout': 'Logout',
       'admin_invalid_secret': 'Invalid secret key.',
       'admin_ble_case': 'BLE CASE Management',
@@ -284,6 +291,13 @@ class AppLocalizations {
       'admin_bad_json': 'Invalid JSON.',
       'admin_nested_fields': 'Expanded object fields',
       'admin_add_nested_field': 'Add nested field',
+      'admin_group_identity': 'Identity & metadata',
+      'admin_group_timing': 'Window & timing parameters',
+      'admin_group_current': 'Current & power parameters',
+      'admin_group_radio': 'Radio & payload parameters',
+      'admin_group_hardware': 'Crystal & hardware parameters',
+      'admin_group_other': 'Other parameters',
+      'admin_object_editor_subtitle': '{n} nested fields',
       'admin_saved_local': 'Saved locally. Export JSON to update seed files.',
       'admin_reset_domain': 'Reset this tab',
       'admin_export_all': 'Export all JSON',
@@ -550,9 +564,15 @@ class AppLocalizations {
       'admin_export_success':
           '已导出到 {location}，覆盖 assets/data/chips/ 后即为新的种子数据。',
       'admin_export_failed': '导出失败：{error}',
-      'admin_login_title': '管理员登录',
-      'admin_secret': '密钥',
+      'admin_login_title': '欢迎登录 BES 管理系统',
+      'admin_login_subtitle': '请输入您的管理员凭证以继续 (Demo)。',
+      'admin_login_badge': '安全管理员验证',
+      'admin_secret': 'Access Key',
+      'admin_secret_hint': '请输入管理员 Access Key',
       'admin_login': '登录',
+      'admin_login_checking': '验证中...',
+      'admin_show_secret': '显示 Access Key',
+      'admin_hide_secret': '隐藏 Access Key',
       'admin_logout': '退出',
       'admin_invalid_secret': '密钥不正确。',
       'admin_ble_case': 'BLE CASE 管理',
@@ -573,6 +593,13 @@ class AppLocalizations {
       'admin_bad_json': 'JSON 格式不正确。',
       'admin_nested_fields': '已展开对象字段',
       'admin_add_nested_field': '新增子字段',
+      'admin_group_identity': '身份与基础信息',
+      'admin_group_timing': '窗口与时间参数',
+      'admin_group_current': '电流与功耗参数',
+      'admin_group_radio': '射频与负载参数',
+      'admin_group_hardware': '晶振与硬件参数',
+      'admin_group_other': '其他参数',
+      'admin_object_editor_subtitle': '{n} 个嵌套字段',
       'admin_saved_local': '已保存到本地，导出 JSON 后可更新种子文件。',
       'admin_reset_domain': '还原当前标签',
       'admin_export_all': '导出全部 JSON',
@@ -854,8 +881,14 @@ class AppLocalizations {
   String adminExportFailed(String error) =>
       _t('admin_export_failed').replaceFirst('{error}', error);
   String get adminLoginTitle => _t('admin_login_title');
+  String get adminLoginSubtitle => _t('admin_login_subtitle');
+  String get adminLoginBadge => _t('admin_login_badge');
   String get adminSecret => _t('admin_secret');
+  String get adminSecretHint => _t('admin_secret_hint');
   String get adminLogin => _t('admin_login');
+  String get adminLoginChecking => _t('admin_login_checking');
+  String get adminShowSecret => _t('admin_show_secret');
+  String get adminHideSecret => _t('admin_hide_secret');
   String get adminLogout => _t('admin_logout');
   String get adminInvalidSecret => _t('admin_invalid_secret');
   String get adminBleCase => _t('admin_ble_case');
@@ -876,6 +909,14 @@ class AppLocalizations {
   String get adminBadJson => _t('admin_bad_json');
   String get adminNestedFields => _t('admin_nested_fields');
   String get adminAddNestedField => _t('admin_add_nested_field');
+  String get adminGroupIdentity => _t('admin_group_identity');
+  String get adminGroupTiming => _t('admin_group_timing');
+  String get adminGroupCurrent => _t('admin_group_current');
+  String get adminGroupRadio => _t('admin_group_radio');
+  String get adminGroupHardware => _t('admin_group_hardware');
+  String get adminGroupOther => _t('admin_group_other');
+  String adminObjectEditorSubtitle(int n) =>
+      _t('admin_object_editor_subtitle').replaceFirst('{n}', '$n');
   String get adminSavedLocal => _t('admin_saved_local');
   String get adminResetDomain => _t('admin_reset_domain');
   String get adminExportAll => _t('admin_export_all');

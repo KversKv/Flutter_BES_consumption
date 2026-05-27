@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
+import '../navigation/app_url_state.dart';
 import '../state/wifi_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -9,12 +10,21 @@ import '../widgets/chart_widgets.dart';
 import '../widgets/config_panels.dart';
 
 class WifiPage extends StatelessWidget {
-  const WifiPage({super.key});
+  final Uri? initialUri;
+
+  const WifiPage({super.key, this.initialUri});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => WIFIState(),
+      create: (_) {
+        final state = WIFIState();
+        final uri = initialUri;
+        if (uri != null) {
+          AppUrlState.applyWifi(state, uri);
+        }
+        return state;
+      },
       child: const _WifiCaseView(),
     );
   }
@@ -29,6 +39,37 @@ class _WifiCaseView extends StatefulWidget {
 
 class _WifiCaseViewState extends State<_WifiCaseView> {
   bool _panelExpanded = true;
+  WIFIState? _wifiState;
+  String? _lastSyncedUrl;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final wifiState = context.read<WIFIState>();
+    if (_wifiState != wifiState) {
+      _wifiState?.removeListener(_syncUrl);
+      _wifiState = wifiState..addListener(_syncUrl);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _syncUrl();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _wifiState?.removeListener(_syncUrl);
+    super.dispose();
+  }
+
+  void _syncUrl() {
+    final state = _wifiState;
+    if (!mounted || state == null) return;
+    final uri = AppUrlState.uriForWifi(state);
+    final next = uri.toString();
+    if (next == _lastSyncedUrl) return;
+    _lastSyncedUrl = next;
+    AppUrlState.replaceBrowserUrl(uri);
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -11,6 +11,7 @@ import 'state/app_state.dart';
 import 'state/bt_state.dart';
 import 'state/earbuds_state.dart';
 import 'state/theme_controller.dart';
+import 'navigation/app_url_state.dart';
 import 'pages/admin_page.dart';
 import 'pages/home_page.dart';
 import 'theme/app_theme.dart';
@@ -71,9 +72,23 @@ class MyApp extends StatelessWidget {
             child: child ?? const SizedBox.shrink(),
           ),
           initialRoute: '/',
-          routes: {
-            '/': (_) => const MyHomePage(),
-            '/admin': (_) => const AdminPage(secretKey: adminSecretKey),
+          onGenerateRoute: (settings) {
+            final uri = Uri.parse(settings.name ?? '/');
+            if (uri.path == '/admin') {
+              return MaterialPageRoute<void>(
+                settings: settings,
+                builder: (_) => const AdminPage(secretKey: adminSecretKey),
+              );
+            }
+
+            final pageIndex = AppUrlState.pageIndexFromPath(uri.path);
+            return MaterialPageRoute<void>(
+              settings: settings,
+              builder: (_) => MyHomePage(
+                initialIndex: pageIndex,
+                initialUri: uri,
+              ),
+            );
           },
         ),
       ),

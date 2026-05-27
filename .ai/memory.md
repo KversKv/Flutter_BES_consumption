@@ -51,6 +51,7 @@
 ## 2. Facts · 长期稳定事实
 
 - [事实] `/admin` 为密钥登录管理界面，密钥常量在 `lib/main.dart` 的 `adminSecretKey`，默认值 `admin`；芯片编辑统一走 `lib/services/chip_json_repository.dart`，支持对象字段展开、自定义字段保留和按当前列表顺序导出 `index.json`。
+- [事实] `/admin` 登录态由 `lib/services/admin_session_store.dart` 通过 `shared_preferences` 持久化；刷新页面保持已登录，点击 Logout 会清除本地登录态。
 
 ### 工程基础
 - [事实] 工程名：`bes_consumption`；历史拼写 `bes_comsuption` 为待修正遗留（散布于六端工程与 `pubspec.yaml`）
@@ -117,6 +118,7 @@
 
 ### 芯片参数建模
 - [决策] BLE/BT/Wi-Fi TX power levels derive from sorted `txCurrent_mA_forDbm` keys; `txPowerLevelsDbm` is only a legacy read fallback and is omitted from seed/export JSON.
+- [决策] BT 手动配置的 RX/TX 最小时长拆为 `RX_min_us` / `TX_min_us`；`Rmin_us` 已从模型、计算逻辑和 BT seed JSON 移除。
 - [决策] Earbuds `mcuRun` and `txSweep` seed/export JSON use label-keyed maps, with legacy list-form reads retained for compatibility.
 - [决策] 芯片数据存为 JSON 资源（`assets/data/earbuds_chips.json`），运行时由 `EarbudsChipLoader` 装载
   - 理由：人类可读、IDE 友好、与平台无关、易于 diff / review；改数据不必动 Dart

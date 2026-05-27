@@ -66,6 +66,20 @@ void main() {
     expect(labels.where((label) => label.startsWith('RXmin')), hasLength(2));
   });
 
+  test('BT sniff manual config uses separate RX and TX minimum lengths', () {
+    final state = BTState()
+      ..setCase(BTCase.btSniff)
+      ..setChip('BES2711IUC2/3')
+      ..setUseDefaultConfig(false)
+      ..setAttemptCount(2);
+
+    final tx = state.events.singleWhere((event) => event.label == 'TX');
+    final rxMin = state.events.singleWhere((event) => event.label == 'RXmin');
+
+    expect(tx.durationUs, closeTo(120.0, 0.001));
+    expect(rxMin.durationUs, closeTo(88.0, 0.001));
+  });
+
   test('BT sniff keeps window widening separate from main RX', () {
     final state = BTState()
       ..setCase(BTCase.btSniff)

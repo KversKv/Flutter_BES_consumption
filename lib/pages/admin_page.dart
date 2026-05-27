@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import '../services/admin_session_store.dart';
 import '../services/chip_json_repository.dart';
 import '../services/chips_export_service.dart';
 import '../theme/app_colors.dart';
@@ -23,7 +25,16 @@ class AdminPage extends StatefulWidget {
 class _AdminPageState extends State<AdminPage> {
   final _secretCtrl = TextEditingController();
   bool _authed = false;
+  bool _sessionReady = false;
+  bool _loginBusy = false;
+  bool _secretVisible = false;
   String? _loginError;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_restoreSession());
+  }
 
   @override
   void dispose() {
@@ -34,6 +45,7 @@ class _AdminPageState extends State<AdminPage> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    if (!_sessionReady) return const _AdminSessionLoadingView();
     if (!_authed) return _loginView(t);
 
     return DefaultTabController(
@@ -47,7 +59,7 @@ class _AdminPageState extends State<AdminPage> {
                 onBackHome: () =>
                     Navigator.of(context).pushReplacementNamed('/'),
                 onExportAll: _exportAll,
-                onLogout: () => setState(() => _authed = false),
+                onLogout: () => unawaited(_logout()),
               ),
               const _AdminTabStrip(),
               Expanded(
@@ -79,6 +91,7 @@ class _AdminPageState extends State<AdminPage> {
 
   Widget _loginView(AppLocalizations t) {
     final palette = AppPalette.of(context);
+    final theme = Theme.of(context);
     return Scaffold(
       body: SafeArea(
         child: Stack(
@@ -110,42 +123,123 @@ class _AdminPageState extends State<AdminPage> {
             ),
             Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 440),
+                constraints: const BoxConstraints(maxWidth: 460),
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.x4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.x4,
+                    vertical: AppSpacing.x6,
+                  ),
                   child: _AdminPanel(
-                    padding: const EdgeInsets.all(AppSpacing.x6),
+                    padding: const EdgeInsets.all(AppSpacing.x8),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Icon(
-                          Icons.admin_panel_settings_outlined,
-                          size: 40,
-                          color: palette.accent,
+                        Align(
+                          alignment: Alignment.center,
+                          child: Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: palette.accentMuted,
+                              borderRadius: BorderRadius.circular(
+                                AppSpacing.radiusLg,
+                              ),
+                              border: Border.all(color: palette.borderStrong),
+                            ),
+                            child: Icon(
+                              Icons.admin_panel_settings_outlined,
+                              size: 30,
+                              color: palette.accent,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.x4),
+                        Align(
+                          alignment: Alignment.center,
+                          child: _LoginStatusPill(
+                            icon: Icons.verified_user_outlined,
+                            label: t.adminLoginBadge,
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.x3),
                         Text(
                           t.adminLoginTitle,
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineMedium,
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.x2),
+                        Text(
+                          t.adminLoginSubtitle,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: palette.textSecondary,
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.x5),
                         TextField(
                           controller: _secretCtrl,
-                          obscureText: true,
+                          enabled: !_loginBusy,
+                          obscureText: !_secretVisible,
                           decoration: InputDecoration(
                             labelText: t.adminSecret,
+                            hintText: t.adminSecretHint,
                             prefixIcon: const Icon(Icons.key_outlined),
-                            errorText: _loginError,
+                            suffixIcon: IconButton(
+                              tooltip: _secretVisible
+                                  ? t.adminHideSecret
+                                  : t.adminShowSecret,
+                              onPressed: _loginBusy
+                                  ? null
+                                  : () => setState(
+                                        () => _secretVisible = !_secretVisible,
+                                      ),
+                              icon: Icon(
+                                _secretVisible
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                              ),
+                            ),
                           ),
+                          textInputAction: TextInputAction.done,
                           onSubmitted: (_) => _tryLogin(t),
                         ),
-                        const SizedBox(height: AppSpacing.x4),
-                        FilledButton.icon(
-                          onPressed: () => _tryLogin(t),
-                          icon: const Icon(Icons.lock_open_outlined),
-                          label: Text(t.adminLogin),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 180),
+                          child: _loginError == null
+                              ? const SizedBox(height: AppSpacing.x4)
+                              : Padding(
+                                  key: ValueKey(_loginError),
+                                  padding: const EdgeInsets.only(
+                                    top: AppSpacing.x3,
+                                    bottom: AppSpacing.x1,
+                                  ),
+                                  child: _LoginErrorBanner(
+                                    message: _loginError!,
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(height: AppSpacing.x3),
+                        SizedBox(
+                          height: 48,
+                          child: FilledButton.icon(
+                            onPressed: _loginBusy ? null : () => _tryLogin(t),
+                            icon: _loginBusy
+                                ? SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: palette.accentOn,
+                                    ),
+                                  )
+                                : const Icon(Icons.lock_open_outlined),
+                            label: Text(
+                              _loginBusy ? t.adminLoginChecking : t.adminLogin,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -159,11 +253,45 @@ class _AdminPageState extends State<AdminPage> {
     );
   }
 
-  void _tryLogin(AppLocalizations t) {
+  Future<void> _tryLogin(AppLocalizations t) async {
+    if (_loginBusy) return;
+    setState(() {
+      _loginBusy = true;
+      _loginError = null;
+    });
+    await Future<void>.delayed(const Duration(milliseconds: 280));
+    if (!mounted) return;
     final ok = _secretCtrl.text == widget.secretKey;
+    if (ok) {
+      await AdminSessionStore.instance.unlock();
+    } else {
+      await AdminSessionStore.instance.clear();
+    }
+    if (!mounted) return;
     setState(() {
       _authed = ok;
+      _loginBusy = false;
       _loginError = ok ? null : t.adminInvalidSecret;
+    });
+  }
+
+  Future<void> _restoreSession() async {
+    final authed = await AdminSessionStore.instance.isUnlocked();
+    if (!mounted) return;
+    setState(() {
+      _authed = authed;
+      _sessionReady = true;
+    });
+  }
+
+  Future<void> _logout() async {
+    await AdminSessionStore.instance.clear();
+    if (!mounted) return;
+    setState(() {
+      _authed = false;
+      _secretCtrl.clear();
+      _loginError = null;
+      _secretVisible = false;
     });
   }
 
@@ -183,6 +311,104 @@ class _AdminPageState extends State<AdminPage> {
         SnackBar(content: Text(t.adminExportFailed('$e'))),
       );
     }
+  }
+}
+
+class _AdminSessionLoadingView extends StatelessWidget {
+  const _AdminSessionLoadingView();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      ),
+    );
+  }
+}
+
+class _LoginStatusPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _LoginStatusPill({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: palette.bgElevated1,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: palette.borderSubtle),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.x3,
+          vertical: AppSpacing.x2,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: palette.success),
+            const SizedBox(width: AppSpacing.x2),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: palette.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LoginErrorBanner extends StatelessWidget {
+  final String message;
+
+  const _LoginErrorBanner({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: palette.danger.withValues(alpha: palette.isDark ? 0.14 : 0.08),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        border: Border.all(
+          color: palette.danger.withValues(alpha: palette.isDark ? 0.42 : 0.24),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.x3,
+          vertical: AppSpacing.x2,
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.error_outline, size: 18, color: palette.danger),
+            const SizedBox(width: AppSpacing.x2),
+            Expanded(
+              child: Text(
+                message,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: palette.danger,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -831,6 +1057,8 @@ class _CountPill extends StatelessWidget {
 
 enum _FieldType { string, number, boolean, json }
 
+enum _FieldCategory { identity, timing, current, radio, hardware, other }
+
 class _FieldDraft {
   String name;
   String value;
@@ -855,6 +1083,13 @@ class _FieldDraft {
   }
 
   bool get hasObjectChildren => type == _FieldType.json && childCount > 0;
+}
+
+class _FieldSection {
+  final _FieldCategory category;
+  final List<int> indexes;
+
+  const _FieldSection(this.category, this.indexes);
 }
 
 class _JsonRecordEditor extends StatefulWidget {
@@ -887,6 +1122,7 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final palette = AppPalette.of(context);
+    final sections = _fieldSections();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1013,12 +1249,35 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
         Expanded(
           child: ColoredBox(
             color: palette.bgBase,
-            child: ListView.separated(
+            child: ListView.builder(
               padding: const EdgeInsets.all(AppSpacing.x4),
-              itemCount: _fields.length,
-              separatorBuilder: (_, __) =>
-                  const SizedBox(height: AppSpacing.x3),
-              itemBuilder: (context, index) => _fieldRow(t, index, _fields),
+              itemCount: sections.length,
+              itemBuilder: (context, sectionIndex) {
+                final section = sections[sectionIndex];
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom:
+                        sectionIndex == sections.length - 1 ? 0 : AppSpacing.x4,
+                  ),
+                  child: _FieldGroupPanel(
+                    icon: _categoryIcon(section.category),
+                    title: _categoryTitle(t, section.category),
+                    count: section.indexes.length,
+                    child: Column(
+                      children: [
+                        for (int i = 0; i < section.indexes.length; i++) ...[
+                          if (i > 0)
+                            Divider(
+                              height: AppSpacing.x4,
+                              color: palette.borderSubtle,
+                            ),
+                          _fieldRow(t, section.indexes[i], _fields),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -1026,166 +1285,270 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
     );
   }
 
+  List<_FieldSection> _fieldSections() {
+    final grouped = <_FieldCategory, List<int>>{
+      for (final category in _FieldCategory.values) category: <int>[],
+    };
+    for (int i = 0; i < _fields.length; i++) {
+      grouped[_categoryFor(_fields[i].name)]!.add(i);
+    }
+    return _FieldCategory.values
+        .where((category) => grouped[category]!.isNotEmpty)
+        .map((category) => _FieldSection(category, grouped[category]!))
+        .toList();
+  }
+
+  _FieldCategory _categoryFor(String name) {
+    final key = name.toLowerCase();
+    if (_matchesAny(key, [
+      'id',
+      'name',
+      'model',
+      'description',
+      'project',
+      'software',
+      'mass',
+      'config',
+    ])) {
+      return _FieldCategory.identity;
+    }
+    if (_matchesAny(key, [
+      'crystal',
+      'clock',
+      'osc',
+      'pll',
+      'process',
+      'core',
+      'ram',
+      'vcore',
+      'vana',
+      'vsys',
+      'vhppa',
+    ])) {
+      return _FieldCategory.hardware;
+    }
+    if (_matchesAny(key, [
+      'current',
+      'power',
+      'voltage',
+      'vbat',
+      'ma',
+      'ua',
+      'sleep',
+      'standby',
+      'wfi',
+    ])) {
+      return _FieldCategory.current;
+    }
+    if (_matchesAny(key, [
+      'window',
+      'time',
+      'length',
+      'interval',
+      'delay',
+      'duration',
+      'attemptwait',
+      'gap',
+      'period',
+      'rmin',
+    ])) {
+      return _FieldCategory.timing;
+    }
+    if (_matchesAny(key, [
+      'tx',
+      'rx',
+      'bt',
+      'ble',
+      'wifi',
+      'phy',
+      'dbm',
+      'gain',
+      'payload',
+      'packet',
+      'channel',
+      'sniff',
+      'page',
+    ])) {
+      return _FieldCategory.radio;
+    }
+    return _FieldCategory.other;
+  }
+
+  bool _matchesAny(String value, List<String> patterns) {
+    return patterns.any(value.contains);
+  }
+
+  IconData _categoryIcon(_FieldCategory category) {
+    switch (category) {
+      case _FieldCategory.identity:
+        return Icons.badge_outlined;
+      case _FieldCategory.timing:
+        return Icons.timer_outlined;
+      case _FieldCategory.current:
+        return Icons.bolt_outlined;
+      case _FieldCategory.radio:
+        return Icons.settings_input_antenna_outlined;
+      case _FieldCategory.hardware:
+        return Icons.memory_outlined;
+      case _FieldCategory.other:
+        return Icons.tune_outlined;
+    }
+  }
+
+  String _categoryTitle(AppLocalizations t, _FieldCategory category) {
+    switch (category) {
+      case _FieldCategory.identity:
+        return t.adminGroupIdentity;
+      case _FieldCategory.timing:
+        return t.adminGroupTiming;
+      case _FieldCategory.current:
+        return t.adminGroupCurrent;
+      case _FieldCategory.radio:
+        return t.adminGroupRadio;
+      case _FieldCategory.hardware:
+        return t.adminGroupHardware;
+      case _FieldCategory.other:
+        return t.adminGroupOther;
+    }
+  }
+
+  List<DropdownMenuItem<_FieldType>> _fieldTypeItems(AppLocalizations t) {
+    return [
+      DropdownMenuItem(
+        value: _FieldType.string,
+        child: Text(t.adminTypeString),
+      ),
+      DropdownMenuItem(
+        value: _FieldType.number,
+        child: Text(t.adminTypeNumber),
+      ),
+      DropdownMenuItem(
+        value: _FieldType.boolean,
+        child: Text(t.adminTypeBool),
+      ),
+      DropdownMenuItem(
+        value: _FieldType.json,
+        child: Text(t.adminTypeJson),
+      ),
+    ];
+  }
+
   Widget _fieldRow(AppLocalizations t, int index, List<_FieldDraft> fields) {
     final palette = AppPalette.of(context);
     final field = fields[index];
     final isObject = field.hasObjectChildren;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: palette.bgElevated2,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: palette.borderSubtle),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.x3),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final narrow = constraints.maxWidth < 720;
-                final controls = [
-                  SizedBox(
-                    width: narrow ? double.infinity : 220,
-                    child: TextFormField(
-                      initialValue: field.name,
-                      decoration: InputDecoration(
-                        labelText: t.adminFieldName,
-                        prefixIcon: const Icon(Icons.label_outline, size: 18),
-                      ),
-                      onChanged: (value) => field.name = value,
-                    ),
-                  ),
-                  SizedBox(
-                    width: narrow ? double.infinity : 150,
-                    child: DropdownButtonFormField<_FieldType>(
-                      initialValue: field.type,
-                      decoration: InputDecoration(
-                        labelText: t.adminFieldType,
-                        prefixIcon: const Icon(Icons.tune_outlined, size: 18),
-                      ),
-                      items: [
-                        DropdownMenuItem(
-                          value: _FieldType.string,
-                          child: Text(t.adminTypeString),
-                        ),
-                        DropdownMenuItem(
-                          value: _FieldType.number,
-                          child: Text(t.adminTypeNumber),
-                        ),
-                        DropdownMenuItem(
-                          value: _FieldType.boolean,
-                          child: Text(t.adminTypeBool),
-                        ),
-                        DropdownMenuItem(
-                          value: _FieldType.json,
-                          child: Text(t.adminTypeJson),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() {
-                          field.type = value;
-                          if (value != _FieldType.json) {
-                            field.children = [];
-                            field.rawValue = null;
-                          }
-                          if (value == _FieldType.json &&
-                              field.children.isEmpty &&
-                              field.rawValue == null &&
-                              field.value.trim().isEmpty) {
-                            field.value = '{}';
-                          }
-                        });
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: isObject
-                        ? _NestedFieldsBadge(
-                            label: t.adminNestedFields,
-                            childCount: field.childCount,
-                            expanded: field.expanded,
-                            onToggle: () => _toggleExpanded(field),
-                          )
-                        : TextFormField(
-                            initialValue: field.value,
-                            minLines: field.type == _FieldType.json ? 3 : 1,
-                            maxLines: field.type == _FieldType.json ? 8 : 1,
-                            decoration: InputDecoration(
-                              labelText: t.adminFieldValue,
-                              prefixIcon: const Icon(Icons.edit_note, size: 18),
-                            ),
-                            onChanged: (value) => field.value = value,
-                          ),
-                  ),
-                  IconButton.filledTonal(
-                    tooltip: t.adminRemoveRow,
-                    onPressed: () => setState(() => fields.removeAt(index)),
-                    icon: const Icon(Icons.delete_outline),
-                  ),
-                ];
-                if (narrow) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: controls
-                        .map((child) => Padding(
-                              padding:
-                                  const EdgeInsets.only(bottom: AppSpacing.x2),
-                              child: child,
-                            ))
-                        .toList(),
-                  );
-                }
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    controls[0],
-                    const SizedBox(width: AppSpacing.x2),
-                    controls[1],
-                    const SizedBox(width: AppSpacing.x2),
-                    controls[2],
-                    controls[3],
-                  ],
-                );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x1),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final narrow = constraints.maxWidth < 760;
+          final nameInput = _FieldInputFrame(
+            child: TextFormField(
+              initialValue: field.name,
+              decoration: InputDecoration(
+                hintText: t.adminFieldName,
+                prefixIcon: const Icon(Icons.label_outline, size: 18),
+              ),
+              onChanged: (value) => field.name = value,
+            ),
+          );
+          final typeInput = _FieldInputFrame(
+            child: DropdownButtonFormField<_FieldType>(
+              initialValue: field.type,
+              decoration: InputDecoration(
+                hintText: t.adminFieldType,
+                prefixIcon: const Icon(Icons.tune_outlined, size: 18),
+              ),
+              items: _fieldTypeItems(t),
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() {
+                  field.type = value;
+                  if (value != _FieldType.json) {
+                    field.children = [];
+                    field.rawValue = null;
+                  }
+                  if (value == _FieldType.json &&
+                      field.children.isEmpty &&
+                      field.rawValue == null &&
+                      field.value.trim().isEmpty) {
+                    field.value = '{}';
+                  }
+                });
               },
             ),
-            if (isObject && field.expanded) ...[
-              const SizedBox(height: AppSpacing.x2),
-              Padding(
-                padding: const EdgeInsets.only(left: AppSpacing.x2),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (int i = 0; i < field.children.length; i++)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.x2),
-                        child: _nestedFieldRow(t, field.children, i),
-                      ),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: () => setState(() {
-                          _ensureChildren(field);
-                          field.children = [
-                            ...field.children,
-                            _FieldDraft(
-                              name: 'customField',
-                              value: '',
-                              type: _FieldType.string,
-                            ),
-                          ];
-                        }),
-                        icon: const Icon(Icons.add),
-                        label: Text(t.adminAddNestedField),
-                      ),
+          );
+          final valueInput = isObject
+              ? _ObjectFieldButton(
+                  label: t.adminNestedFields,
+                  childCount: field.childCount,
+                  onTap: () => _openObjectEditor(t, field),
+                )
+              : _FieldInputFrame(
+                  child: TextFormField(
+                    initialValue: field.value,
+                    minLines: field.type == _FieldType.json ? 3 : 1,
+                    maxLines: field.type == _FieldType.json ? 8 : 1,
+                    decoration: InputDecoration(
+                      hintText: t.adminFieldValue,
+                      prefixIcon: const Icon(Icons.edit_note, size: 18),
                     ),
+                    onChanged: (value) => field.value = value,
+                  ),
+                );
+          final removeButton = Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.x2),
+            child: IconButton.filledTonal(
+              tooltip: t.adminRemoveRow,
+              onPressed: () => setState(() => fields.removeAt(index)),
+              icon: const Icon(Icons.delete_outline),
+            ),
+          );
+          final grip = Padding(
+            padding: EdgeInsets.only(
+              right: narrow ? 0 : AppSpacing.x2,
+              top: narrow ? 0 : AppSpacing.x3,
+            ),
+            child: Icon(
+              Icons.drag_indicator,
+              size: 18,
+              color: palette.textMuted,
+            ),
+          );
+
+          if (narrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    grip,
+                    const SizedBox(width: AppSpacing.x2),
+                    Expanded(child: nameInput),
+                    removeButton,
                   ],
                 ),
-              ),
+                const SizedBox(height: AppSpacing.x2),
+                typeInput,
+                const SizedBox(height: AppSpacing.x2),
+                valueInput,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              grip,
+              SizedBox(width: 220, child: nameInput),
+              const SizedBox(width: AppSpacing.x2),
+              SizedBox(width: 150, child: typeInput),
+              const SizedBox(width: AppSpacing.x2),
+              Expanded(child: valueInput),
+              removeButton,
             ],
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -1194,160 +1557,199 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
     AppLocalizations t,
     List<_FieldDraft> fields,
     int index,
+    void Function(VoidCallback fn) mutate,
   ) {
     final palette = AppPalette.of(context);
     final field = fields[index];
     final isObject = field.hasObjectChildren;
-    return Material(
-      color: palette.bgElevated1,
-      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.x2),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final narrow = constraints.maxWidth < 680;
-                final controls = [
-                  SizedBox(
-                    width: narrow ? double.infinity : 220,
-                    child: TextFormField(
-                      initialValue: field.name,
-                      decoration: InputDecoration(
-                        labelText: t.adminFieldName,
-                        prefixIcon: const Icon(Icons.label_outline, size: 18),
-                      ),
-                      onChanged: (value) => field.name = value,
-                    ),
-                  ),
-                  SizedBox(
-                    width: narrow ? double.infinity : 150,
-                    child: DropdownButtonFormField<_FieldType>(
-                      initialValue: field.type,
-                      decoration: InputDecoration(
-                        labelText: t.adminFieldType,
-                        prefixIcon: const Icon(Icons.tune_outlined, size: 18),
-                      ),
-                      items: [
-                        DropdownMenuItem(
-                          value: _FieldType.string,
-                          child: Text(t.adminTypeString),
-                        ),
-                        DropdownMenuItem(
-                          value: _FieldType.number,
-                          child: Text(t.adminTypeNumber),
-                        ),
-                        DropdownMenuItem(
-                          value: _FieldType.boolean,
-                          child: Text(t.adminTypeBool),
-                        ),
-                        DropdownMenuItem(
-                          value: _FieldType.json,
-                          child: Text(t.adminTypeJson),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() {
-                          field.type = value;
-                          if (value != _FieldType.json) {
-                            field.children = [];
-                            field.rawValue = null;
-                          }
-                        });
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: isObject
-                        ? _NestedFieldsBadge(
-                            label: t.adminNestedFields,
-                            childCount: field.childCount,
-                            expanded: field.expanded,
-                            onToggle: () => _toggleExpanded(field),
-                          )
-                        : TextFormField(
-                            initialValue: field.value,
-                            minLines: field.type == _FieldType.json ? 2 : 1,
-                            maxLines: field.type == _FieldType.json ? 6 : 1,
-                            decoration: InputDecoration(
-                              labelText: t.adminFieldValue,
-                              prefixIcon: const Icon(Icons.edit_note, size: 18),
-                            ),
-                            onChanged: (value) => field.value = value,
-                          ),
-                  ),
-                  IconButton.filledTonal(
-                    tooltip: t.adminRemoveRow,
-                    onPressed: () => setState(() => fields.removeAt(index)),
-                    icon: const Icon(Icons.delete_outline),
-                  ),
-                ];
-
-                if (narrow) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: controls
-                        .map((child) => Padding(
-                              padding:
-                                  const EdgeInsets.only(bottom: AppSpacing.x2),
-                              child: child,
-                            ))
-                        .toList(),
-                  );
-                }
-
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    controls[0],
-                    const SizedBox(width: AppSpacing.x2),
-                    controls[1],
-                    const SizedBox(width: AppSpacing.x2),
-                    controls[2],
-                    controls[3],
-                  ],
-                );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x1),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final narrow = constraints.maxWidth < 700;
+          final nameInput = _FieldInputFrame(
+            child: TextFormField(
+              initialValue: field.name,
+              decoration: InputDecoration(
+                hintText: t.adminFieldName,
+                prefixIcon: const Icon(Icons.label_outline, size: 18),
+              ),
+              onChanged: (value) => field.name = value,
+            ),
+          );
+          final typeInput = _FieldInputFrame(
+            child: DropdownButtonFormField<_FieldType>(
+              initialValue: field.type,
+              decoration: InputDecoration(
+                hintText: t.adminFieldType,
+                prefixIcon: const Icon(Icons.tune_outlined, size: 18),
+              ),
+              items: _fieldTypeItems(t),
+              onChanged: (value) {
+                if (value == null) return;
+                mutate(() {
+                  field.type = value;
+                  if (value != _FieldType.json) {
+                    field.children = [];
+                    field.rawValue = null;
+                  }
+                });
               },
             ),
-            if (isObject && field.expanded) ...[
-              const SizedBox(height: AppSpacing.x2),
-              Padding(
-                padding: const EdgeInsets.only(left: AppSpacing.x2),
-                child: Column(
+          );
+          final valueInput = isObject
+              ? _ObjectFieldButton(
+                  label: t.adminNestedFields,
+                  childCount: field.childCount,
+                  onTap: () => _openObjectEditor(t, field),
+                )
+              : _FieldInputFrame(
+                  child: TextFormField(
+                    initialValue: field.value,
+                    minLines: field.type == _FieldType.json ? 2 : 1,
+                    maxLines: field.type == _FieldType.json ? 6 : 1,
+                    decoration: InputDecoration(
+                      hintText: t.adminFieldValue,
+                      prefixIcon: const Icon(Icons.edit_note, size: 18),
+                    ),
+                    onChanged: (value) => field.value = value,
+                  ),
+                );
+          final removeButton = Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.x2),
+            child: IconButton.filledTonal(
+              tooltip: t.adminRemoveRow,
+              onPressed: () => mutate(() => fields.removeAt(index)),
+              icon: const Icon(Icons.delete_outline),
+            ),
+          );
+          final grip = Padding(
+            padding: EdgeInsets.only(
+              right: narrow ? 0 : AppSpacing.x2,
+              top: narrow ? 0 : AppSpacing.x3,
+            ),
+            child: Icon(
+              Icons.drag_indicator,
+              size: 18,
+              color: palette.textMuted,
+            ),
+          );
+
+          if (narrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
                   children: [
-                    for (int i = 0; i < field.children.length; i++)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.x1),
-                        child: _nestedFieldRow(t, field.children, i),
+                    grip,
+                    const SizedBox(width: AppSpacing.x2),
+                    Expanded(child: nameInput),
+                    removeButton,
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.x2),
+                typeInput,
+                const SizedBox(height: AppSpacing.x2),
+                valueInput,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              grip,
+              SizedBox(width: 220, child: nameInput),
+              const SizedBox(width: AppSpacing.x2),
+              SizedBox(width: 150, child: typeInput),
+              const SizedBox(width: AppSpacing.x2),
+              Expanded(child: valueInput),
+              removeButton,
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _openObjectEditor(
+    AppLocalizations t,
+    _FieldDraft field,
+  ) async {
+    setState(() => _ensureChildren(field));
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            void mutateDialog(VoidCallback fn) {
+              setDialogState(fn);
+              setState(() {});
+            }
+
+            return Dialog(
+              insetPadding: const EdgeInsets.all(AppSpacing.x4),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 980,
+                  maxHeight: 720,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _ObjectEditorHeader(
+                      title: field.name,
+                      subtitle: t.adminObjectEditorSubtitle(field.childCount),
+                      onClose: () => Navigator.of(dialogContext).pop(),
+                    ),
+                    Expanded(
+                      child: ColoredBox(
+                        color: AppPalette.of(context).bgBase,
+                        child: ListView.separated(
+                          padding: const EdgeInsets.all(AppSpacing.x4),
+                          itemCount: field.children.length,
+                          separatorBuilder: (_, __) => Divider(
+                            height: AppSpacing.x4,
+                            color: AppPalette.of(context).borderSubtle,
+                          ),
+                          itemBuilder: (context, i) => _nestedFieldRow(
+                            t,
+                            field.children,
+                            i,
+                            mutateDialog,
+                          ),
+                        ),
                       ),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: () => setState(() {
-                          _ensureChildren(field);
-                          field.children = [
-                            ...field.children,
-                            _FieldDraft(
-                              name: 'customField',
-                              value: '',
-                              type: _FieldType.string,
-                            ),
-                          ];
-                        }),
-                        icon: const Icon(Icons.add),
-                        label: Text(t.adminAddNestedField),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.x3),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: () => mutateDialog(() {
+                            field.children = [
+                              ...field.children,
+                              _FieldDraft(
+                                name: 'customField',
+                                value: '',
+                                type: _FieldType.string,
+                              ),
+                            ];
+                          }),
+                          icon: const Icon(Icons.add),
+                          label: Text(t.adminAddNestedField),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ],
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
+    if (mounted) setState(() {});
   }
 
   void _addField() {
@@ -1357,13 +1759,6 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
         value: '',
         type: _FieldType.string,
       ));
-    });
-  }
-
-  void _toggleExpanded(_FieldDraft field) {
-    setState(() {
-      _ensureChildren(field);
-      field.expanded = !field.expanded;
     });
   }
 
@@ -1471,62 +1866,210 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
   }
 }
 
-class _NestedFieldsBadge extends StatelessWidget {
+class _FieldGroupPanel extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final int count;
+  final Widget child;
+
+  const _FieldGroupPanel({
+    required this.icon,
+    required this.title,
+    required this.count,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: palette.bgElevated2.withValues(alpha: palette.isDark ? 0.7 : 1),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        border: Border.all(color: palette.borderSubtle),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.x3),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 18, color: palette.accent),
+                const SizedBox(width: AppSpacing.x2),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                _CountPill(text: '$count'),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.x3),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FieldInputFrame extends StatelessWidget {
+  final Widget child;
+
+  const _FieldInputFrame({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        boxShadow: palette.isDark
+            ? const []
+            : const [
+                BoxShadow(
+                  color: Color(0x120F172A),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ],
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          inputDecorationTheme: Theme.of(context).inputDecorationTheme.copyWith(
+                fillColor: palette.bgElevated2,
+              ),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _ObjectFieldButton extends StatelessWidget {
   final String label;
   final int childCount;
-  final bool expanded;
-  final VoidCallback onToggle;
+  final VoidCallback onTap;
 
-  const _NestedFieldsBadge({
+  const _ObjectFieldButton({
     required this.label,
     required this.childCount,
-    required this.expanded,
-    required this.onToggle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return _FieldInputFrame(
+      child: Material(
+        color: palette.bgElevated2,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          onTap: onTap,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 48),
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              border: Border.all(color: palette.borderSubtle),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.account_tree_outlined,
+                  size: 18,
+                  color: palette.accent,
+                ),
+                const SizedBox(width: AppSpacing.x2),
+                Expanded(
+                  child: Text(
+                    '$label · $childCount',
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: palette.textSecondary,
+                        ),
+                  ),
+                ),
+                Icon(
+                  Icons.open_in_new_outlined,
+                  size: 18,
+                  color: palette.textSecondary,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ObjectEditorHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final VoidCallback onClose;
+
+  const _ObjectEditorHeader({
+    required this.title,
+    required this.subtitle,
+    required this.onClose,
   });
 
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     return Material(
-      color: palette.bgElevated1,
-      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        onTap: onToggle,
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 48),
-          alignment: Alignment.centerLeft,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            border: Border.all(color: palette.borderSubtle),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                expanded
-                    ? Icons.keyboard_arrow_down
-                    : Icons.keyboard_arrow_right,
-                size: 20,
-                color: palette.textSecondary,
+      color: palette.bgElevated2,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: palette.borderSubtle)),
+        ),
+        padding: const EdgeInsets.all(AppSpacing.x4),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: palette.accentMuted,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               ),
-              const SizedBox(width: AppSpacing.x1),
-              Icon(
+              child: Icon(
                 Icons.account_tree_outlined,
-                size: 18,
+                size: 20,
                 color: palette.accent,
               ),
-              const SizedBox(width: AppSpacing.x2),
-              Expanded(
-                child: Text(
-                  '$label · $childCount',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: palette.textSecondary,
-                      ),
-                ),
+            ),
+            const SizedBox(width: AppSpacing.x3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  Text(
+                    subtitle,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: palette.textSecondary,
+                        ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            IconButton(
+              tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+              onPressed: onClose,
+              icon: const Icon(Icons.close),
+            ),
+          ],
         ),
       ),
     );

@@ -1,37 +1,30 @@
 {
-    // 使用 IntelliSense 了解相关属性。 
-    // 悬停以查看现有属性的描述。
-    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "bes_consumption",
+            "name": "bes_consumption (Chrome debug)",
             "request": "launch",
             "type": "dart",
+            "deviceId": "chrome",
             "toolArgs": [
-                "--web-port=5174",
-                "--web-hostname=localhost"
+                "--web-hostname",
+                "localhost",
+                "--web-port",
+                "5174"
             ]
         },
         {
-            "name": "bes_consumption (profile mode)",
+            "name": "bes_consumption (web-server)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "profile",
+            "deviceId": "web-server",
             "toolArgs": [
-                "--web-port=5174",
-                "--web-hostname=localhost"
-            ]
-        },
-        {
-            "name": "bes_consumption (release mode)",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "release",
-            "toolArgs": [
-                "--web-port=5174",
-                "--web-hostname=localhost"
+                "--web-hostname",
+                "localhost",
+                "--web-port",
+                "5174"
             ]
         }
+
     ]
 }

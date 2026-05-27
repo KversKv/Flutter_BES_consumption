@@ -91,7 +91,8 @@ class BTState extends ChangeNotifier {
   double get _rxPayloadUs => rxPayloadBytes * 8.0 / packetType.payloadRateMbps;
   double get _txPayloadUs => txPayloadBytes * 8.0 / packetType.payloadRateMbps;
   double get _rxExtWindowUs => (chip as dynamic).rxExtWindow_us as double;
-  double get _rxMinUs => (chip as dynamic).Rmin_us as double;
+  double get _rxMinUs => (chip as dynamic).RX_min_us as double;
+  double get _txMinUs => (chip as dynamic).TX_min_us as double;
   double get _attemptWaitUs => (chip as dynamic).AttemptWaitTimeUS as double;
   double get _guardUs => _connectIntervalUs * clockDriftPpm / 1000000.0;
   int get _extraRxAttempts => math.max(0, attemptCount - 1);
@@ -99,7 +100,7 @@ class BTState extends ChangeNotifier {
       math.min(_rxMinUs + _rxPayloadUs, _packetMaxUs);
   double get _mainRxDurationUs => _rxExtWindowUs + _rxPacketDurationUs;
   double get _rxDurationUs => _rxPacketDurationUs;
-  double get _txDurationUs => math.min(_rxMinUs + _txPayloadUs, _packetMaxUs);
+  double get _txDurationUs => math.min(_txMinUs + _txPayloadUs, _packetMaxUs);
 
   // --- BLE settings ---
   Mode mode = Mode.advertisingTxRx;

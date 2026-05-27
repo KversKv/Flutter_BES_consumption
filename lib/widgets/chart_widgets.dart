@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import '../l10n/app_localizations.dart';
 import '../models/power_event.dart';
 import '../theme/app_colors.dart';
+import 'duration_format.dart';
 import 'legend_hover_widgets.dart';
 
 /// ===========================================================================
@@ -280,20 +281,20 @@ class _ChartTooltip extends StatelessWidget {
                 const SizedBox(height: 4),
                 if (hasRxBreakdown) ...[
                   Text(
-                    '${l10n.chartTotalRxTime}: ${event.totalLengthUs!.toStringAsFixed(0)} µs',
+                    '${l10n.chartTotalRxTime}: ${formatDurationUsAuto(event.totalLengthUs!)}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   Text(
-                    '${l10n.chartWindowWideningLength}: ${event.windowWideningLengthUs!.toStringAsFixed(0)} µs',
+                    '${l10n.chartWindowWideningLength}: ${formatDurationUsAuto(event.windowWideningLengthUs!)}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   Text(
-                    '${l10n.chartRadioRxLength}: ${event.occupiedLengthUs!.toStringAsFixed(0)} µs',
+                    '${l10n.chartRadioRxLength}: ${formatDurationUsAuto(event.occupiedLengthUs!)}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ] else
                   Text(
-                    '${l10n.chartLength}: ${event.durationUs.toStringAsFixed(0)} µs',
+                    '${l10n.chartLength}: ${formatDurationUsAuto(event.durationUs)}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 Text(

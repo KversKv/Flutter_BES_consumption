@@ -184,9 +184,9 @@ T_{guard}
 T_{CI}
 \times
 \frac{ppm_{total}}{10^6}
-+
-T_{margin}
 \]
+
+当前实现没有单独配置 `T_margin`，guard 只由 Connect Interval 和 clock drift ppm 换算。
 
 所以 Connect Interval 有两个方向的影响：
 
@@ -237,7 +237,7 @@ T_{attempt\_extra}
 (Attempt-1)T_{rx\_min}
 \]
 
-考虑 gap 时：
+当前实现中，额外 RXmin 之前会先插入一段 standby wait，长度为芯片参数 `AttemptWaitTimeUS`。因此按当前实现应使用带 gap 的形式：
 
 \[
 T_{attempt\_extra}
@@ -246,8 +246,18 @@ T_{attempt\_extra}
 \left(
 T_{rx\_min}
 +
-T_{rx\_gap}
+T_{attempt\_wait}
 \right)
+\]
+
+其中：
+
+\[
+T_{rx\_min}=RX\_min\_us
+\]
+
+\[
+T_{attempt\_wait}=AttemptWaitTimeUS
 \]
 
 ### 波形示例
@@ -303,7 +313,7 @@ I_{rx}
 T_{rx\_min}
 \]
 
-如果考虑 gap：
+当前实现考虑 RXmin 前的 standby wait：
 
 \[
 E_{extra\_rx}
@@ -315,7 +325,7 @@ V
 \left(
 I_{rx}T_{rx\_min}
 +
-I_{idle}T_{rx\_gap}
+I_{idle}T_{attempt\_wait}
 \right)
 \]
 
@@ -337,14 +347,14 @@ I_{rx}
 T_{rx\_min}
 \]
 
-如果考虑 gap：
+当前实现考虑 RXmin 前的 standby wait：
 
 \[
 \Delta T_{active}
 =
 T_{rx\_min}
 +
-T_{rx\_gap}
+T_{attempt\_wait}
 \]
 
 \[
@@ -355,7 +365,7 @@ V
 \left(
 I_{rx}T_{rx\_min}
 +
-I_{idle}T_{rx\_gap}
+I_{idle}T_{attempt\_wait}
 \right)
 \]
 
@@ -380,9 +390,9 @@ T_{guard}
 T_{CI}
 \times
 \frac{ppm_{total}}{10^6}
-+
-T_{margin}
 \]
+
+当前实现没有单独配置 `T_margin`，guard 只由 Connect Interval 和 clock drift ppm 换算。
 
 其中：
 
@@ -438,9 +448,29 @@ RX Payload 影响的是第一次完整 RX，也就是 Main RX。
 ### 计算关系
 
 \[
+T_{rx\_payload}
+=
+\frac{RXPayloadBytes \times 8}{PayloadRateMbps}
+\]
+
+\[
+T_{rx\_packet}
+=
+\min
+\left(
+RX\_min\_us + T_{rx\_payload},
+N_{slot}(PacketType)\times625\ \mu s
+\right)
+\]
+
+其中 `RX_min_us` 是 RX packet 的最小时长。芯片自身准备 RX 窗口需要的基础时间单独由 `rxExtWindow_us` 表示，因此：
+
+\[
 T_{rx\_main}
 =
-f(PacketType, RXPayload)
+rxExtWindow\_us
++
+T_{rx\_packet}
 \]
 
 RX Payload 越大，Main RX 持续时间越长：
@@ -497,9 +527,19 @@ TX Payload 决定 TX packet 的持续时间。
 ### 计算关系
 
 \[
+T_{tx\_payload}
+=
+\frac{TXPayloadBytes \times 8}{PayloadRateMbps}
+\]
+
+\[
 T_{tx}
 =
-f(PacketType, TXPayload)
+\min
+\left(
+TX\_min\_us + T_{tx\_payload},
+N_{slot}(PacketType)\times625\ \mu s
+\right)
 \]
 
 TX 能量为：
@@ -587,13 +627,23 @@ Packet type 是结构性参数，决定 Main RX 和 TX 的基本时序形态。
 \[
 T_{rx\_main}
 =
-f(PacketType,RXPayload)
+rxExtWindow\_us
++
+\min
+\left(
+RX\_min\_us + \frac{RXPayloadBytes \times 8}{PayloadRateMbps},
+N_{slot}(PacketType)\times625\ \mu s
+\right)
 \]
 
 \[
 T_{tx}
 =
-f(PacketType,TXPayload)
+\min
+\left(
+TX\_min\_us + \frac{TXPayloadBytes \times 8}{PayloadRateMbps},
+N_{slot}(PacketType)\times625\ \mu s
+\right)
 \]
 
 Classic BT 一个 slot 为：
@@ -686,18 +736,46 @@ T_{guard}
 T_{CI}
 \times
 \frac{ppm_{total}}{10^6}
-+
-T_{margin}
 \]
+
+当前实现没有单独配置 `T_margin`，guard 只由 Connect Interval 和 clock drift ppm 换算。
 
 ---
 
 ## 4.3 Main RX 时间
 
 \[
+T_{rx\_payload}
+=
+\frac{RXPayloadBytes \times 8}{PayloadRateMbps}
+\]
+
+\[
+T_{rx\_packet}
+=
+\min
+\left(
+RX\_min\_us + T_{rx\_payload},
+N_{slot}(PacketType)\times625\ \mu s
+\right)
+\]
+
+\[
 T_{rx\_main}
 =
-f(PacketType,RXPayload)
+rxExtWindow\_us
++
+T_{rx\_packet}
+\]
+
+完整 RX 窗还要包含 clock drift guard：
+
+\[
+T_{rx\_window}
+=
+T_{guard}
++
+T_{rx\_main}
 \]
 
 ---
@@ -705,9 +783,19 @@ f(PacketType,RXPayload)
 ## 4.4 TX 时间
 
 \[
+T_{tx\_payload}
+=
+\frac{TXPayloadBytes \times 8}{PayloadRateMbps}
+\]
+
+\[
 T_{tx}
 =
-f(PacketType,TXPayload)
+\min
+\left(
+TX\_min\_us + T_{tx\_payload},
+N_{slot}(PacketType)\times625\ \mu s
+\right)
 \]
 
 ---
@@ -720,22 +808,24 @@ T_{extra\_rx}
 (Attempt-1)T_{rx\_min}
 \]
 
-如果考虑 gap：
+当前实现考虑 RXmin 前的 standby wait：
 
 \[
 T_{extra\_rx}
 =
 (Attempt-1)
 \left(
-T_{rx\_min}+T_{rx\_gap}
+T_{rx\_min}+T_{attempt\_wait}
 \right)
 \]
+
+其中 `T_rx_min = RX_min_us`，`T_attempt_wait = AttemptWaitTimeUS`。
 
 ---
 
 ## 4.6 Active 时间
 
-不考虑 gap：
+不考虑 RXmin 前 wait：
 
 \[
 T_{active}
@@ -759,7 +849,7 @@ T_{process}
 T_{sleep\_entry}
 \]
 
-考虑 gap：
+当前实现考虑 RXmin 前的 standby wait：
 
 \[
 T_{active}
@@ -778,7 +868,7 @@ T_{tx}
 +
 (Attempt-1)
 \left(
-T_{rx\_min}+T_{rx\_gap}
+T_{rx\_min}+T_{attempt\_wait}
 \right)
 +
 T_{process}
@@ -841,7 +931,7 @@ T_{CI}
 }
 \]
 
-考虑 RXmin gap：
+当前实现考虑 RXmin 前的 standby wait：
 
 \[
 I_{avg}
@@ -862,7 +952,7 @@ T_{rx\_main}
 (Attempt-1)T_{rx\_min}
 \right]
 +
-I_{idle}(Attempt-1)T_{rx\_gap}
+I_{idle}(Attempt-1)T_{attempt\_wait}
 +
 I_{tx}(BTpower)T_{tx}
 +
@@ -978,10 +1068,10 @@ Connect Interval 越长，clock drift 累积越大，guard 可能越宽。
 ```text
 Connect Interval 决定周期总长度；
 Clock drift 决定 Main RX 前的 guard 宽度；
-RX Payload + Packet type 决定 Main RX 宽度；
-TX Payload + Packet type 决定 TX 宽度；
+rxExtWindow_us + RX_min_us + RX Payload + Packet type 决定 Main RX 宽度；
+TX_min_us + TX Payload + Packet type 决定 TX 宽度；
 BT power 决定 TX 高度；
-Attempt=N 时，TX 后追加 N-1 个 RXmin。
+Attempt=N 时，TX 后追加 N-1 个 RXmin，每个 RXmin 前有 AttemptWaitTimeUS standby wait。
 ```
 
 最核心的 active 时间公式是：
@@ -1001,7 +1091,10 @@ T_{turnaround}
 +
 T_{tx}
 +
-(Attempt-1)T_{rx\_min}
+(Attempt-1)
+\left(
+T_{rx\_min}+T_{attempt\_wait}
+\right)
 +
 T_{process}
 +
@@ -1022,6 +1115,8 @@ T_{rx\_main}
 +
 (Attempt-1)T_{rx\_min}
 \right]
++
+I_{idle}(Attempt-1)T_{attempt\_wait}
 +
 I_{tx}(BTpower)T_{tx}
 +

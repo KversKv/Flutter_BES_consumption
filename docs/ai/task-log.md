@@ -484,3 +484,60 @@
 - **Reason**: Switching admin chip records and BLE/BT/Earbuds/Wi-Fi domains still felt janky in Debug mode.
 - **Change**: Replaced admin `TabBarView` with a lazy `IndexedStack` tied to the existing `TabController`, so domain pages mount only after first visit; JSON object fields now keep raw map values and generate nested field rows only when expanded, so chip selection no longer recursively builds collapsed object editors.
 - **Verification**: `flutter analyze` passed; `flutter test` passed; `flutter build web` passed.
+
+## 2026-05-26 - VS Code web-server launch config
+- **Type**: tooling / debug
+- **Scope**: `.vscode/launch.json`
+- **Reason**: VS Code Debug kept using random Flutter Web Chrome debug ports, and manually opening the same URL in other browsers produced a blank page because Chrome debug uses a DWDS-bound browser session.
+- **Change**: Made the default launch config target `deviceId: web-server` with fixed `localhost:5174`, kept a separate `Chrome debug` profile for Flutter-managed browser debugging, and changed web args to split `--web-hostname` / `--web-port` form.
+- **Verification**: Inspected `launch.json`; runtime verification requires starting VS Code Debug and checking `http://localhost:5174/`.
+
+## 2026-05-26 - Admin login visual and interaction polish
+- **Type**: ui / admin
+- **Scope**: `lib/pages/admin_page.dart`, `lib/l10n/app_localizations.dart`
+- **Reason**: The `/admin` entry needed a less cramped, clearer login experience with modern password handling and interaction feedback.
+- **Change**: Reworked the login card with stronger visual hierarchy, subtitle guidance, a verification pill, wider full-width action button, password visibility toggle, loading state, and animated inline error banner; added matching zh/en localization keys.
+- **Verification**: `flutter analyze` passed; `flutter test` passed; `flutter build web` passed. Local `/admin` returned HTTP 200, but headless Chrome screenshots stalled on the Flutter bootstrap blank page, so visual QA could not be captured in this environment.
+
+## 2026-05-26 - Admin JSON editor field layout cleanup
+- **Type**: ui / admin
+- **Scope**: `lib/pages/admin_page.dart`, `lib/l10n/app_localizations.dart`
+- **Reason**: The JSON field editor felt visually heavy because each field row was presented as a large card with repeated labels.
+- **Change**: Replaced per-field cards with grouped, divider-separated inline rows; removed persistent Field name / Type / Value labels from rows in favor of icons and hints; added subtle raised input frames, automatic parameter grouping, and a modal editor for nested object fields.
+- **Verification**: `flutter analyze` passed; `flutter test` passed; `flutter build web` passed.
+
+## 2026-05-26 - Admin login session persistence
+- **Type**: fix / admin
+- **Scope**: `lib/services/admin_session_store.dart`, `lib/pages/admin_page.dart`
+- **Reason**: Refreshing `/admin` asked for the admin password again because authentication only lived in page state.
+- **Change**: Added a small service-layer `AdminSessionStore` backed by `shared_preferences`; admin login now restores the local unlocked state on page load, writes it after successful login, clears it after failed login or Logout, and shows a loading spinner while the session is restored.
+- **Verification**: `flutter analyze` passed; `flutter test` passed; `flutter build web` passed.
+
+## 2026-05-27 - BT RX/TX minimum length split
+- **Type**: fix / model / data / test
+- **Scope**: `lib/models/bt_chip.dart`, `lib/state/bt_state.dart`, `assets/data/chips/bt/*.json`, `test/bt_state_test.dart`, `.ai/memory.md`
+- **Reason**: BT manual config incorrectly used one shared `Rmin_us` for both TX min and RX min; BES2711IUC2/3 should keep RX min at 88us while TX min starts at 120us.
+- **Change**: Removed `Rmin_us` from BT model serialization/deserialization and manual calculation; added `RX_min_us` and `TX_min_us`; manual Main RX / extra RXmin use `RX_min_us`, manual TX uses `TX_min_us`; all BT seed JSON chips now carry `RX_min_us: 88` and `TX_min_us: 120`; added a regression test for separate RX/TX minimum lengths.
+- **Verification**: `flutter analyze` passed; `flutter test` passed.
+
+## 2026-05-27 - BT sniff documentation formula alignment
+- **Type**: docs
+- **Scope**: `docs/admin/BT_SniffConsumption.md`
+- **Reason**: `rxExtWindow_us` represents the chip-specific base time to prepare the RX window, so the admin documentation needed to reflect the current split RX/TX minimum length model.
+- **Change**: Replaced abstract RX/TX `f(PacketType, Payload)` formulas with explicit `rxExtWindow_us + min(RX_min_us + rxPayloadAirtime, packetMax)` and `min(TX_min_us + txPayloadAirtime, packetMax)` formulas; documented `AttemptWaitTimeUS` as the standby wait before each extra RXmin.
+- **Verification**: Documentation-only update; checked the file no longer mentions `Rmin_us`, `T_rx_gap`, or abstract `f(PacketType, ...)` formulas.
+
+## 2026-05-27 - Chart duration unit auto formatting
+- **Type**: ui / test
+- **Scope**: `lib/widgets/duration_format.dart`, `lib/widgets/chart_widgets.dart`, `lib/widgets/legend_hover_widgets.dart`, `test/duration_format_test.dart`
+- **Reason**: Chart preview durations were always shown in microseconds or milliseconds, making long periods hard to scan.
+- **Change**: Added `formatDurationUsAuto()` and used it in the chart tooltip and hover info bar; durations now show `us` below 1000us, `ms` from 1000us, and `s` from 1000ms.
+- **Verification**: `flutter analyze` passed; `flutter test` passed.
+
+## 2026-05-27 - Lightweight URL state for main pages
+- **Type**: feature / routing
+- **Scope**: `lib/main.dart`, `lib/navigation/app_url_state.dart`, `lib/pages/home_page.dart`, `lib/pages/wifi_case_page.dart`
+- **Reason**: Main simulator pages needed shareable, refreshable URLs for high-value state without moving every control into routing.
+- **Change**: Added `/ble`, `/bt`, `/earbuds`, `/wifi`, and `/admin` route handling; synchronized BLE chip/mode, BT case/chip, Earbuds tab/chips/focus, and Wi-Fi case/chip/band through query parameters; kept other sliders and transient UI state in Provider/local widget state.
+- **Impact**: Direct links such as `/bt?case=btPage&chip=nrf52832` and `/earbuds?tab=tx&chips=1306,1502&focus=1306` now restore the key view state. Deployments using Flutter Web path URL strategy still need server fallback to `index.html` for non-root paths.
+- **Verification**: `flutter analyze` passed; `flutter test` passed; `flutter build web` passed; local `flutter run -d web-server` returned HTTP 200 for `/ble`, `/bt`, `/earbuds`, `/wifi`, and `/admin` deep links.

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/power_event.dart';
 import '../theme/app_colors.dart';
+import 'duration_format.dart';
 
 /// 鼠标悬浮时显示的当前事件信息栏
 class HoverInfoBar extends StatelessWidget {
@@ -22,15 +23,9 @@ class HoverInfoBar extends StatelessWidget {
       );
     }
 
-    final durMs = event!.durationUs / 1000.0;
-    final totalMs =
-        event!.totalLengthUs == null ? null : event!.totalLengthUs! / 1000.0;
-    final windowMs = event!.windowWideningLengthUs == null
-        ? null
-        : event!.windowWideningLengthUs! / 1000.0;
-    final radioMs = event!.occupiedLengthUs == null
-        ? null
-        : event!.occupiedLengthUs! / 1000.0;
+    final totalLengthUs = event!.totalLengthUs;
+    final windowWideningLengthUs = event!.windowWideningLengthUs;
+    final occupiedLengthUs = event!.occupiedLengthUs;
     final phaseLabel = event!.previewLabel ?? event!.label;
     return Align(
       alignment: Alignment.centerLeft,
@@ -39,16 +34,21 @@ class HoverInfoBar extends StatelessWidget {
         runSpacing: 8,
         children: [
           Text('${l10n.chartPhase}: $phaseLabel', style: textStyle),
-          if (totalMs != null && windowMs != null && radioMs != null) ...[
-            Text('${l10n.chartTotalRxTime}: ${totalMs.toStringAsFixed(3)} ms',
+          if (totalLengthUs != null &&
+              windowWideningLengthUs != null &&
+              occupiedLengthUs != null) ...[
+            Text(
+                '${l10n.chartTotalRxTime}: ${formatDurationUsAuto(totalLengthUs)}',
                 style: textStyle),
             Text(
-                '${l10n.chartWindowWideningLength}: ${windowMs.toStringAsFixed(3)} ms',
+                '${l10n.chartWindowWideningLength}: ${formatDurationUsAuto(windowWideningLengthUs)}',
                 style: textStyle),
-            Text('${l10n.chartRadioRxLength}: ${radioMs.toStringAsFixed(3)} ms',
+            Text(
+                '${l10n.chartRadioRxLength}: ${formatDurationUsAuto(occupiedLengthUs)}',
                 style: textStyle),
           ] else
-            Text('${l10n.chartLength}: ${durMs.toStringAsFixed(3)} ms',
+            Text(
+                '${l10n.chartLength}: ${formatDurationUsAuto(event!.durationUs)}',
                 style: textStyle),
           Text(
               '${l10n.chartCurrent}: ${event!.currentMa.toStringAsFixed(3)} mA',

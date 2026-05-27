@@ -7,27 +7,98 @@ import 'bt_case_page.dart';
 import 'earbuds_compare_page.dart';
 import 'wifi_case_page.dart';
 import '../l10n/app_localizations.dart';
+import '../navigation/app_url_state.dart';
+import '../state/app_state.dart';
+import '../state/bt_state.dart';
 import '../state/earbuds_state.dart';
 import '../state/theme_controller.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+  final int initialIndex;
+  final Uri? initialUri;
+
+  const MyHomePage({
+    super.key,
+    this.initialIndex = 0,
+    this.initialUri,
+  });
+
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
   static const int _pageCount = 4;
-  int selectedIndex = 0;
+  late int selectedIndex;
   final List<bool> _visited = List<bool>.filled(_pageCount, false);
   final List<Widget?> _pages = List<Widget?>.filled(_pageCount, null);
+  AppState? _appState;
+  BTState? _btState;
+  EarbudsState? _earbudsState;
+  bool _didApplyInitialUrl = false;
+  String? _lastSyncedUrl;
 
   @override
   void initState() {
     super.initState();
+    selectedIndex = widget.initialIndex.clamp(0, _pageCount - 1).toInt();
     _visited[selectedIndex] = true;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final appState = context.read<AppState>();
+    final btState = context.read<BTState>();
+    final earbudsState = context.read<EarbudsState>();
+
+    if (_appState != appState) {
+      _appState?.removeListener(_syncActiveUrl);
+      _appState = appState..addListener(_syncActiveUrl);
+    }
+    if (_btState != btState) {
+      _btState?.removeListener(_syncActiveUrl);
+      _btState = btState..addListener(_syncActiveUrl);
+    }
+    if (_earbudsState != earbudsState) {
+      _earbudsState?.removeListener(_syncActiveUrl);
+      _earbudsState = earbudsState..addListener(_syncActiveUrl);
+    }
+
+    if (!_didApplyInitialUrl) {
+      _didApplyInitialUrl = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _applyInitialUrl();
+        _syncActiveUrl();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _appState?.removeListener(_syncActiveUrl);
+    _btState?.removeListener(_syncActiveUrl);
+    _earbudsState?.removeListener(_syncActiveUrl);
+    super.dispose();
+  }
+
+  void _applyInitialUrl() {
+    final uri = widget.initialUri;
+    if (uri == null) return;
+    switch (selectedIndex) {
+      case 0:
+        AppUrlState.applyBle(context.read<AppState>(), uri);
+        break;
+      case 1:
+        AppUrlState.applyBt(context.read<BTState>(), uri);
+        break;
+      case 2:
+        AppUrlState.applyEarbuds(context.read<EarbudsState>(), uri);
+        break;
+    }
   }
 
   Widget _pageAt(int index) {
@@ -35,9 +106,28 @@ class _MyHomePageState extends State<MyHomePage> {
       0 => const BleCasePage(),
       1 => const BTPage(),
       2 => const EarbudsComparePage(),
-      3 => const WifiPage(),
+      3 => WifiPage(initialUri: widget.initialUri),
       _ => const SizedBox.shrink(),
     };
+  }
+
+  void _selectPage(int index) {
+    if (index == selectedIndex) return;
+    Navigator.of(context).pushReplacementNamed(AppUrlState.pathForPage(index));
+  }
+
+  void _syncActiveUrl() {
+    if (!mounted) return;
+    final uri = switch (selectedIndex) {
+      0 => AppUrlState.uriForBle(context.read<AppState>()),
+      1 => AppUrlState.uriForBt(context.read<BTState>()),
+      2 => AppUrlState.uriForEarbuds(context.read<EarbudsState>()),
+      _ => AppUrlState.uriForPage(selectedIndex),
+    };
+    final next = uri.toString();
+    if (next == _lastSyncedUrl) return;
+    _lastSyncedUrl = next;
+    AppUrlState.replaceBrowserUrl(uri);
   }
 
   @override
@@ -53,10 +143,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: _SideNav(
                   isWide: isWide,
                   selectedIndex: selectedIndex,
-                  onSelect: (v) => setState(() {
-                    selectedIndex = v;
-                    _visited[v] = true;
-                  }),
+                  onSelect: _selectPage,
                 ),
               ),
               Expanded(
