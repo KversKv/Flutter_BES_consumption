@@ -90,6 +90,13 @@ class AppLocalizations {
       'theme_toggle_system': 'Theme: Follow system (click to switch)',
       'theme_toggle_dark': 'Theme: Dark (click to switch)',
       'theme_toggle_light': 'Theme: Light (click to switch)',
+      'config_section_device': 'Device',
+      'config_section_radio': 'Radio',
+      'config_section_timing': 'Timing',
+      'config_section_advanced': 'Advanced',
+      'config_section_power': 'Power',
+      'config_section_case': 'Case',
+      'config_section_manual': 'Manual parameters',
 
       // === Earbuds ===
       'eb_title': 'Earbuds Power Compare',
@@ -397,6 +404,13 @@ class AppLocalizations {
       'theme_toggle_system': '主题：跟随系统（点击切换）',
       'theme_toggle_dark': '主题：深色（点击切换）',
       'theme_toggle_light': '主题：浅色（点击切换）',
+      'config_section_device': '设备',
+      'config_section_radio': '射频',
+      'config_section_timing': '时序',
+      'config_section_advanced': '高级',
+      'config_section_power': '电源',
+      'config_section_case': '场景',
+      'config_section_manual': '手动参数',
 
       // === Earbuds ===
       'eb_title': '耳机功耗对比',
@@ -706,6 +720,13 @@ class AppLocalizations {
   String get themeToggleSystem => _t('theme_toggle_system');
   String get themeToggleDark => _t('theme_toggle_dark');
   String get themeToggleLight => _t('theme_toggle_light');
+  String get configSectionDevice => _t('config_section_device');
+  String get configSectionRadio => _t('config_section_radio');
+  String get configSectionTiming => _t('config_section_timing');
+  String get configSectionAdvanced => _t('config_section_advanced');
+  String get configSectionPower => _t('config_section_power');
+  String get configSectionCase => _t('config_section_case');
+  String get configSectionManual => _t('config_section_manual');
   String get kpiBatteryLifeEst => _t('kpi_battery_life_est');
   String get kpiPeakCurrent => _t('kpi_peak_current');
 

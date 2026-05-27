@@ -12,7 +12,7 @@ const double kFixedRxWindowUs = 300.0;
 // ============ 数据模型 ============
 
 enum Mode { advertising, connected }
-enum Phy { le1M, le2M, leCodedS8 }
+enum Phy { le1M, le2M }
 
 class BleChip {
   final String id;
@@ -378,8 +378,6 @@ class AppState extends ChangeNotifier {
         return 8;
       case Phy.le2M:
         return 4;
-      case Phy.leCodedS8:
-        return 64;
     }
   }
 
@@ -1756,7 +1754,6 @@ class _ConfigPanelState extends State<ConfigPanel> {
           segments: const [
             ButtonSegment(value: Phy.le1M, label: Text('1M')),
             ButtonSegment(value: Phy.le2M, label: Text('2M')),
-            ButtonSegment(value: Phy.leCodedS8, label: Text('Coded S=8')),
           ],
           selected: {app.params.phy},
           onSelectionChanged: (s) {

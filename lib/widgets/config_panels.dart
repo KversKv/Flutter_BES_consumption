@@ -5,6 +5,8 @@ import '../state/app_state.dart';
 import '../state/bt_state.dart';
 import '../models/profile_params.dart' show Mode, Phy;
 import '../l10n/app_localizations.dart';
+import '../theme/app_colors.dart';
+import 'config_panel_frame.dart';
 
 class ConfigPanel extends StatefulWidget {
   const ConfigPanel({super.key});
@@ -46,32 +48,8 @@ class _ConfigPanelState extends State<ConfigPanel> {
   @override
   Widget build(BuildContext context) {
     // Try to sync BTState with AppState if provider is present.
-    final theme = Theme.of(context);
-    Widget sectionCard(
-        {required String title, required Widget child, required Color color}) {
-      return Container(
-        width: double.infinity,
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-              color: theme.colorScheme.outline.withValues(alpha: 0.6)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title,
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            child,
-          ],
-        ),
-      );
-    }
-
+    final l10n = AppLocalizations.of(context);
+    final palette = AppPalette.of(context);
     final app = context.watch<AppState>();
     List<double> levels;
     double currentTx;
@@ -88,208 +66,221 @@ class _ConfigPanelState extends State<ConfigPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(AppLocalizations.of(context).config,
-            style: theme.textTheme.titleLarge),
+        ConfigPanelTitle(title: l10n.config),
         const SizedBox(height: 12),
 
         // Chip settings card (single bordered section)
-        sectionCard(
-          title: 'Chip settings',
-          color:
-              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.06),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(AppLocalizations.of(context).chip),
-              const SizedBox(height: 6),
-              DropdownMenu<String>(
-                initialSelection: app.selectedChipId,
-                expandedInsets: EdgeInsets.zero,
-                dropdownMenuEntries: app.chips
-                    .map((c) => DropdownMenuEntry(
-                          value: c.id,
-                          label: c.name,
-                        ))
-                    .toList(),
-                onSelected: (v) {
-                  if (v != null) context.read<AppState>().setChip(v);
-                },
-              ),
-              const SizedBox(height: 12),
-              Text('Voltage: ${btState.supplyVoltage_V.toStringAsFixed(2)} V'),
-              Slider(
-                value: btState.supplyVoltage_V,
-                min: 1.8,
-                max: 5.5,
-                divisions: 37,
-                onChanged: (v) => context.read<BTState>().setSupplyVoltage(v),
-              ),
-            ],
-          ),
+        ConfigSectionCard(
+          title: l10n.configSectionDevice,
+          icon: Icons.memory,
+          accent: palette.info,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ConfigField(
+                  label: l10n.chip,
+                  child: DropdownMenu<String>(
+                    initialSelection: app.selectedChipId,
+                    expandedInsets: EdgeInsets.zero,
+                    dropdownMenuEntries: app.chips
+                        .map((c) => DropdownMenuEntry(
+                              value: c.id,
+                              label: c.name,
+                            ))
+                        .toList(),
+                    onSelected: (v) {
+                      if (v != null) context.read<AppState>().setChip(v);
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ConfigField(
+                  label: l10n.btVoltageLabel,
+                  value: '${btState.supplyVoltage_V.toStringAsFixed(2)} V',
+                  child: Slider(
+                    value: btState.supplyVoltage_V,
+                    min: 1.8,
+                    max: 5.5,
+                    divisions: 37,
+                    onChanged: (v) =>
+                        context.read<BTState>().setSupplyVoltage(v),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
+        const SizedBox(height: 12),
 
         // BLE settings card (single bordered section)
-        sectionCard(
-          title: 'BLE settings',
-          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.04),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(AppLocalizations.of(context).mode),
-              const SizedBox(height: 6),
-              SizedBox(
-                width: double.infinity,
-                child: DropdownMenu<Mode>(
-                  initialSelection: app.params.mode,
-                  expandedInsets: EdgeInsets.zero,
-                  dropdownMenuEntries: [
-                    DropdownMenuEntry(
-                        value: Mode.advertisingTxRx,
-                        label: AppLocalizations.of(context).advertisingTxRx),
-                    DropdownMenuEntry(
-                        value: Mode.advertisingTxOnly,
-                        label: AppLocalizations.of(context).advertisingTxOnly),
-                    DropdownMenuEntry(
-                        value: Mode.bleConnectionPeripheral,
-                        label: AppLocalizations.of(context)
-                            .bleConnectionPeripheral),
-                    DropdownMenuEntry(
-                        value: Mode.bleConnectionCentral,
-                        label:
-                            AppLocalizations.of(context).bleConnectionCentral),
-                    if (app.chip.supportsHDT)
-                      DropdownMenuEntry(value: Mode.hdt, label: 'HDT'),
-                  ],
-                  onSelected: (v) {
-                    if (v != null) context.read<AppState>().setMode(v);
-                  },
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              Text('${AppLocalizations.of(context).txPowerLabel} $currentTx'),
-              const SizedBox(height: 6),
-              DropdownMenu<double>(
-                initialSelection: currentTx,
-                expandedInsets: EdgeInsets.zero,
-                dropdownMenuEntries: levels
-                    .map((lv) => DropdownMenuEntry(
-                          value: lv,
-                          label: lv.toString(),
-                        ))
-                    .toList(),
-                onSelected: (v) {
-                  if (v != null) context.read<AppState>().setTxPower(v);
-                },
-              ),
-              const SizedBox(height: 12),
-
-              Text(
-                  '${AppLocalizations.of(context).payloadBytesLabel} ${app.params.payloadBytes}'),
-              Slider(
-                value: app.params.payloadBytes.toDouble(),
-                min: 0,
-                max: 251,
-                divisions: 251,
-                onChanged: (v) =>
-                    context.read<AppState>().setPayloadBytes(v.round()),
-              ),
-              const SizedBox(height: 12),
-
-              // Interval controls (advertising vs connection)
-              if (app.params.mode == Mode.advertisingTxOnly ||
-                  app.params.mode == Mode.advertisingTxRx)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                        '${AppLocalizations.of(context).advIntervalLabel} ${app.params.advIntervalMs.toStringAsFixed(0)}'),
-                    Slider(
-                      value: app.params.advIntervalMs,
-                      min: 20,
-                      max: 2000,
-                      divisions: 198,
-                      onChanged: (v) =>
-                          context.read<AppState>().setAdvInterval(v),
-                    ),
-                  ],
-                )
-              else
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(AppLocalizations.of(context).connIntervalLabel),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            controller: _connIntervalCtrl,
-                            // Use a numeric keyboard with decimal support and filter input to digits and dot.
-                            keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                  RegExp(r'[0-9\.]'))
-                            ],
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              isDense: true,
-                              suffixText: 'ms',
-                              hintText: '7.5 ~ 4000',
-                            ),
-                            textAlign: TextAlign.right,
-                            onChanged: (txt) {
-                              if (_syncingConn) return;
-                            },
-                            onSubmitted: (txt) {
-                              if (_syncingConn) return;
-                              final v = double.tryParse(txt.trim());
-                              if (v != null) {
-                                final snapped = _quantizeConn(v);
-                                context
-                                    .read<AppState>()
-                                    .setConnInterval(snapped);
-                                _setConnText(snapped);
-                              } else {
-                                _setConnText(app.params.connIntervalMs);
-                              }
-                              FocusScope.of(context).unfocus();
-                            },
-                            onEditingComplete: () {
-                              if (_syncingConn) return;
-                              final txt = _connIntervalCtrl.text;
-                              final v = double.tryParse(txt.trim());
-                              if (v != null) {
-                                final snapped = _quantizeConn(v);
-                                context
-                                    .read<AppState>()
-                                    .setConnInterval(snapped);
-                                _setConnText(snapped);
-                              } else {
-                                _setConnText(app.params.connIntervalMs);
-                              }
-                              FocusScope.of(context).unfocus();
-                            },
-                          ),
-                        ),
+        ConfigSectionCard(
+          title: l10n.configSectionRadio,
+          icon: Icons.settings_input_antenna,
+          accent: palette.accent,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ConfigField(
+                  label: l10n.mode,
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: DropdownMenu<Mode>(
+                      initialSelection: app.params.mode,
+                      expandedInsets: EdgeInsets.zero,
+                      dropdownMenuEntries: [
+                        DropdownMenuEntry(
+                            value: Mode.advertisingTxRx,
+                            label: l10n.advertisingTxRx),
+                        DropdownMenuEntry(
+                            value: Mode.advertisingTxOnly,
+                            label: l10n.advertisingTxOnly),
+                        DropdownMenuEntry(
+                            value: Mode.bleConnectionPeripheral,
+                            label: l10n.bleConnectionPeripheral),
+                        DropdownMenuEntry(
+                            value: Mode.bleConnectionCentral,
+                            label: l10n.bleConnectionCentral),
+                        if (app.chip.supportsHDT)
+                          DropdownMenuEntry(value: Mode.hdt, label: 'HDT'),
                       ],
-                    ),
-                    const SizedBox(height: 6),
-                    Slider(
-                      value: app.params.connIntervalMs,
-                      min: _connMin,
-                      max: _connMax,
-                      onChanged: (v) {
-                        final snapped = _quantizeConn(v);
-                        context.read<AppState>().setConnInterval(snapped);
-                        _setConnText(snapped);
+                      onSelected: (v) {
+                        if (v != null) context.read<AppState>().setMode(v);
                       },
                     ),
-                  ],
+                  ),
                 ),
-            ],
-          ),
+                const SizedBox(height: 12),
+
+                ConfigField(
+                  label: l10n.txPowerLabel,
+                  value: currentTx.toString(),
+                  child: DropdownMenu<double>(
+                    initialSelection: currentTx,
+                    expandedInsets: EdgeInsets.zero,
+                    dropdownMenuEntries: levels
+                        .map((lv) => DropdownMenuEntry(
+                              value: lv,
+                              label: lv.toString(),
+                            ))
+                        .toList(),
+                    onSelected: (v) {
+                      if (v != null) context.read<AppState>().setTxPower(v);
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                _NumberSliderInput(
+                  label: l10n.payloadBytesLabel,
+                  value: app.params.payloadBytes.toDouble(),
+                  min: 0,
+                  max: 251,
+                  divisions: 251,
+                  decimals: 0,
+                  suffixText: 'bytes',
+                  onChanged: (v) =>
+                      context.read<AppState>().setPayloadBytes(v.round()),
+                ),
+                const SizedBox(height: 12),
+
+                // Interval controls (advertising vs connection)
+                if (app.params.mode == Mode.advertisingTxOnly ||
+                    app.params.mode == Mode.advertisingTxRx)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                          '${AppLocalizations.of(context).advIntervalLabel} ${app.params.advIntervalMs.toStringAsFixed(0)}'),
+                      Slider(
+                        value: app.params.advIntervalMs,
+                        min: 20,
+                        max: 2000,
+                        divisions: 198,
+                        onChanged: (v) =>
+                            context.read<AppState>().setAdvInterval(v),
+                      ),
+                    ],
+                  )
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(AppLocalizations.of(context).connIntervalLabel),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: _connIntervalCtrl,
+                              // Use a numeric keyboard with decimal support and filter input to digits and dot.
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                    RegExp(r'[0-9\.]'))
+                              ],
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                                suffixText: 'ms',
+                                hintText: '7.5 ~ 4000',
+                              ),
+                              textAlign: TextAlign.right,
+                              onChanged: (txt) {
+                                if (_syncingConn) return;
+                              },
+                              onSubmitted: (txt) {
+                                if (_syncingConn) return;
+                                final v = double.tryParse(txt.trim());
+                                if (v != null) {
+                                  final snapped = _quantizeConn(v);
+                                  context
+                                      .read<AppState>()
+                                      .setConnInterval(snapped);
+                                  _setConnText(snapped);
+                                } else {
+                                  _setConnText(app.params.connIntervalMs);
+                                }
+                                FocusScope.of(context).unfocus();
+                              },
+                              onEditingComplete: () {
+                                if (_syncingConn) return;
+                                final txt = _connIntervalCtrl.text;
+                                final v = double.tryParse(txt.trim());
+                                if (v != null) {
+                                  final snapped = _quantizeConn(v);
+                                  context
+                                      .read<AppState>()
+                                      .setConnInterval(snapped);
+                                  _setConnText(snapped);
+                                } else {
+                                  _setConnText(app.params.connIntervalMs);
+                                }
+                                FocusScope.of(context).unfocus();
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Slider(
+                        value: app.params.connIntervalMs,
+                        min: _connMin,
+                        max: _connMax,
+                        onChanged: (v) {
+                          final snapped = _quantizeConn(v);
+                          context.read<AppState>().setConnInterval(snapped);
+                          _setConnText(snapped);
+                        },
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ],
         ),
 
         const SizedBox(height: 12),
@@ -298,93 +289,104 @@ class _ConfigPanelState extends State<ConfigPanel> {
         if (app.params.mode == Mode.bleConnectionCentral ||
             app.params.mode == Mode.bleConnectionPeripheral ||
             app.params.mode == Mode.hdt)
-          sectionCard(
-            title: 'Advanced',
-            color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.06),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(AppLocalizations.of(context).phy),
-                const SizedBox(height: 6),
-                SizedBox(
-                  width: double.infinity,
-                  child: SegmentedButton<Phy>(
-                    segments: const [
-                      ButtonSegment(value: Phy.le1M, label: Text('1M')),
-                      ButtonSegment(value: Phy.le2M, label: Text('2M')),
-                      ButtonSegment(
-                          value: Phy.leCodedS8, label: Text('Coded S=8')),
-                    ],
-                    selected: {app.params.phy},
-                    onSelectionChanged: (s) {
-                      context.read<AppState>().setPhy(s.first);
-                    },
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // When BLE mode is HDT, expose HDT-specific role and band here
-                if (app.params.mode == Mode.hdt)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(AppLocalizations.of(context).moduleRole),
-                      const SizedBox(height: 6),
-                      SizedBox(
-                        width: double.infinity,
-                        child: DropdownButton<HdtModule>(
-                          value: btState.hdtModule,
-                          isExpanded: true,
-                          items: [
-                            DropdownMenuItem(
-                                value: HdtModule.sink,
-                                child: Text(AppLocalizations.of(context).sink)),
-                            DropdownMenuItem(
-                                value: HdtModule.source,
-                                child:
-                                    Text(AppLocalizations.of(context).source)),
-                          ],
-                          onChanged: (v) {
-                            if (v == null) return;
-                            context.read<BTState>().setHdtModule(v);
-                          },
-                        ),
+          ConfigSectionCard(
+            title: l10n.configSectionAdvanced,
+            icon: Icons.tune,
+            accent: palette.warning,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ConfigField(
+                    label: l10n.phy,
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: SegmentedButton<Phy>(
+                        segments: const [
+                          ButtonSegment(value: Phy.le1M, label: Text('1M')),
+                          ButtonSegment(value: Phy.le2M, label: Text('2M')),
+                        ],
+                        selected: {app.params.phy},
+                        onSelectionChanged: (s) {
+                          context.read<AppState>().setPhy(s.first);
+                        },
                       ),
-                      const SizedBox(height: 12),
-                      Text(AppLocalizations.of(context).frequencyBand),
-                      const SizedBox(height: 6),
-                      SizedBox(
-                        width: double.infinity,
-                        child: DropdownButton<String>(
-                          value: btState.band,
-                          isExpanded: true,
-                          items: const [
-                            DropdownMenuItem(
-                                value: '2.4G', child: Text('2.4G')),
-                            DropdownMenuItem(value: '5G', child: Text('5G')),
-                          ],
-                          onChanged: (v) {
-                            if (v == null) return;
-                            context.read<BTState>().setBand(v);
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
+                    ),
                   ),
-              ],
-            ),
+                  const SizedBox(height: 12),
+                  // When BLE mode is HDT, expose HDT-specific role and band here
+                  if (app.params.mode == Mode.hdt)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(AppLocalizations.of(context).moduleRole),
+                        const SizedBox(height: 6),
+                        SizedBox(
+                          width: double.infinity,
+                          child: DropdownButton<HdtModule>(
+                            value: btState.hdtModule,
+                            isExpanded: true,
+                            items: [
+                              DropdownMenuItem(
+                                  value: HdtModule.sink,
+                                  child:
+                                      Text(AppLocalizations.of(context).sink)),
+                              DropdownMenuItem(
+                                  value: HdtModule.source,
+                                  child: Text(
+                                      AppLocalizations.of(context).source)),
+                            ],
+                            onChanged: (v) {
+                              if (v == null) return;
+                              context.read<BTState>().setHdtModule(v);
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(AppLocalizations.of(context).frequencyBand),
+                        const SizedBox(height: 6),
+                        SizedBox(
+                          width: double.infinity,
+                          child: DropdownButton<String>(
+                            value: btState.band,
+                            isExpanded: true,
+                            items: const [
+                              DropdownMenuItem(
+                                  value: '2.4G', child: Text('2.4G')),
+                              DropdownMenuItem(value: '5G', child: Text('5G')),
+                            ],
+                            onChanged: (v) {
+                              if (v == null) return;
+                              context.read<BTState>().setBand(v);
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
+                ],
+              ),
+            ],
           ),
 
         const SizedBox(height: 12),
 
-        Text(
-            '${AppLocalizations.of(context).batteryCapacityLabel} ${app.batteryCapacity_mAh.toStringAsFixed(0)}'),
-        Slider(
-          value: app.batteryCapacity_mAh,
-          min: 50,
-          max: 1200,
-          divisions: 115,
-          onChanged: (v) => context.read<AppState>().setBatteryCapacity(v),
+        ConfigSectionCard(
+          title: l10n.configSectionPower,
+          icon: Icons.battery_charging_full,
+          accent: palette.success,
+          children: [
+            _NumberSliderInput(
+              label: l10n.batteryCapacityLabel,
+              value: app.batteryCapacity_mAh,
+              min: 50,
+              max: 1200,
+              divisions: 115,
+              decimals: 0,
+              suffixText: 'mAh',
+              onChanged: (v) => context.read<AppState>().setBatteryCapacity(v),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         ChipInfoCard(chip: app.chip),
@@ -400,70 +402,127 @@ class SniffingConfigPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final st = context.watch<BTState>();
     final l10n = AppLocalizations.of(context);
+    final palette = AppPalette.of(context);
+    final List<double> levels = st.chip.txPowerLevelsDbm.cast<double>();
+    final double currentTx = st.chip.snapTxPower(st.txPowerDbm);
+
+    final isBtCase = st.caseType == BTCase.btSniff ||
+        st.caseType == BTCase.btPage ||
+        st.caseType == BTCase.btPagescan ||
+        st.caseType == BTCase.relay;
+    final chipsList = isBtCase ? st.btChips : st.bleChips;
+
+    Widget caseSpecificPanel() {
+      switch (st.caseType) {
+        case BTCase.btSniff:
+          return const SizedBox.shrink();
+
+        case BTCase.btPage:
+          return Text(l10n.btPage);
+
+        case BTCase.btPagescan:
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.btPagescan),
+              const SizedBox(height: 6),
+              _NumberSliderInput(
+                label: l10n.channelsLabel,
+                value: st.channelsPerCycle.toDouble(),
+                min: 1,
+                max: 3,
+                divisions: 2,
+                decimals: 0,
+                onChanged: (v) =>
+                    context.read<BTState>().setChannels(v.round()),
+              ),
+              const SizedBox(height: 12),
+              Text('${l10n.channelGap} ${st.channelGapUs.toStringAsFixed(0)}'),
+              const SizedBox(height: 6),
+              Text(l10n.defaultNote,
+                  style: Theme.of(context).textTheme.bodySmall),
+            ],
+          );
+
+        case BTCase.relay:
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.relay),
+              const SizedBox(height: 6),
+              _NumberSliderInput(
+                label: l10n.relayHopGap,
+                value: st.relayHopGapUs.clamp(0.0, 100000.0).toDouble(),
+                min: 0.0,
+                max: 100000.0,
+                decimals: 0,
+                suffixText: 'us',
+                onChanged: (v) => context.read<BTState>().setRelayHopGapUs(v),
+              ),
+            ],
+          );
+      }
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.config, style: Theme.of(context).textTheme.titleLarge),
+        ConfigPanelTitle(title: l10n.config),
         const SizedBox(height: 12),
-
-        Text(l10n.chip),
-        const SizedBox(height: 6),
-        Builder(builder: (ctx) {
-          final isBtCase = st.caseType == BTCase.btSniff ||
-              st.caseType == BTCase.btPage ||
-              st.caseType == BTCase.btPagescan ||
-              st.caseType == BTCase.relay;
-          final chipsList = isBtCase ? st.btChips : st.bleChips;
-          return DropdownButton<String>(
-            value: st.selectedChipId,
-            isExpanded: true,
-            items: chipsList
-                .map<DropdownMenuItem<String>>((c) => DropdownMenuItem<String>(
-                      value: (c as dynamic).id as String,
-                      child: Text((c as dynamic).name as String),
-                    ))
-                .toList(),
-            onChanged: (v) {
-              if (v != null) context.read<BTState>().setChip(v);
-            },
-          );
-        }),
-        const SizedBox(height: 12),
-
-        Text(l10n.listeningCase),
-        const SizedBox(height: 6),
-        SizedBox(
-          width: double.infinity,
-          child: DropdownButton<BTCase>(
-            value: st.caseType,
-            isExpanded: true,
-            items: [
-              DropdownMenuItem(
-                  value: BTCase.btSniff, child: Text(l10n.btSniff)),
-              DropdownMenuItem(value: BTCase.btPage, child: Text(l10n.btPage)),
-              DropdownMenuItem(
-                  value: BTCase.btPagescan, child: Text(l10n.btPagescan)),
-              DropdownMenuItem(value: BTCase.relay, child: Text(l10n.relay)),
-            ],
-            onChanged: (v) {
-              if (v != null) context.read<BTState>().setCase(v);
-            },
-          ),
+        ConfigSectionCard(
+          title: l10n.configSectionDevice,
+          icon: Icons.memory,
+          accent: palette.info,
+          children: [
+            ConfigField(
+              label: l10n.chip,
+              child: DropdownButton<String>(
+                value: st.selectedChipId,
+                isExpanded: true,
+                items: chipsList
+                    .map<DropdownMenuItem<String>>(
+                        (c) => DropdownMenuItem<String>(
+                              value: (c as dynamic).id as String,
+                              child: Text((c as dynamic).name as String),
+                            ))
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) context.read<BTState>().setChip(v);
+                },
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
-
-        // 发射功率选择（与 BLE 配置面板一致的交互）
-        Builder(builder: (ctx) {
-          final List<double> levels = st.chip.txPowerLevelsDbm.cast<double>();
-          final double currentTx = st.chip.snapTxPower(st.txPowerDbm);
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('${l10n.txPowerLabel} $currentTx'),
-              const SizedBox(height: 6),
-              DropdownButton<double>(
+        ConfigSectionCard(
+          title: l10n.configSectionCase,
+          icon: Icons.route,
+          accent: palette.accent,
+          children: [
+            ConfigField(
+              label: l10n.listeningCase,
+              child: DropdownButton<BTCase>(
+                value: st.caseType,
+                isExpanded: true,
+                items: [
+                  DropdownMenuItem(
+                      value: BTCase.btSniff, child: Text(l10n.btSniff)),
+                  DropdownMenuItem(
+                      value: BTCase.btPage, child: Text(l10n.btPage)),
+                  DropdownMenuItem(
+                      value: BTCase.btPagescan, child: Text(l10n.btPagescan)),
+                  DropdownMenuItem(
+                      value: BTCase.relay, child: Text(l10n.relay)),
+                ],
+                onChanged: (v) {
+                  if (v != null) context.read<BTState>().setCase(v);
+                },
+              ),
+            ),
+            ConfigField(
+              label: l10n.txPowerLabel,
+              value: currentTx.toString(),
+              child: DropdownButton<double>(
                 value: currentTx,
                 isExpanded: true,
                 items: levels
@@ -477,158 +536,104 @@ class SniffingConfigPanel extends StatelessWidget {
                   if (v != null) context.read<BTState>().setTxPower(v);
                 },
               ),
-              const SizedBox(height: 12),
-            ],
-          );
-        }),
-        _NumberSliderInput(
-          label: l10n.btVoltageLabel,
-          value: st.supplyVoltage_V,
-          min: 1.8,
-          max: 5.5,
-          divisions: 37,
-          decimals: 2,
-          suffixText: 'V',
-          onChanged: (v) => context.read<BTState>().setSupplyVoltage(v),
+            ),
+            caseSpecificPanel(),
+            _ConnectIntervalInput(
+              label: l10n.btConnectIntervalLabel,
+              valueMs: st.connectIntervalMs,
+              slots: st.connectIntervalSlots,
+              onChanged: (ms) =>
+                  context.read<BTState>().setConnectIntervalMs(ms),
+            ),
+            ConfigSwitchTile(
+              title: l10n.btDefaultConfigLabel,
+              value: st.useDefaultConfig,
+              onChanged: (v) => context.read<BTState>().setUseDefaultConfig(v),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
-
-        _ConnectIntervalInput(
-          label: l10n.btConnectIntervalLabel,
-          valueMs: st.connectIntervalMs,
-          slots: st.connectIntervalSlots,
-          onChanged: (ms) => context.read<BTState>().setConnectIntervalMs(ms),
-        ),
-        const SizedBox(height: 12),
-
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(l10n.btDefaultConfigLabel),
-          value: st.useDefaultConfig,
-          onChanged: (v) => context.read<BTState>().setUseDefaultConfig(v),
-        ),
-        const SizedBox(height: 12),
-
         if (!st.useDefaultConfig) ...[
-          Text(l10n.btPacketTypeLabel),
-          const SizedBox(height: 6),
-          DropdownButton<BtPacketType>(
-            value: st.packetType,
-            isExpanded: true,
-            items: BTState.packetTypes
-                .map((type) => DropdownMenuItem<BtPacketType>(
-                      value: type,
-                      child: Text(type.label),
-                    ))
-                .toList(),
-            onChanged: (v) {
-              if (v != null) context.read<BTState>().setPacketType(v);
-            },
-          ),
-          const SizedBox(height: 12),
-          _IntegerInputField(
-            label: l10n.btRxPayloadLabel,
-            value: st.rxPayloadBytes,
-            suffixText: 'bytes',
-            onSubmitted: (v) => context.read<BTState>().setRxPayloadBytes(v),
-          ),
-          const SizedBox(height: 12),
-          _IntegerInputField(
-            label: l10n.btTxPayloadLabel,
-            value: st.txPayloadBytes,
-            suffixText: 'bytes',
-            onSubmitted: (v) => context.read<BTState>().setTxPayloadBytes(v),
-          ),
-          const SizedBox(height: 12),
-          _IntegerInputField(
-            label: l10n.btAttemptLabel,
-            value: st.attemptCount,
-            onSubmitted: (v) => context.read<BTState>().setAttemptCount(v),
-          ),
-          const SizedBox(height: 12),
-          _NumberSliderInput(
-            label: l10n.btClockDriftLabel,
-            value: st.clockDriftPpm,
-            min: 20,
-            max: 500,
-            divisions: 480,
-            decimals: 0,
-            suffixText: 'ppm',
-            onChanged: (v) => context.read<BTState>().setClockDriftPpm(v),
+          ConfigSectionCard(
+            title: l10n.configSectionManual,
+            icon: Icons.edit_note,
+            accent: palette.danger,
+            children: [
+              ConfigField(
+                label: l10n.btPacketTypeLabel,
+                child: DropdownButton<BtPacketType>(
+                  value: st.packetType,
+                  isExpanded: true,
+                  items: BTState.packetTypes
+                      .map((type) => DropdownMenuItem<BtPacketType>(
+                            value: type,
+                            child: Text(type.label),
+                          ))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) context.read<BTState>().setPacketType(v);
+                  },
+                ),
+              ),
+              _IntegerInputField(
+                label: l10n.btRxPayloadLabel,
+                value: st.rxPayloadBytes,
+                suffixText: 'bytes',
+                onSubmitted: (v) =>
+                    context.read<BTState>().setRxPayloadBytes(v),
+              ),
+              _IntegerInputField(
+                label: l10n.btTxPayloadLabel,
+                value: st.txPayloadBytes,
+                suffixText: 'bytes',
+                onSubmitted: (v) =>
+                    context.read<BTState>().setTxPayloadBytes(v),
+              ),
+              _IntegerInputField(
+                label: l10n.btAttemptLabel,
+                value: st.attemptCount,
+                onSubmitted: (v) => context.read<BTState>().setAttemptCount(v),
+              ),
+              _NumberSliderInput(
+                label: l10n.btClockDriftLabel,
+                value: st.clockDriftPpm,
+                min: 20,
+                max: 500,
+                divisions: 480,
+                decimals: 0,
+                suffixText: 'ppm',
+                onChanged: (v) => context.read<BTState>().setClockDriftPpm(v),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
         ],
-
-        // Case-specific panel
-        Builder(builder: (ctx) {
-          switch (st.caseType) {
-            case BTCase.btSniff:
-              return const SizedBox.shrink();
-
-            case BTCase.btPage:
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l10n.btPage),
-                ],
-              );
-
-            case BTCase.btPagescan:
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l10n.btPagescan),
-                  const SizedBox(height: 6),
-                  _NumberSliderInput(
-                    label: l10n.channelsLabel,
-                    value: st.channelsPerCycle.toDouble(),
-                    min: 1,
-                    max: 3,
-                    divisions: 2,
-                    decimals: 0,
-                    onChanged: (v) =>
-                        context.read<BTState>().setChannels(v.round()),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                      '${l10n.channelGap} ${st.channelGapUs.toStringAsFixed(0)}'),
-                  const SizedBox(height: 6),
-                  Text(l10n.defaultNote,
-                      style: Theme.of(context).textTheme.bodySmall),
-                ],
-              );
-
-            case BTCase.relay:
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l10n.relay),
-                  const SizedBox(height: 6),
-                  _NumberSliderInput(
-                    label: l10n.relayHopGap,
-                    value: st.relayHopGapUs.clamp(0.0, 100000.0).toDouble(),
-                    min: 0.0,
-                    max: 100000.0,
-                    decimals: 0,
-                    suffixText: 'µs',
-                    onChanged: (v) =>
-                        context.read<BTState>().setRelayHopGapUs(v),
-                  ),
-                ],
-              );
-          }
-        }),
-        const SizedBox(height: 12),
-
-        _NumberSliderInput(
-          label: l10n.batteryCapacityLabel,
-          value: st.batteryCapacity_mAh,
-          min: 50,
-          max: 1200,
-          divisions: 115,
-          decimals: 0,
-          suffixText: 'mAh',
-          onChanged: (v) => context.read<BTState>().setBatteryCapacity(v),
+        ConfigSectionCard(
+          title: l10n.configSectionPower,
+          icon: Icons.battery_charging_full,
+          accent: palette.success,
+          children: [
+            _NumberSliderInput(
+              label: l10n.btVoltageLabel,
+              value: st.supplyVoltage_V,
+              min: 1.8,
+              max: 5.5,
+              divisions: 37,
+              decimals: 2,
+              suffixText: 'V',
+              onChanged: (v) => context.read<BTState>().setSupplyVoltage(v),
+            ),
+            _NumberSliderInput(
+              label: l10n.batteryCapacityLabel,
+              value: st.batteryCapacity_mAh,
+              min: 50,
+              max: 1200,
+              divisions: 115,
+              decimals: 0,
+              suffixText: 'mAh',
+              onChanged: (v) => context.read<BTState>().setBatteryCapacity(v),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         ChipInfoCard(chip: st.chip),
@@ -798,26 +803,9 @@ class _ConnectIntervalInputState extends State<_ConnectIntervalInput> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '${widget.label} ${_formatMs(widget.valueMs)} ms '
-          '(${widget.slots} slots)',
-        ),
-        const SizedBox(height: 6),
         Row(
           children: [
-            Expanded(
-              child: Slider(
-                value: widget.valueMs,
-                min: _minMs,
-                max: _maxMs,
-                divisions: ((_maxMs - _minMs) / _stepMs).round(),
-                onChanged: (v) {
-                  final snapped = _snapMs(v);
-                  widget.onChanged(snapped);
-                  _setText(snapped);
-                },
-              ),
-            ),
+            Expanded(child: Text(widget.label)),
             const SizedBox(width: 12),
             SizedBox(
               width: 120,
@@ -839,6 +827,18 @@ class _ConnectIntervalInputState extends State<_ConnectIntervalInput> {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 6),
+        Slider(
+          value: widget.valueMs,
+          min: _minMs,
+          max: _maxMs,
+          divisions: ((_maxMs - _minMs) / _stepMs).round(),
+          onChanged: (v) {
+            final snapped = _snapMs(v);
+            widget.onChanged(snapped);
+            _setText(snapped);
+          },
         ),
       ],
     );
@@ -934,28 +934,12 @@ class _NumberSliderInputState extends State<_NumberSliderInput> {
   @override
   Widget build(BuildContext context) {
     final value = widget.value.clamp(widget.min, widget.max).toDouble();
-    final display = _format(value);
-    final suffix = widget.suffixText == null ? '' : ' ${widget.suffixText}';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('${widget.label} $display$suffix'),
-        const SizedBox(height: 6),
         Row(
           children: [
-            Expanded(
-              child: Slider(
-                value: value,
-                min: widget.min,
-                max: widget.max,
-                divisions: widget.divisions,
-                onChanged: (v) {
-                  final snapped = _snap(v);
-                  widget.onChanged(snapped);
-                  _setText(snapped);
-                },
-              ),
-            ),
+            Expanded(child: Text(widget.label)),
             const SizedBox(width: 12),
             SizedBox(
               width: 120,
@@ -977,6 +961,18 @@ class _NumberSliderInputState extends State<_NumberSliderInput> {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 6),
+        Slider(
+          value: value,
+          min: widget.min,
+          max: widget.max,
+          divisions: widget.divisions,
+          onChanged: (v) {
+            final snapped = _snap(v);
+            widget.onChanged(snapped);
+            _setText(snapped);
+          },
         ),
       ],
     );
@@ -1009,7 +1005,7 @@ class ChipInfoCard extends StatelessWidget {
                     context, AppLocalizations.of(context).model, chip.name),
                 _specItem(context, AppLocalizations.of(context).vbat,
                     '${chip.vbat} V'),
-                // _specItem('Sleep', '${chip.sleepCurrent_uA} µA'),
+                // _specItem('Sleep', '${chip.sleepCurrent_uA} uA'),
                 _specItem(context, AppLocalizations.of(context).rx,
                     '${chip.rxCurrent_mA} mA'),
                 _specItem(context, AppLocalizations.of(context).tx,

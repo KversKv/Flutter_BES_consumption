@@ -73,7 +73,6 @@ class PowerCalculator {
     switch (phy) {
       case Phy.le1M: return 8;
       case Phy.le2M: return 4;
-      case Phy.leCodedS8: return 64;
     }
   }
 

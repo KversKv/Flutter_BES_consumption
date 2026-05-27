@@ -7,6 +7,7 @@ import '../state/wifi_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/chart_widgets.dart';
+import '../widgets/config_panel_frame.dart';
 import '../widgets/config_panels.dart';
 
 class WifiPage extends StatelessWidget {
@@ -153,6 +154,7 @@ class _WifiConfigPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final st = context.watch<WIFIState>();
+    final palette = AppPalette.of(context);
     final chip = st.chip;
     final levels = chip.txPowerLevelsDbm.cast<double>();
     final currentTx = chip.snapTxPower(st.txPowerDbm);
@@ -160,137 +162,194 @@ class _WifiConfigPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.config, style: Theme.of(context).textTheme.titleLarge),
+        ConfigPanelTitle(title: l10n.config),
         const SizedBox(height: AppSpacing.x3),
-        Text(l10n.chip),
-        const SizedBox(height: AppSpacing.x1),
-        DropdownButton<String>(
-          value: st.selectedChipId,
-          isExpanded: true,
-          items: st.wifiChips
-              .map<DropdownMenuItem<String>>(
-                (c) => DropdownMenuItem(value: c.id, child: Text(c.name)),
-              )
-              .toList(),
-          onChanged: (v) {
-            if (v != null) context.read<WIFIState>().setChip(v);
-          },
-        ),
-        const SizedBox(height: AppSpacing.x3),
-        Text(l10n.listeningCase),
-        const SizedBox(height: AppSpacing.x1),
-        DropdownButton<SniffCase>(
-          value: st.caseType,
-          isExpanded: true,
-          items: [
-            const DropdownMenuItem(value: SniffCase.hdt, child: Text('HDT')),
-            DropdownMenuItem(
-                value: SniffCase.btSniff, child: Text(l10n.btSniff)),
-            DropdownMenuItem(value: SniffCase.btPage, child: Text(l10n.btPage)),
-            DropdownMenuItem(
-              value: SniffCase.btPagescan,
-              child: Text(l10n.btPagescan),
+        ConfigSectionCard(
+          title: l10n.configSectionDevice,
+          icon: Icons.memory,
+          accent: palette.info,
+          children: [
+            ConfigField(
+              label: l10n.chip,
+              child: DropdownButton<String>(
+                value: st.selectedChipId,
+                isExpanded: true,
+                items: st.wifiChips
+                    .map<DropdownMenuItem<String>>(
+                      (c) => DropdownMenuItem(value: c.id, child: Text(c.name)),
+                    )
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) context.read<WIFIState>().setChip(v);
+                },
+              ),
             ),
-            DropdownMenuItem(value: SniffCase.relay, child: Text(l10n.relay)),
           ],
-          onChanged: (v) {
-            if (v != null) context.read<WIFIState>().setCase(v);
-          },
         ),
         const SizedBox(height: AppSpacing.x3),
-        Text('${l10n.frequencyBand}: ${st.band}'),
-        DropdownButton<String>(
-          value: st.band,
-          isExpanded: true,
-          items: const [
-            DropdownMenuItem(value: '2.4G', child: Text('2.4G')),
-            DropdownMenuItem(value: '5G', child: Text('5G')),
+        ConfigSectionCard(
+          title: l10n.configSectionCase,
+          icon: Icons.route,
+          accent: palette.accent,
+          children: [
+            ConfigField(
+              label: l10n.listeningCase,
+              child: DropdownButton<SniffCase>(
+                value: st.caseType,
+                isExpanded: true,
+                items: [
+                  const DropdownMenuItem(
+                      value: SniffCase.hdt, child: Text('HDT')),
+                  DropdownMenuItem(
+                      value: SniffCase.btSniff, child: Text(l10n.btSniff)),
+                  DropdownMenuItem(
+                      value: SniffCase.btPage, child: Text(l10n.btPage)),
+                  DropdownMenuItem(
+                    value: SniffCase.btPagescan,
+                    child: Text(l10n.btPagescan),
+                  ),
+                  DropdownMenuItem(
+                      value: SniffCase.relay, child: Text(l10n.relay)),
+                ],
+                onChanged: (v) {
+                  if (v != null) context.read<WIFIState>().setCase(v);
+                },
+              ),
+            ),
+            ConfigField(
+              label: l10n.frequencyBand,
+              value: st.band,
+              child: DropdownButton<String>(
+                value: st.band,
+                isExpanded: true,
+                items: const [
+                  DropdownMenuItem(value: '2.4G', child: Text('2.4G')),
+                  DropdownMenuItem(value: '5G', child: Text('5G')),
+                ],
+                onChanged: (v) {
+                  if (v != null) context.read<WIFIState>().setBand(v);
+                },
+              ),
+            ),
+            ConfigField(
+              label: l10n.txPowerLabel,
+              value: currentTx.toString(),
+              child: DropdownButton<double>(
+                value: currentTx,
+                isExpanded: true,
+                items: levels
+                    .map<DropdownMenuItem<double>>(
+                      (lv) => DropdownMenuItem<double>(
+                        value: lv,
+                        child: Text(lv.toString()),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) context.read<WIFIState>().setTxPower(v);
+                },
+              ),
+            ),
           ],
-          onChanged: (v) {
-            if (v != null) context.read<WIFIState>().setBand(v);
-          },
         ),
         const SizedBox(height: AppSpacing.x3),
-        Text('${l10n.txPowerLabel} $currentTx'),
-        DropdownButton<double>(
-          value: currentTx,
-          isExpanded: true,
-          items: levels
-              .map<DropdownMenuItem<double>>(
-                (lv) => DropdownMenuItem<double>(
-                  value: lv,
-                  child: Text(lv.toString()),
+        ConfigSectionCard(
+          title: l10n.configSectionTiming,
+          icon: Icons.timer,
+          accent: palette.warning,
+          children: [
+            if (st.caseType == SniffCase.hdt) ...[
+              ConfigField(
+                label: l10n.hdtPeriod,
+                value: '${st.hdtPeriodUs.toStringAsFixed(0)} us',
+                child: Slider(
+                  value: st.hdtPeriodUs.clamp(100.0, 5000.0).toDouble(),
+                  min: 100,
+                  max: 5000,
+                  onChanged: (v) => context.read<WIFIState>().setHdtPeriodUs(v),
                 ),
-              )
-              .toList(),
-          onChanged: (v) {
-            if (v != null) context.read<WIFIState>().setTxPower(v);
-          },
+              ),
+              ConfigField(
+                label: l10n.hdtPhyRate,
+                value: '${st.hdtPhyRateMbps.toStringAsFixed(1)} Mbps',
+                child: Slider(
+                  value: st.hdtPhyRateMbps.clamp(2.0, 15.0).toDouble(),
+                  min: 2,
+                  max: 15,
+                  divisions: 13,
+                  onChanged: (v) => context.read<WIFIState>().setHdtPhyRate(v),
+                ),
+              ),
+            ] else ...[
+              ConfigField(
+                label: l10n.listeningInterval,
+                value: '${st.sniffIntervalMs.toStringAsFixed(0)} ms',
+                child: Slider(
+                  value: st.sniffIntervalMs.clamp(10.0, 5000.0).toDouble(),
+                  min: 10,
+                  max: 5000,
+                  onChanged: (v) =>
+                      context.read<WIFIState>().setSniffIntervalMs(v),
+                ),
+              ),
+              ConfigField(
+                label: l10n.listeningWindow,
+                value: '${st.sniffWindowUs.toStringAsFixed(0)} us',
+                child: Slider(
+                  value: st.sniffWindowUs.clamp(50.0, 50000.0).toDouble(),
+                  min: 50,
+                  max: 50000,
+                  onChanged: (v) =>
+                      context.read<WIFIState>().setSniffWindowUs(v),
+                ),
+              ),
+            ],
+            if (st.caseType == SniffCase.btPagescan)
+              ConfigField(
+                label: l10n.channelsLabel,
+                value: '${st.channelsPerCycle}',
+                child: Slider(
+                  value: st.channelsPerCycle.toDouble(),
+                  min: 1,
+                  max: 3,
+                  divisions: 2,
+                  onChanged: (v) =>
+                      context.read<WIFIState>().setChannels(v.round()),
+                ),
+              ),
+            if (st.caseType == SniffCase.relay)
+              ConfigField(
+                label: l10n.relayHopGap,
+                value: '${st.relayHopGapUs.toStringAsFixed(0)} us',
+                child: Slider(
+                  value: st.relayHopGapUs.clamp(0.0, 100000.0).toDouble(),
+                  min: 0,
+                  max: 100000,
+                  onChanged: (v) =>
+                      context.read<WIFIState>().setRelayHopGapUs(v),
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: AppSpacing.x3),
-        if (st.caseType == SniffCase.hdt) ...[
-          Text('${l10n.hdtPeriod} ${st.hdtPeriodUs.toStringAsFixed(0)} us'),
-          Slider(
-            value: st.hdtPeriodUs.clamp(100.0, 5000.0).toDouble(),
-            min: 100,
-            max: 5000,
-            onChanged: (v) => context.read<WIFIState>().setHdtPeriodUs(v),
-          ),
-          Text(
-              '${l10n.hdtPhyRate} ${st.hdtPhyRateMbps.toStringAsFixed(1)} Mbps'),
-          Slider(
-            value: st.hdtPhyRateMbps.clamp(2.0, 15.0).toDouble(),
-            min: 2,
-            max: 15,
-            divisions: 13,
-            onChanged: (v) => context.read<WIFIState>().setHdtPhyRate(v),
-          ),
-        ] else ...[
-          Text(
-              '${l10n.listeningInterval} ${st.sniffIntervalMs.toStringAsFixed(0)} ms'),
-          Slider(
-            value: st.sniffIntervalMs.clamp(10.0, 5000.0).toDouble(),
-            min: 10,
-            max: 5000,
-            onChanged: (v) => context.read<WIFIState>().setSniffIntervalMs(v),
-          ),
-          Text(
-              '${l10n.listeningWindow} ${st.sniffWindowUs.toStringAsFixed(0)} us'),
-          Slider(
-            value: st.sniffWindowUs.clamp(50.0, 50000.0).toDouble(),
-            min: 50,
-            max: 50000,
-            onChanged: (v) => context.read<WIFIState>().setSniffWindowUs(v),
-          ),
-        ],
-        if (st.caseType == SniffCase.btPagescan) ...[
-          Text('${l10n.channelsLabel} ${st.channelsPerCycle}'),
-          Slider(
-            value: st.channelsPerCycle.toDouble(),
-            min: 1,
-            max: 3,
-            divisions: 2,
-            onChanged: (v) => context.read<WIFIState>().setChannels(v.round()),
-          ),
-        ],
-        if (st.caseType == SniffCase.relay) ...[
-          Text('${l10n.relayHopGap} ${st.relayHopGapUs.toStringAsFixed(0)} us'),
-          Slider(
-            value: st.relayHopGapUs.clamp(0.0, 100000.0).toDouble(),
-            min: 0,
-            max: 100000,
-            onChanged: (v) => context.read<WIFIState>().setRelayHopGapUs(v),
-          ),
-        ],
-        const SizedBox(height: AppSpacing.x3),
-        Text(
-            '${l10n.batteryCapacityLabel} ${st.batteryCapacity_mAh.toStringAsFixed(0)}'),
-        Slider(
-          value: st.batteryCapacity_mAh,
-          min: 50,
-          max: 1200,
-          divisions: 115,
-          onChanged: (v) => context.read<WIFIState>().setBatteryCapacity(v),
+        ConfigSectionCard(
+          title: l10n.configSectionPower,
+          icon: Icons.battery_charging_full,
+          accent: palette.success,
+          children: [
+            ConfigField(
+              label: l10n.batteryCapacityLabel,
+              value: '${st.batteryCapacity_mAh.toStringAsFixed(0)} mAh',
+              child: Slider(
+                value: st.batteryCapacity_mAh,
+                min: 50,
+                max: 1200,
+                divisions: 115,
+                onChanged: (v) =>
+                    context.read<WIFIState>().setBatteryCapacity(v),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: AppSpacing.x3),
         ChipInfoCard(chip: chip),

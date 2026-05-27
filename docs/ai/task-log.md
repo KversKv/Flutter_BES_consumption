@@ -16,6 +16,22 @@
 
 ---
 
+## 2026-05-27 - Remove BLE Coded S=8 PHY
+- **Type**: refactor
+- **Scope**: `lib/models/profile_params.dart`, `lib/services/power_calculator.dart`, `lib/widgets/config_panels.dart`, `lib/main_all_in_one.txt`
+- **Reason**: BLE CASE no longer needs the low-frequency Long Range `Coded S=8` option in the normal power simulation UI.
+- **Change**: Removed `Phy.leCodedS8`, removed the 64 us/byte calculation branch, and removed the `Coded S=8` segmented control option. 1M and 2M behavior is unchanged.
+- **Verification**: `flutter analyze` passed; `flutter build web --debug` passed.
+
+---
+
+## 2026-05-27 - Configuration panel visual polish
+- **Type**: ui
+- **Scope**: `lib/widgets/config_panel_frame.dart`, `lib/widgets/config_panels.dart`, `lib/pages/wifi_case_page.dart`, `lib/l10n/app_localizations.dart`
+- **Reason**: The BLE/BT/Wi-Fi Configuration areas felt visually flat and hard to scan.
+- **Change**: Added a reusable configuration panel frame with a stronger title treatment, accent-led section cards, compact field labels, and a custom switch tile; applied it to BLE, BT/Sniffing, and Wi-Fi configuration panels; added zh/en section labels for Device/Radio/Timing/Power/Case/Manual groups; normalized slider + numeric input controls so the value appears only in the editable field beside the label; folded BT Timing controls into the bottom of the Case section; placed BT Manual parameters directly above Power when Default Config is disabled.
+- **Verification**: `flutter analyze` passed; `flutter test` passed. Local web server returned HTTP 200, but the in-app browser debug preview hit a known Flutter DWDS injected-client black-screen issue, so screenshot QA could not be completed in this environment.
+
 ## 2026-05-26 路 页面域配置架构一期：BLE/BT/Wi-Fi 数据拆分接入 ConfigRepository
 - **类型**：refactor / decision
 - **范围**：`assets/data/config_manifest.json`、`assets/data/chips/{ble,bt,wifi}/index.json`、`assets/data/chips/{ble,bt,wifi}/*.json`、`lib/models/{ble_chip,bt_chip,wifi_chip}.dart`、`lib/services/config/config_repository.dart`、`lib/state/{app_state,bt_state,sniffing_state,wifi_state}.dart`、`lib/main.dart`、`pubspec.yaml`

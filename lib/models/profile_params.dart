@@ -1,5 +1,5 @@
 enum Mode {advertisingTxOnly, advertisingTxRx, bleConnectionCentral, bleConnectionPeripheral, hdt }
-enum Phy { le1M, le2M, leCodedS8 }
+enum Phy { le1M, le2M }
 
 enum HdtModule { source, sink }
 
