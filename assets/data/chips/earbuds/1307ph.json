@@ -29,6 +29,7 @@
     "callAncOn": null,
     "sniffPageAncOn": null,
     "powerOffAncOn": null,
+    "noisePinkDetail": null,
     "testConfig": {
       "testPhone": null,
       "testDate": null,

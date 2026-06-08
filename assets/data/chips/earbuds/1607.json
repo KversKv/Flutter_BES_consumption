@@ -29,6 +29,7 @@
     "callAncOn": null,
     "sniffPageAncOn": null,
     "powerOffAncOn": null,
+    "noisePinkDetail": null,
     "testConfig": {
       "testPhone": "Pixel 3(Android 9)",
       "testDate": "2025.06.20",

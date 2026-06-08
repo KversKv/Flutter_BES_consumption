@@ -16,6 +16,98 @@
 
 ---
 
+### 2026-06-08 · 移除芯片最多选 6 个的限制
+- **类型**：feature
+- **范围**：`state/earbuds_state.dart`、`pages/earbuds_pages/earbuds_left_sidebar.dart`
+- **变更**：删除 `EarbudsState.kMaxSelected` 常量；`toggleSelected` 去掉 `>= kMaxSelected` 判断（恒成功，可选任意数量）；侧栏计数由 `x/6` 改为仅显示 `x`；移除侧栏 onTap 中 `!ok` 的「已满」SnackBar 提示分支。
+- **影响**：可同时对比任意数量芯片。`s.ebSelectionFull` 文案保留未删（无害）。`flutter analyze` 通过。
+
+### 2026-06-08 · NoisePink 单选：去重 + Isys 列高亮
+- **类型**：fix/ui
+- **范围**：`pages/earbuds_pages/earbuds_metric_table_view.dart`
+- **动因**：单选 scene/noisepink 时主表 Isys 与下方 Breakdown 面板重复；Breakdown 中 Isys 列不易一眼定位。
+- **变更**：(1) `showNoisePinkDetail` 为真时主表 Card 不渲染（`if (!showNoisePinkDetail) Expanded(...)`），仅保留 `_CaseSelectorBar` + `Expanded(_NoisePinkDetailPanel)`，面板内表格改为垂直+水平双向滚动。(2) Breakdown 的 Isys 表头改为 primary 高亮胶囊；新增 `_IsysCell`：列底色（primary alpha 0.06）+ best(min→success 胶囊描边加粗)/worst(max→danger)着色，等宽数字。
+- **影响**：单选 NoisePink 不再重复展示 Isys；Isys 列一眼可辨且极值高亮。`flutter analyze` 通过。
+
+### 2026-06-08 · Cases 表 DataTable → Table 重构（修复列宽失衡）
+- **类型**：fix/refactor
+- **范围**：`pages/earbuds_pages/earbuds_metric_table_view.dart`
+- **动因**：DataTable + `ConstrainedBox(minWidth)` 撑满会把多余空间全堆给首列（Chip Info 与首个数据列间巨大空隙）；数据列宽由表头文字自然宽度决定，导致三列宽度参差。
+- **变更**：弃用 DataTable，改用 `Table` + `columnWidths`（首列 `FlexColumnWidth(2.4)` 占更大但平衡，数据列统一 `FixedColumnWidth(116)`）。新增 `_HeaderCell`（统一内边距/对齐/可点击排序 + InkWell）、`_BodyCell`；表头排序点击自实现（同列切升降序、异列重置升序），首列显示当前排序方向箭头，`_MetricHeader` 加 `active` 高亮当前排序列（primary 色）。
+- **影响**：列宽可控、三数据列严格等宽、首列不再失衡；纯垂直滚动（去掉横向滚动与 minWidth 撑满）。`flutter analyze` 通过。
+- **后续**：列特别多时未做横向滚动兜底，目前场景列数有限可接受。
+
+### 2026-06-08 · Cases 指标表视觉精修（frontend-design）
+- **类型**：ui
+- **范围**：`pages/earbuds_pages/earbuds_metric_table_view.dart`
+- **动因**：表头长标题三行硬折叠拥挤、单位与指标名混排无层级，整体观感差，用户要求用 frontend-design 优化。
+- **变更**：
+  - 新增 `_MetricHeader`：指标名（labelLarge/w700）为主、单位独立成弱化胶囊小标签，右对齐两层结构。
+  - DataTable：表头底色改 `surfaceContainerHighest`（更柔和）、`headingRowHeight 64`、`columnSpacing 28`、`horizontalMargin x5`、`dividerThickness 0`、行高 52/60。
+  - `_HeatmapCell`：胶囊改全圆角 + best/worst 细描边、内边距加大、数值 w700/tabular/字距、`AnimatedContainer` 微过渡。
+  - chip 名称色点 10→12 加同色柔光晕、名称字距优化、交替行底色减淡 0.3→0.22。
+  - `_ToolbarChip`：全圆角 + 微描边、图标改 primary 弱化色、文字 w600。
+- **影响**：纯视觉，复用既有 `AppSpacing`/`AppPalette`/M3 token，无新依赖；`flutter analyze` 通过。
+- **后续**：maxWidth 仍为 132，若长标题需更宽可再调。
+
+### 2026-06-08 · 移除 Comparison 场景对比的 Multi-Dimension Radar 面板
+- **类型**：fix
+- **范围**：`pages/earbuds_pages/earbuds_scene_tab.dart`
+- **动因**：用户要求移除 Comparison 视图里的「Multi-Dimension Radar」雷达图面板。
+- **变更**：`_ComparisonSceneView` 去掉 `if (chips.length >= 2)` 的雷达 Padding，仅保留 `_MetricTableView`；删除 `_SceneOverviewPanel` / `_SceneRadarChart`（含 `_normalizeRadarValue`）/ `_RadarLegend` 三个组件。`ebRadarTitle` i18n key 保留（getter 不触发 unused 告警，最小改动）。
+- **影响**：`flutter analyze` 通过；`fl_chart` 与 `_computeMetricStats` 仍被其它视图使用，未产生未用告警。
+- **后续**：无。
+
+### 2026-06-08 · 修复 Sync Excel 写错层级 + Cases 汇总改回工具栏右侧
+- **类型**：fix
+- **范围**：`services/chip_json_repository.dart`、`pages/earbuds_pages/earbuds_metric_table_view.dart`
+- **动因**：(1) Sync Excel 后 admin 编辑器出现「重复的 noisePinkDetail」（顶层一个 + scene 一个），且对比页只有 1605 有数据；(2) 用户要求去掉 Cases 表底部 best/worst/avg 三行，改回工具栏右侧的统计文字。
+- **变更**：
+  1. `syncEarbudsNoisePinkDetail` 之前误把 `noisePinkDetail` 写到记录顶层 `record.data['noisePinkDetail']`，而模型只读 `data['scene']['noisePinkDetail']` → 改为写进 `scene` 子对象，并 `remove` 顶层残留（旧 bug 数据再次同步即自动清理）。
+  2. `_MetricTableView` 移除底部三行 `_buildSummaryRow`（及 `_buildSummaryRow` 方法、`_StatType` enum）；`_MetricTableToolbar` 新增 `stats`，在工具栏右侧用新 `_SummaryStat` 展示全局 Best/Avg/Worst（min 的最小、max 的最大、avg 的均值），颜色用 palette success/danger。
+- **影响**：修复前用旧代码同步过的存档仍残留顶层字段，需重新 Sync 或 Reset 该 tab 清理；同步功能需重新 build / hot restart 才生效（解析+匹配链路经真实 xlsx 单测验证正确：匹配 5 颗、跳过 1307s）。
+- **后续**：无。
+
+### 2026-06-08 · Admin「Sync Excel」一键同步 NoisePink 详情 + 模型字段补全
+- **类型**：feature / decision
+- **范围**：`models/earbuds.dart`、`services/noisepink_sync_service.dart`(新增)、`services/chip_json_repository.dart`、`pages/admin_page.dart`、`pages/earbuds_pages/earbuds_metric_table_view.dart`、`l10n/app_localizations.dart`、`assets/data/chips/earbuds/1605.json`、`pubspec.yaml`
+- **动因**：用户提供 `temp/NoisePink Consumption LIST.xlsx`（含 6 颗芯片完整 NoisePink 数据），要求在「Reset this tab」下方加「Sync Excel」按钮，选 xlsx/csv 一键同步匹配芯片的 NoisePink 详情；并补全所有字段。
+- **决策**（经用户确认，均取推荐项）：选文件→引入 `file_picker`；补字段→扩展 `NoisePinkDetail` 模型；同步范围→按 BES ID 大小写不敏感匹配，命中即更新、缺失跳过。
+- **变更**：
+  1. `NoisePinkDetail` 由 9 字段扩展到 13：新增 `vsys/vcore/icoreM/icoreL`（同步 const/toJson/fromJson）；`_NoisePinkDetailPanel` 增对应 4 列；1605.json 新字段填 null（Excel 无 1605）。
+  2. 新增 `NoisePinkSyncService`：纯 Dart 解析 xlsx（archive 解 zip + 正则读 sheetN.xml/sharedStrings）与 csv；列名大小写/空格不敏感映射；缺失值 `/ / - / na / 空` → null；ID 去 "BES" 前缀后小写为 key。
+  3. `ChipJsonRepository.syncEarbudsNoisePinkDetail(details)`：按小写 id 匹配 earbuds 记录写 `noisePinkDetail`，命中才 `_commit`（落 SharedPreferences + 重建 EarbudsRepository），返回 `(matched, skipped)`。
+  4. `admin_page.dart`：`_RecordList` 加可选 `onSyncExcel`（仅 earbuds 域传非空）；`_syncExcel()` 走 file_picker → 解析 → 同步 → 结果对话框；按钮在「Reset this tab」下方（Icons.sync）。
+  5. i18n 新增 `admin_sync_excel*`（zh+en）+ getter（含 `adminSyncExcelResultBody(matched, skipped)`）。
+  6. `pubspec.yaml` 加 `file_picker: ^8.1.2`（实际解析 8.3.7）。
+- **影响**：Excel 里 1307S 在 JSON 无对应（仅 1307）→ 同步时计入 skipped 并提示；同步后数据直接落库驱动全 app。
+- **校验**：`flutter analyze` → No issues found；临时单测验证真实 xlsx + csv 解析全过（已删，因依赖 temp/ 路径）。
+
+### 2026-06-08 · Earbuds Comparison 精简 Best/Avg/Worst + NoisePink 详情面板
+- **类型**：feature / refactor
+- **范围**：`models/earbuds.dart`、`services/earbuds_repository.dart`、`state/earbuds_state.dart`、`pages/earbuds_pages/earbuds_metric_table_view.dart`、`pages/earbuds_pages/earbuds_scene_tab.dart`、`l10n/app_localizations.dart`、`assets/data/chips/earbuds/1605.json`
+- **动因**：用户要求 Comparison 去除多处重复 Best/Avg/Worst 文字、默认只对比 NoisePink、并在仅选该 case 时展示电压与功耗拆分。
+- **变更**：
+  1. 模型新增 `NoisePinkDetail`（vcoreM/vcoreL/vana/vhppa 单位 V；isys/icore/iana/ihppa/isysRemain 单位 mA）+ `EarbudsScene.noisePinkDetail`，含 toJson/fromJson；`MutableEarbudsScene` round-trip。
+  2. `EarbudsState._defaultMetricKeys`：scene 组默认只勾 `noisepink`，其余组仍全选。
+  3. 删除重复展示组件：`_MetricDashboardHeader/_SummaryRow/_KpiCard/_MetricSpreadCard/_SpreadItem/_MiniStat`（table view）与 `_SceneInsightPanel/_InsightBadge/_InsightMetricTile/_MetricPill`（scene tab）；保留 DataTable 底部 `_buildSummaryRow`（Summary 背景行）与 `_HeatmapCell`（CASE 颜色）。
+  4. 新增 `_NoisePinkDetailPanel`：仅当 scene 组且只选 noisepink 时，于 DataTable 下方展示各芯片电压/功耗拆分表。
+  5. i18n 新增 `eb_noisepink_detail_title`/`eb_npd_*`（zh+en）；1605.json 填入示例值。
+- **影响**：已有用户存档（`admin_chip_json_db_v1_earbuds`）不含新字段；需 /admin 重置或清存档后方显示 1605 详情。
+- **后续**：其余芯片暂无 noisePinkDetail，面板按芯片逐列显示 `-`；如需补全可在各 JSON 增字段。
+- **校验**：`flutter analyze` → No issues found。
+
+### 2026-06-08 · Admin 每域新增「还原种子」按钮（修复旧存档不含新字段）
+- **类型**：feature / fix
+- **范围**：`pages/admin_page.dart`、`l10n/app_localizations.dart`
+- **动因**：1605 已在 JSON/模型加 noisePinkDetail，但 admin 看不到——因 `ChipJsonRepository` 仅在无存档时从 JSON 种子化，旧存档（`admin_chip_json_db_v1_<domain>`）覆盖了新字段，且此前无 UI 入口刷新。
+- **变更**：
+  1. `_RecordList` 新增 `onResetSeed` 回调，Add 按钮下加 OutlinedButton（Icons.restore，文案 `adminResetDomain`）。
+  2. `_DomainAdminTabState._confirmReset`：确认对话框后调 `ChipJsonRepository.resetToSeed(domain)`（该方法早已存在，仅缺 UI）。
+  3. i18n 新增 `admin_reset_domain_body`（zh+en）+ getter `adminResetDomainBody`；对话框标题复用既有 `adminResetDomain`。
+- **影响**：改完 JSON 后，到 /admin 对应标签点「还原当前标签」即可刷新；无需清应用数据。
+- **校验**：`flutter analyze` → No issues found。
+
 ## 2026-05-27 - Admin deep-link URL stability
 - **Type**: fix / routing
 - **Scope**: `lib/main.dart`, `lib/pages/home_page.dart`, `lib/pages/wifi_case_page.dart`

@@ -153,6 +153,7 @@ class MutableEarbudsScene {
   double? callAncOn;
   double? sniffPageAncOn;
   double? powerOffAncOn;
+  NoisePinkDetail? noisePinkDetail;
   MutableSceneTestConfig testConfig;
 
   MutableEarbudsScene({
@@ -170,6 +171,7 @@ class MutableEarbudsScene {
     this.callAncOn,
     this.sniffPageAncOn,
     this.powerOffAncOn,
+    this.noisePinkDetail,
     MutableSceneTestConfig? testConfig,
   }) : testConfig = testConfig ?? MutableSceneTestConfig();
 
@@ -188,6 +190,7 @@ class MutableEarbudsScene {
         callAncOn: s.callAncOn,
         sniffPageAncOn: s.sniffPageAncOn,
         powerOffAncOn: s.powerOffAncOn,
+        noisePinkDetail: s.noisePinkDetail,
         testConfig: MutableSceneTestConfig.from(s.testConfig),
       );
 
@@ -206,6 +209,7 @@ class MutableEarbudsScene {
         callAncOn: callAncOn,
         sniffPageAncOn: sniffPageAncOn,
         powerOffAncOn: powerOffAncOn,
+        noisePinkDetail: noisePinkDetail,
         testConfig: testConfig.toImmutable(),
       );
 }

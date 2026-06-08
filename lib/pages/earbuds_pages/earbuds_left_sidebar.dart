@@ -129,16 +129,7 @@ class _LeftSidebarState extends State<_LeftSidebar> {
                     selected: selected,
                     chipColor: chipColor,
                     onTap: () {
-                      final ok = es.toggleSelected(chip.id);
-                      if (!ok) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(s.ebSelectionFull),
-                            duration: const Duration(seconds: 1),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
+                      es.toggleSelected(chip.id);
                     },
                   );
                 },
@@ -458,7 +449,7 @@ class _ChipInfoHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
             ),
             child: Text(
-              '${es.selectedIds.length}/${EarbudsState.kMaxSelected}',
+              '${es.selectedIds.length}',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: cs.primary,
                 fontWeight: FontWeight.w600,

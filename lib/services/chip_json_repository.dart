@@ -240,6 +240,42 @@ class ChipJsonRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 将外部解析得到的 NoisePink 详情按 BES ID 大小写不敏感匹配到 earbuds 记录。
+  /// [detailsByLowerId] 的 key 为去掉前缀 "BES" 并小写后的芯片 ID。
+  /// 返回 (已同步 ID 列表, 未匹配跳过的 ID 列表)。
+  ({List<String> matched, List<String> skipped}) syncEarbudsNoisePinkDetail(
+    Map<String, Map<String, dynamic>> detailsByLowerId,
+  ) {
+    final list = _records[ChipJsonDomain.earbuds]!;
+    final index = <String, ChipJsonRecord>{};
+    for (final record in list) {
+      final id = record.id.trim().toLowerCase();
+      if (id.isNotEmpty) index[id] = record;
+    }
+    final matched = <String>[];
+    final skipped = <String>[];
+    for (final entry in detailsByLowerId.entries) {
+      final record = index[entry.key];
+      if (record == null) {
+        skipped.add(entry.key);
+        continue;
+      }
+      final rawScene = record.data['scene'];
+      final scene = rawScene is Map
+          ? Map<String, dynamic>.from(rawScene)
+          : <String, dynamic>{};
+      scene['noisePinkDetail'] =
+          ChipJsonRecord._normalizeMap(Map<String, dynamic>.from(entry.value));
+      record.data['scene'] = scene;
+      record.data.remove('noisePinkDetail');
+      matched.add(record.id);
+    }
+    if (matched.isNotEmpty) {
+      _commit(ChipJsonDomain.earbuds);
+    }
+    return (matched: matched, skipped: skipped);
+  }
+
   Map<String, String> exportFiles({ChipJsonDomain? only}) {
     const encoder = JsonEncoder.withIndent('  ');
     final domains = only == null ? ChipJsonDomain.values : [only];

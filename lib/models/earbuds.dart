@@ -131,6 +131,73 @@ class SceneTestConfig {
       );
 }
 
+/// NoisePink 8/15 AAC 场景的电压与功耗拆分明细。
+///
+/// 电压单位：V；电流单位：mA。仅在该场景需要展示细分时填充。
+class NoisePinkDetail {
+  final double? vsys; // V, 系统电压
+  final double? vcore; // V
+  final double? vcoreM; // V
+  final double? vcoreL; // V
+  final double? vana; // V
+  final double? vhppa; // V
+  final double? isys; // mA, 系统总电流
+  final double? icore; // mA
+  final double? icoreM; // mA
+  final double? icoreL; // mA
+  final double? iana; // mA
+  final double? ihppa; // mA
+  final double? isysRemain; // mA, 系统剩余电流
+
+  const NoisePinkDetail({
+    this.vsys,
+    this.vcore,
+    this.vcoreM,
+    this.vcoreL,
+    this.vana,
+    this.vhppa,
+    this.isys,
+    this.icore,
+    this.icoreM,
+    this.icoreL,
+    this.iana,
+    this.ihppa,
+    this.isysRemain,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'vsys': vsys,
+        'vcore': vcore,
+        'vcoreM': vcoreM,
+        'vcoreL': vcoreL,
+        'vana': vana,
+        'vhppa': vhppa,
+        'isys': isys,
+        'icore': icore,
+        'icoreM': icoreM,
+        'icoreL': icoreL,
+        'iana': iana,
+        'ihppa': ihppa,
+        'isysRemain': isysRemain,
+      };
+
+  factory NoisePinkDetail.fromJson(Map<String, dynamic> j) => NoisePinkDetail(
+        vsys: _d(j['vsys']),
+        vcore: _d(j['vcore']),
+        vcoreM: _d(j['vcoreM']),
+        vcoreL: _d(j['vcoreL']),
+        vana: _d(j['vana']),
+        vhppa: _d(j['vhppa']),
+        isys: _d(j['isys']),
+        icore: _d(j['icore']),
+        icoreM: _d(j['icoreM']),
+        icoreL: _d(j['icoreL']),
+        iana: _d(j['iana']),
+        ihppa: _d(j['ihppa']),
+        isysRemain: _d(j['isysRemain']),
+      );
+}
+
 /// Earbuds 真机使用场景电流（mA, VSYS=3.8V）
 class EarbudsScene {
   final double? hotelCal;
@@ -149,6 +216,8 @@ class EarbudsScene {
   final double? sniffPageAncOn;
   final double? powerOffAncOn;
 
+  final NoisePinkDetail? noisePinkDetail;
+
   final SceneTestConfig? testConfig;
 
   const EarbudsScene({
@@ -166,6 +235,7 @@ class EarbudsScene {
     this.callAncOn,
     this.sniffPageAncOn,
     this.powerOffAncOn,
+    this.noisePinkDetail,
     this.testConfig,
   });
 
@@ -184,6 +254,7 @@ class EarbudsScene {
         'callAncOn': callAncOn,
         'sniffPageAncOn': sniffPageAncOn,
         'powerOffAncOn': powerOffAncOn,
+        'noisePinkDetail': noisePinkDetail?.toJson(),
         'testConfig': testConfig?.toJson(),
       };
 
@@ -202,6 +273,10 @@ class EarbudsScene {
         callAncOn: _d(j['callAncOn']),
         sniffPageAncOn: _d(j['sniffPageAncOn']),
         powerOffAncOn: _d(j['powerOffAncOn']),
+        noisePinkDetail: j['noisePinkDetail'] == null
+            ? null
+            : NoisePinkDetail.fromJson(
+                Map<String, dynamic>.from(j['noisePinkDetail'] as Map)),
         testConfig: j['testConfig'] == null
             ? null
             : SceneTestConfig.fromJson(

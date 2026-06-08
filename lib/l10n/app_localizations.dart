@@ -217,6 +217,14 @@ class AppLocalizations {
       'eb_search_chip': 'Search chip...',
       'eb_chip_info': 'Chip Info',
       'eb_no_data': 'No Data',
+      'eb_noisepink_detail_title': 'NoisePink 8/15 AAC · Voltage & Power Breakdown',
+      'eb_npd_voltage': 'Voltage (V)',
+      'eb_npd_current': 'Current (mA)',
+      'eb_npd_isys': 'Isys',
+      'eb_npd_icore': 'Icore',
+      'eb_npd_iana': 'Iana',
+      'eb_npd_ihppa': 'Ihppa',
+      'eb_npd_isys_remain': 'Isys_remain',
 
       // === Admin Page ===
       'admin_title': 'Admin · Earbuds Data Editor',
@@ -233,6 +241,17 @@ class AppLocalizations {
       'admin_reset_confirm_title': 'Reset all data?',
       'admin_reset_confirm_body':
           'This restores every chip record to the original seed (const) data. Your in-memory edits will be lost.',
+      'admin_reset_domain_body':
+          'Records in this tab will be restored from the JSON seed files. Edits saved locally will be lost.',
+      'admin_sync_excel': 'Sync Excel',
+      'admin_sync_excel_pick_failed': 'No file selected or read failed.',
+      'admin_sync_excel_parse_failed':
+          'Could not parse the file. Please check the format.',
+      'admin_sync_excel_empty':
+          'No valid NoisePink rows found in the file.',
+      'admin_sync_excel_result_title': 'Sync finished',
+      'admin_sync_excel_result_body':
+          'Synced {matched} chip(s); skipped {skipped} unmatched.',
       'admin_delete_confirm_title': 'Delete chip?',
       'admin_delete_confirm_body':
           'Chip "{id}" will be removed from the in-memory store. Continue?',
@@ -256,6 +275,9 @@ class AppLocalizations {
       'admin_section_test_config': 'Scene Test Config',
       'admin_add_row': 'Add row',
       'admin_remove_row': 'Remove',
+      'admin_remove_field_confirm_title': 'Remove field?',
+      'admin_remove_field_confirm_body':
+          'Field "{name}" will be removed from this record. Continue?',
       'admin_no_chip_selected': 'Select a chip on the left to edit.',
       'admin_total_chips': 'Total: {n}',
       'admin_invalid_id': 'ID cannot be empty or duplicated.',
@@ -533,6 +555,14 @@ class AppLocalizations {
       'eb_search_chip': '搜索芯片...',
       'eb_chip_info': '芯片信息',
       'eb_no_data': '无数据',
+      'eb_noisepink_detail_title': 'NoisePink 8/15 AAC · 电压与功耗拆分',
+      'eb_npd_voltage': '电压 (V)',
+      'eb_npd_current': '电流 (mA)',
+      'eb_npd_isys': 'Isys',
+      'eb_npd_icore': 'Icore',
+      'eb_npd_iana': 'Iana',
+      'eb_npd_ihppa': 'Ihppa',
+      'eb_npd_isys_remain': 'Isys_remain',
 
       // === Admin Page ===
       'admin_title': '管理员 · 耳机数据编辑',
@@ -548,6 +578,13 @@ class AppLocalizations {
       'admin_saved': '已保存（内存中）。',
       'admin_reset_confirm_title': '确认还原全部数据？',
       'admin_reset_confirm_body': '所有芯片记录将还原为源代码（const）中的初始数据，内存中的编辑会丢失。',
+      'admin_reset_domain_body': '当前标签的芯片记录将从 JSON 种子文件重新还原，本地保存的编辑会丢失。',
+      'admin_sync_excel': '同步 Excel',
+      'admin_sync_excel_pick_failed': '未选择文件或读取失败。',
+      'admin_sync_excel_parse_failed': '无法解析该文件，请检查格式。',
+      'admin_sync_excel_empty': '文件中未找到有效的 NoisePink 数据行。',
+      'admin_sync_excel_result_title': '同步完成',
+      'admin_sync_excel_result_body': '已同步 {matched} 颗芯片；跳过 {skipped} 颗未匹配。',
       'admin_delete_confirm_title': '确认删除？',
       'admin_delete_confirm_body': '芯片 "{id}" 将从内存仓储中移除，是否继续？',
       'admin_cancel': '取消',
@@ -570,6 +607,8 @@ class AppLocalizations {
       'admin_section_test_config': '场景测试配置',
       'admin_add_row': '新增一行',
       'admin_remove_row': '删除',
+      'admin_remove_field_confirm_title': '确认删除字段？',
+      'admin_remove_field_confirm_body': '字段 "{name}" 将从该记录中移除，是否继续？',
       'admin_no_chip_selected': '请在左侧选择一个芯片进行编辑。',
       'admin_total_chips': '共 {n} 颗',
       'admin_invalid_id': 'ID 不能为空或与已有 ID 重复。',
@@ -854,6 +893,14 @@ class AppLocalizations {
   String get ebSearchChip => _t('eb_search_chip');
   String get ebChipInfo => _t('eb_chip_info');
   String get ebNoData => _t('eb_no_data');
+  String get ebNoisePinkDetailTitle => _t('eb_noisepink_detail_title');
+  String get ebNpdVoltage => _t('eb_npd_voltage');
+  String get ebNpdCurrent => _t('eb_npd_current');
+  String get ebNpdIsys => _t('eb_npd_isys');
+  String get ebNpdIcore => _t('eb_npd_icore');
+  String get ebNpdIana => _t('eb_npd_iana');
+  String get ebNpdIhppa => _t('eb_npd_ihppa');
+  String get ebNpdIsysRemain => _t('eb_npd_isys_remain');
 
   // ===== Admin =====
   String get adminTitle => _t('admin_title');
@@ -869,6 +916,7 @@ class AppLocalizations {
   String get adminSaved => _t('admin_saved');
   String get adminResetConfirmTitle => _t('admin_reset_confirm_title');
   String get adminResetConfirmBody => _t('admin_reset_confirm_body');
+  String get adminResetDomainBody => _t('admin_reset_domain_body');
   String get adminDeleteConfirmTitle => _t('admin_delete_confirm_title');
   String adminDeleteConfirmBody(String id) =>
       _t('admin_delete_confirm_body').replaceFirst('{id}', id);
@@ -892,6 +940,10 @@ class AppLocalizations {
   String get adminSectionTestConfig => _t('admin_section_test_config');
   String get adminAddRow => _t('admin_add_row');
   String get adminRemoveRow => _t('admin_remove_row');
+  String get adminRemoveFieldConfirmTitle =>
+      _t('admin_remove_field_confirm_title');
+  String adminRemoveFieldConfirmBody(String name) =>
+      _t('admin_remove_field_confirm_body').replaceFirst('{name}', name);
   String get adminNoChipSelected => _t('admin_no_chip_selected');
   String adminTotalChips(int n) =>
       _t('admin_total_chips').replaceFirst('{n}', '$n');
@@ -946,6 +998,15 @@ class AppLocalizations {
       _t('admin_object_editor_subtitle').replaceFirst('{n}', '$n');
   String get adminSavedLocal => _t('admin_saved_local');
   String get adminResetDomain => _t('admin_reset_domain');
+  String get adminSyncExcel => _t('admin_sync_excel');
+  String get adminSyncExcelPickFailed => _t('admin_sync_excel_pick_failed');
+  String get adminSyncExcelParseFailed => _t('admin_sync_excel_parse_failed');
+  String get adminSyncExcelEmpty => _t('admin_sync_excel_empty');
+  String get adminSyncExcelResultTitle => _t('admin_sync_excel_result_title');
+  String adminSyncExcelResultBody(int matched, int skipped) =>
+      _t('admin_sync_excel_result_body')
+          .replaceFirst('{matched}', '$matched')
+          .replaceFirst('{skipped}', '$skipped');
   String get adminExportAll => _t('admin_export_all');
   String get adminOpsHint => _t('admin_ops_hint');
   String get adminHeatHint => _t('admin_heat_hint');

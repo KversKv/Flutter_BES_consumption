@@ -47,9 +47,6 @@ class EarbudsState extends ChangeNotifier {
   /// 全部已建模芯片（数据源），页面只读。
   List<EarbudsChip> get allChips => EarbudsRepository.instance.chips;
 
-  /// 最多同时对比的芯片数。
-  static const int kMaxSelected = 6;
-
   // 当前选中的 Tab（指标分组）。
   MetricGroup _group = MetricGroup.scene;
   MetricGroup get group => _group;
@@ -107,15 +104,13 @@ class EarbudsState extends ChangeNotifier {
 
   bool isSelected(String id) => _selected.contains(id);
 
-  /// 返回：true=成功 toggle；false=想要 select 但超出上限。
+  /// 切换选中状态；不再限制最大数量，恒返回 true。
   bool toggleSelected(String id) {
     if (_selected.contains(id)) {
       _selected.remove(id);
-      notifyListeners();
-      return true;
+    } else {
+      _selected.add(id);
     }
-    if (_selected.length >= kMaxSelected) return false;
-    _selected.add(id);
     notifyListeners();
     return true;
   }
@@ -177,9 +172,19 @@ class EarbudsState extends ChangeNotifier {
   Set<String> _ensureMetricKeys(MetricGroup g) {
     final cached = _selectedMetricKeys[g];
     if (cached != null) return cached;
-    final all = metricsOf(g).map((m) => m.key).toSet();
-    _selectedMetricKeys[g] = all;
-    return all;
+    final defaults = _defaultMetricKeys(g);
+    _selectedMetricKeys[g] = defaults;
+    return defaults;
+  }
+
+  /// 各 group 的默认勾选 case。Scene 默认只对比 NoisePink 8/15 AAC，其余全选。
+  Set<String> _defaultMetricKeys(MetricGroup g) {
+    if (g == MetricGroup.scene) {
+      const noisePinkKey = 'noisepink';
+      final hasNoisePink = metricsOf(g).any((m) => m.key == noisePinkKey);
+      if (hasNoisePink) return {noisePinkKey};
+    }
+    return metricsOf(g).map((m) => m.key).toSet();
   }
 
   bool isMetricSelected(MetricGroup g, String key) =>

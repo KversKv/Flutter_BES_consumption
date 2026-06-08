@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/admin_session_store.dart';
 import '../services/chip_json_repository.dart';
 import '../services/chips_export_service.dart';
+import '../services/noisepink_sync_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
@@ -721,6 +723,10 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
             final record = repo.add(widget.domain);
             setState(() => _selectedId = record.id);
           },
+          onResetSeed: () => _confirmReset(),
+          onSyncExcel: widget.domain == ChipJsonDomain.earbuds
+              ? () => _syncExcel()
+              : null,
           onDuplicate: (id) {
             final record = repo.duplicate(widget.domain, id);
             setState(() => _selectedId = record.id);
@@ -786,6 +792,95 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
       ChipJsonRepository.instance.delete(widget.domain, id);
     }
   }
+
+  Future<void> _confirmReset() async {
+    final t = AppLocalizations.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.adminResetDomain),
+        content: Text(t.adminResetDomainBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(t.adminCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(t.adminConfirm),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await ChipJsonRepository.instance.resetToSeed(widget.domain);
+    }
+  }
+
+  Future<void> _syncExcel() async {
+    final t = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
+    FilePickerResult? picked;
+    try {
+      picked = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['xlsx', 'csv'],
+        withData: true,
+      );
+    } catch (_) {
+      picked = null;
+    }
+
+    final file = picked?.files.isNotEmpty == true ? picked!.files.first : null;
+    final bytes = file?.bytes;
+    if (file == null || bytes == null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.adminSyncExcelPickFailed)),
+      );
+      return;
+    }
+
+    Map<String, Map<String, dynamic>> details;
+    try {
+      details = NoisePinkSyncService.parse(file.name, bytes);
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.adminSyncExcelParseFailed)),
+      );
+      return;
+    }
+
+    if (details.isEmpty) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.adminSyncExcelEmpty)),
+      );
+      return;
+    }
+
+    final result =
+        ChipJsonRepository.instance.syncEarbudsNoisePinkDetail(details);
+
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.adminSyncExcelResultTitle),
+        content: Text(
+          t.adminSyncExcelResultBody(
+            result.matched.length,
+            result.skipped.length,
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(t.adminConfirm),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _RecordList extends StatelessWidget {
@@ -796,6 +891,8 @@ class _RecordList extends StatelessWidget {
   final ValueChanged<String> onSearch;
   final ValueChanged<String> onSelect;
   final VoidCallback onAdd;
+  final VoidCallback onResetSeed;
+  final VoidCallback? onSyncExcel;
   final ValueChanged<String> onDuplicate;
   final ValueChanged<String> onDelete;
   final void Function(int oldIndex, int newIndex) onReorder;
@@ -810,6 +907,8 @@ class _RecordList extends StatelessWidget {
     required this.onSearch,
     required this.onSelect,
     required this.onAdd,
+    required this.onResetSeed,
+    this.onSyncExcel,
     required this.onDuplicate,
     required this.onDelete,
     required this.onReorder,
@@ -860,6 +959,20 @@ class _RecordList extends StatelessWidget {
               icon: const Icon(Icons.add),
               label: Text(t.adminAddChip),
             ),
+            const SizedBox(height: AppSpacing.x2),
+            OutlinedButton.icon(
+              onPressed: onResetSeed,
+              icon: const Icon(Icons.restore),
+              label: Text(t.adminResetDomain),
+            ),
+            if (onSyncExcel != null) ...[
+              const SizedBox(height: AppSpacing.x2),
+              OutlinedButton.icon(
+                onPressed: onSyncExcel,
+                icon: const Icon(Icons.sync),
+                label: Text(t.adminSyncExcel),
+              ),
+            ],
             const SizedBox(height: AppSpacing.x3),
             Container(
               padding: const EdgeInsets.all(AppSpacing.x2),
@@ -1433,6 +1546,32 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
     ];
   }
 
+  Future<void> _confirmRemoveField(
+    String fieldName,
+    VoidCallback onConfirmed,
+  ) async {
+    final t = AppLocalizations.of(context);
+    final label = fieldName.trim().isEmpty ? '-' : fieldName.trim();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.adminRemoveFieldConfirmTitle),
+        content: Text(t.adminRemoveFieldConfirmBody(label)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(t.adminCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(t.adminConfirm),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) onConfirmed();
+  }
+
   Widget _fieldRow(AppLocalizations t, int index, List<_FieldDraft> fields) {
     final palette = AppPalette.of(context);
     final field = fields[index];
@@ -1500,7 +1639,10 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
             padding: const EdgeInsets.only(left: AppSpacing.x2),
             child: IconButton.filledTonal(
               tooltip: t.adminRemoveRow,
-              onPressed: () => setState(() => fields.removeAt(index)),
+              onPressed: () => _confirmRemoveField(
+                field.name,
+                () => setState(() => fields.removeAt(index)),
+              ),
               icon: const Icon(Icons.delete_outline),
             ),
           );
@@ -1619,7 +1761,10 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
             padding: const EdgeInsets.only(left: AppSpacing.x2),
             child: IconButton.filledTonal(
               tooltip: t.adminRemoveRow,
-              onPressed: () => mutate(() => fields.removeAt(index)),
+              onPressed: () => _confirmRemoveField(
+                field.name,
+                () => mutate(() => fields.removeAt(index)),
+              ),
               icon: const Icon(Icons.delete_outline),
             ),
           );

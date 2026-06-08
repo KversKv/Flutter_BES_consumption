@@ -27,6 +27,8 @@ dependencies:
   # archive: 纯 Dart zip 实现，admin 一键导出 chips/earbuds/ 等 JSON 资源
   # 给用户回写到 assets/data/ 用；六端通吃，无原生依赖。
   archive: ^3.6.1
+  # file_picker: admin「Sync Excel」选取 .xlsx/.csv 文件读取 bytes，六端通用。
+  file_picker: ^8.1.2
 
 dev_dependencies:
   flutter_test:
