@@ -118,6 +118,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _syncActiveUrl() {
     if (!mounted) return;
+    final route = ModalRoute.of(context);
+    if (route == null || !route.isCurrent) return;
     final uri = switch (selectedIndex) {
       0 => AppUrlState.uriForBle(context.read<AppState>()),
       1 => AppUrlState.uriForBt(context.read<BTState>()),

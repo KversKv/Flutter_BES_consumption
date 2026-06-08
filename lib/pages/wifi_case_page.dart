@@ -65,6 +65,8 @@ class _WifiCaseViewState extends State<_WifiCaseView> {
   void _syncUrl() {
     final state = _wifiState;
     if (!mounted || state == null) return;
+    final route = ModalRoute.of(context);
+    if (route == null || !route.isCurrent) return;
     final uri = AppUrlState.uriForWifi(state);
     final next = uri.toString();
     if (next == _lastSyncedUrl) return;

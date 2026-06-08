@@ -51,7 +51,7 @@ class MyApp extends StatelessWidget {
       ],
       child: Consumer<ThemeController>(
         builder: (context, themeCtrl, _) => MaterialApp(
-          title: 'BES CONSUMPTION (Demo)',
+          title: 'BES CONSUMPTION',
           locale: locale,
           supportedLocales: const [
             Locale('en'),
@@ -71,22 +71,29 @@ class MyApp extends StatelessWidget {
           builder: (context, child) => MaterialIconFontAnchor(
             child: child ?? const SizedBox.shrink(),
           ),
-          initialRoute: '/',
           onGenerateRoute: (settings) {
             final uri = Uri.parse(settings.name ?? '/');
             if (uri.path == '/admin') {
               return MaterialPageRoute<void>(
                 settings: settings,
-                builder: (_) => const AdminPage(secretKey: adminSecretKey),
+                builder: (context) => Title(
+                  color: Theme.of(context).colorScheme.primary,
+                  title: AppLocalizations.of(context).browserTitleAdmin,
+                  child: const AdminPage(secretKey: adminSecretKey),
+                ),
               );
             }
 
             final pageIndex = AppUrlState.pageIndexFromPath(uri.path);
             return MaterialPageRoute<void>(
               settings: settings,
-              builder: (_) => MyHomePage(
-                initialIndex: pageIndex,
-                initialUri: uri,
+              builder: (context) => Title(
+                color: Theme.of(context).colorScheme.primary,
+                title: AppLocalizations.of(context).browserTitleUser,
+                child: MyHomePage(
+                  initialIndex: pageIndex,
+                  initialUri: uri,
+                ),
               ),
             );
           },

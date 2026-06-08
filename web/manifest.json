@@ -1,11 +1,11 @@
 {
-    "name": "bes_consumption",
-    "short_name": "bes_consumption",
+    "name": "BES CONSUMPTION",
+    "short_name": "BES Power",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "BES chip power simulation and visualization.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

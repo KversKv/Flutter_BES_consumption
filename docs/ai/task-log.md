@@ -16,6 +16,24 @@
 
 ---
 
+## 2026-05-27 - Admin deep-link URL stability
+- **Type**: fix / routing
+- **Scope**: `lib/main.dart`, `lib/pages/home_page.dart`, `lib/pages/wifi_case_page.dart`
+- **Reason**: Opening `/admin` and logging in could leave a hidden user route alive long enough to rewrite the browser URL to `/ble?...`, breaking refresh.
+- **Change**: Let Flutter Web use the platform default initial route instead of forcing `/`; guarded user-page and Wi-Fi URL sync so they only replace the address bar while their route is current.
+- **Verification**: `flutter analyze` passed; `flutter test` passed; `flutter build web --debug` passed; local `/admin` browser check kept the URL at `/admin`.
+
+---
+
+## 2026-05-27 - Web tab icon and route titles
+- **Type**: ui / web
+- **Scope**: `web/index.html`, `web/favicon.svg`, `web/manifest.json`, `lib/main.dart`, `lib/l10n/app_localizations.dart`
+- **Reason**: Browser tab branding needed a power-themed icon, no trailing Demo label, and clear distinction between user and admin interfaces.
+- **Change**: Added an SVG favicon with battery/bolt power imagery; updated Web initial title and PWA metadata to BES CONSUMPTION; wrapped user routes and `/admin` in localized `Title` widgets so browser tabs show User vs Admin titles.
+- **Verification**: `flutter analyze` passed; `flutter build web --debug` passed; local browser check confirmed `/` title `BES CONSUMPTION - User`, `/admin` title `BES CONSUMPTION - Admin`, and `favicon.svg` as the active favicon.
+
+---
+
 ## 2026-05-27 - Remove BLE Coded S=8 PHY
 - **Type**: refactor
 - **Scope**: `lib/models/profile_params.dart`, `lib/services/power_calculator.dart`, `lib/widgets/config_panels.dart`, `lib/main_all_in_one.txt`

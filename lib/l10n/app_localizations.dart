@@ -10,7 +10,9 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
-      'appTitle': 'BES CONSUMPTION (Demo)',
+      'appTitle': 'BES CONSUMPTION',
+      'browser_title_user': 'BES CONSUMPTION - User',
+      'browser_title_admin': 'BES CONSUMPTION - Admin',
       'nav_ble': 'BLE CASE',
       'nav_bt': 'BT CASE',
       'nav_earbuds': 'Earbuds',
@@ -327,7 +329,9 @@ class AppLocalizations {
       'expand_panel': 'Expand panel',
     },
     'zh': {
-      'appTitle': 'BES 功耗 (演示)',
+      'appTitle': 'BES 功耗',
+      'browser_title_user': 'BES 功耗 - 用户界面',
+      'browser_title_admin': 'BES 功耗 - 管理员界面',
       'nav_ble': 'BLE CASE',
       'nav_bt': 'BT CASE',
       'nav_earbuds': 'Earbuds CASE',
@@ -640,6 +644,8 @@ class AppLocalizations {
   }
 
   String get appTitle => _t('appTitle');
+  String get browserTitleUser => _t('browser_title_user');
+  String get browserTitleAdmin => _t('browser_title_admin');
   String get navBle => _t('nav_ble');
   String get navBt => _t('nav_bt');
   String get navEarbuds => _t('nav_earbuds');
