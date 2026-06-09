@@ -1,0 +1,11 @@
+name: chip_server
+description: Minimal Dart backend for bes_consumption admin JSON persistence.
+publish_to: 'none'
+version: 0.0.1
+
+environment:
+  sdk: '>=3.6.0 <4.0.0'
+
+dependencies:
+  shelf: ^1.4.0
+  shelf_router: ^1.1.0

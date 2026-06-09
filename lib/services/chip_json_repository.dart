@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/ble_chip.dart';
 import '../models/bt_chip.dart';
 import '../models/wifi_chip.dart';
+import 'chip_backend_client.dart';
 import 'config/config_repository.dart';
 import 'earbuds_repository.dart';
 
@@ -76,8 +77,14 @@ class ChipJsonRepository extends ChangeNotifier {
   bool _loaded = false;
   ChipJsonDomain? _lastChangedDomain;
 
+  /// 本次 load 是否成功从后端拉到了数据（决定 Save 是否能真正落地 JSON）。
+  bool _backendActive = false;
+
   bool get isLoaded => _loaded;
   ChipJsonDomain? get lastChangedDomain => _lastChangedDomain;
+
+  /// 后端是否可用：true 时 Save 会写回服务器 JSON 源文件；false 时只能本地暂存。
+  bool get isBackendActive => _backendActive;
 
   List<ChipJsonRecord> records(ChipJsonDomain domain) =>
       List.unmodifiable(_records[domain] ?? const <ChipJsonRecord>[]);
@@ -91,6 +98,18 @@ class ChipJsonRepository extends ChangeNotifier {
 
   Future<void> load() async {
     if (_loaded) return;
+
+    // 优先从后端拉取 JSON 源文件，保证「每次打开从 JSON 加载」且与磁盘同步。
+    final fromBackend = await _tryLoadFromBackend();
+    if (fromBackend) {
+      _loaded = true;
+      _lastChangedDomain = null;
+      notifyListeners();
+      return;
+    }
+
+    // 后端不可用：回退到「本地存档 -> 资源种子」，并明确标记未与 JSON 同步。
+    _backendActive = false;
     final sp = await SharedPreferences.getInstance();
     final loaded = await Future.wait(
       ChipJsonDomain.values.map((domain) async {
@@ -108,6 +127,98 @@ class ChipJsonRepository extends ChangeNotifier {
     _loaded = true;
     _lastChangedDomain = null;
     notifyListeners();
+  }
+
+  /// 尝试从后端拉取全部 chips JSON 并填充 `_records`。
+  /// 成功返回 true（同时置 `_backendActive=true`），否则返回 false。
+  Future<bool> _tryLoadFromBackend() async {
+    final files = await ChipBackendClient.instance.fetchFiles();
+    if (files == null || files.isEmpty) return false;
+    try {
+      for (final domain in ChipJsonDomain.values) {
+        final records = _recordsFromBackendFiles(domain, files);
+        if (records == null) continue;
+        _records[domain]!
+          ..clear()
+          ..addAll(records);
+      }
+      for (final domain in ChipJsonDomain.values) {
+        _applyDomain(domain);
+      }
+      _backendActive = true;
+      return true;
+    } catch (e, st) {
+      debugPrint('[ChipJsonRepository] parse backend files failed: $e\n$st');
+      return false;
+    }
+  }
+
+  /// 把后端返回的 {相对路径: 内容} 解析为某个 domain 的记录列表，保持 index 顺序。
+  /// 该 domain 无任何文件时返回 null（保留回退/原值）。
+  List<ChipJsonRecord>? _recordsFromBackendFiles(
+    ChipJsonDomain domain,
+    Map<String, String> files,
+  ) {
+    final prefix = 'chips/${domain.key}/';
+    final indexRaw = files['${prefix}index.json'];
+    final domainFiles = <String, String>{
+      for (final entry in files.entries)
+        if (entry.key.startsWith(prefix) &&
+            entry.key != '${prefix}index.json')
+          entry.key.substring(prefix.length): entry.value,
+    };
+    if (indexRaw == null && domainFiles.isEmpty) return null;
+
+    final order = <_IndexEntry>[];
+    if (indexRaw != null) {
+      try {
+        order.addAll(_indexEntries(jsonDecode(indexRaw), domain));
+      } catch (_) {}
+    }
+
+    final out = <ChipJsonRecord>[];
+    final consumed = <String>{};
+    for (final entry in order) {
+      final raw = domainFiles[entry.file];
+      if (raw == null) continue;
+      final record = _recordFromRaw(domain, raw, entry.id);
+      if (record != null) {
+        out.add(record);
+        consumed.add(entry.file);
+      }
+    }
+    // index 未覆盖到的孤立文件也纳入，避免漏数据。
+    for (final fileEntry in domainFiles.entries) {
+      if (consumed.contains(fileEntry.key)) continue;
+      final record = _recordFromRaw(domain, fileEntry.value, null);
+      if (record != null) out.add(record);
+    }
+    return out;
+  }
+
+  ChipJsonRecord? _recordFromRaw(
+    ChipJsonDomain domain,
+    String raw,
+    String? fallbackId,
+  ) {
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return null;
+      final data = _canonicalData(domain, Map<String, dynamic>.from(decoded));
+      if (fallbackId != null) data['id'] ??= fallbackId;
+      final record = ChipJsonRecord(data);
+      return record.id.trim().isEmpty ? null : record;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// 将当前内存数据推送到后端 JSON 源文件。
+  /// 后端不可用时抛异常，调用方负责提示用户「未落地」。
+  Future<void> pushToBackend({ChipJsonDomain? only}) async {
+    final files = exportFiles(only: only);
+    await ChipBackendClient.instance.saveFiles(files);
+    _backendActive = true;
   }
 
   Future<List<ChipJsonRecord>> _loadDomain(
@@ -240,12 +351,37 @@ class ChipJsonRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 把 JSON 种子里「当前内存中缺失」的芯片补进 `_records`（按 id 大小写不敏感去重）。
+  /// 仅追加缺失项，不覆盖也不删除已有记录，因此不会丢失用户已做的编辑。
+  Future<void> _mergeMissingSeed(ChipJsonDomain domain) async {
+    final list = _records[domain]!;
+    final existing = <String>{
+      for (final r in list)
+        if (r.id.trim().isNotEmpty) r.id.trim().toLowerCase(),
+    };
+    final seed = await _loadSeed(domain);
+    var added = false;
+    for (final record in seed) {
+      final key = record.id.trim().toLowerCase();
+      if (key.isEmpty || existing.contains(key)) continue;
+      list.add(record);
+      existing.add(key);
+      added = true;
+    }
+    if (added) _commit(domain);
+  }
+
   /// 将外部解析得到的 NoisePink 详情按 BES ID 大小写不敏感匹配到 earbuds 记录。
   /// [detailsByLowerId] 的 key 为去掉前缀 "BES" 并小写后的芯片 ID。
   /// 返回 (已同步 ID 列表, 未匹配跳过的 ID 列表)。
-  ({List<String> matched, List<String> skipped}) syncEarbudsNoisePinkDetail(
+  ///
+  /// 匹配前先用 JSON 种子补齐内存中「缺失的已知芯片」（仅补缺、不覆盖已有编辑），
+  /// 避免旧存档丢失某些种子芯片时把本可匹配的行误判为未匹配而跳过。
+  Future<({List<String> matched, List<String> skipped})>
+      syncEarbudsNoisePinkDetail(
     Map<String, Map<String, dynamic>> detailsByLowerId,
-  ) {
+  ) async {
+    await _mergeMissingSeed(ChipJsonDomain.earbuds);
     final list = _records[ChipJsonDomain.earbuds]!;
     final index = <String, ChipJsonRecord>{};
     for (final record in list) {
@@ -320,6 +456,15 @@ class ChipJsonRepository extends ChangeNotifier {
     _lastChangedDomain = domain;
     notifyListeners();
     unawaited(_persist(domain));
+    // 后端可用时，结构性改动（增/删/复制/排序）也尽力同步到 JSON 源文件；
+    // 失败不在此处抛出（无 UI 上下文），由显式 Save/Sync/Reset 负责报错。
+    if (_backendActive) {
+      unawaited(
+        ChipBackendClient.instance.saveFiles(exportFiles(only: domain)).catchError(
+          (Object e) => debugPrint('[ChipJsonRepository] backend sync: $e'),
+        ),
+      );
+    }
   }
 
   Future<void> _persist(ChipJsonDomain domain) async {

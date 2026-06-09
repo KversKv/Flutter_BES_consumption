@@ -330,6 +330,9 @@ class AppLocalizations {
       'admin_group_other': 'Other parameters',
       'admin_object_editor_subtitle': '{n} nested fields',
       'admin_saved_local': 'Saved locally. Export JSON to update seed files.',
+      'admin_saved_json': 'Saved to JSON files on the server.',
+      'admin_save_backend_failed':
+          'Backend not reachable, NOT saved to JSON: {error}',
       'admin_reset_domain': 'Reset this tab',
       'admin_export_all': 'Export all JSON',
       'admin_ops_hint':
@@ -658,6 +661,8 @@ class AppLocalizations {
       'admin_group_other': '其他参数',
       'admin_object_editor_subtitle': '{n} 个嵌套字段',
       'admin_saved_local': '已保存到本地，导出 JSON 后可更新种子文件。',
+      'admin_saved_json': '已保存到服务器 JSON 文件。',
+      'admin_save_backend_failed': '后端不可达，未保存到 JSON：{error}',
       'admin_reset_domain': '还原当前标签',
       'admin_export_all': '导出全部 JSON',
       'admin_ops_hint': '编辑后使用“导出全部 JSON”，再用导出的文件覆盖 assets/data/chips/。',
@@ -997,6 +1002,9 @@ class AppLocalizations {
   String adminObjectEditorSubtitle(int n) =>
       _t('admin_object_editor_subtitle').replaceFirst('{n}', '$n');
   String get adminSavedLocal => _t('admin_saved_local');
+  String get adminSavedJson => _t('admin_saved_json');
+  String adminSaveBackendFailed(String error) =>
+      _t('admin_save_backend_failed').replaceFirst('{error}', error);
   String get adminResetDomain => _t('admin_reset_domain');
   String get adminSyncExcel => _t('admin_sync_excel');
   String get adminSyncExcelPickFailed => _t('admin_sync_excel_pick_failed');

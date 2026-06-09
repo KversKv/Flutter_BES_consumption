@@ -3,6 +3,32 @@
 > 关键变更与决策流水。**仅记"对未来任务有价值的事"**，琐碎改动不必入账。
 > 格式固定，方便增量写入与检索。
 
+### 2026-06-09 · admin 数据落地后端：Save 写回 JSON 源文件 + 启动从 JSON 加载
+- **类型**：feature / infra
+- **范围**：新增 `tool/chip_server/`（独立 Dart shelf 后端）、新增 `lib/services/chip_backend_client.dart`、`services/chip_json_repository.dart`、`pages/admin_page.dart`、`l10n/app_localizations.dart`、`pubspec.yaml`、`.gitignore`
+- **动因**：原「导出 zip → 手动覆盖 assets → git」流程太复杂，且 Web（Chrome 调试 / 服务器部署）受浏览器沙箱限制**无法直接写源码/服务器 JSON**。用户要求 Save 直接落地 JSON、启动从 JSON 加载、显示与 JSON 同步。纯前端物理不可行，故选「最小后端 API」方案。
+- **变更**：
+  1. 后端 `tool/chip_server/bin/server.dart`（shelf+shelf_router）：`GET /api/chips` 读 `assets/data/chips/**.json` 返回 `{files:{相对路径:内容}}`；`POST /api/chips` **写前自动备份到 `.chip_backups/<时间戳>/`** 再写回；可静态托管 `build/web`；含 CORS、路径白名单（仅 `chips/*.json`、拒 `..`）。端口 8088（可 `CHIP_SERVER_PORT` 覆盖）。
+  2. 前端 `ChipBackendClient`：GET/POST 封装；base 解析优先 `--dart-define=CHIP_API_BASE`，否则 Web 调试兜底 `http://localhost:8088`，部署同源。
+  3. `ChipJsonRepository.load()` 优先 `_tryLoadFromBackend()`（解析 files→records，保 index 顺序），成功置 `isBackendActive=true`；失败回退「SP 存档→资源种子」。新增 `pushToBackend({only})`。
+  4. `_commit` 在后端可用时对增/删/复制/排序**尽力静默同步**；显式 Save/Sync Excel/Reset 调 `pushToBackend` 并在失败时明确报错（`adminSaveBackendFailed`，**不静默回退**）。
+  5. i18n 新增 `admin_saved_json` / `admin_save_backend_failed`（zh+en）。
+- **约束/坑**：纯前端无法写服务器/源码 JSON（浏览器安全限制），必须有后端进程；release 打包后 assets 只读。`.chip_backups/` 已入 `.gitignore`。
+- **校验**：`flutter analyze lib` + `dart analyze tool/chip_server` → No issues；`flutter test` → 15 passed；手动跑后端验证 GET 返回 54 文件、POST 写 1 文件并生成备份、备份可完整恢复 index.json。
+
+### 2026-06-08 · Sync Excel 匹配前自动合并 JSON 种子
+- **类型**：fix
+- **范围**：`services/chip_json_repository.dart`、`pages/admin_page.dart`
+- **动因**：旧存档 `admin_chip_json_db_v1_earbuds` 缺失某些种子芯片（如 1307PH/1503P）时，`syncEarbudsNoisePinkDetail` 因 index 取不到记录把本可匹配的 Excel 行误判为「未匹配」跳过，用户表现为「只剩 1605」。解析与匹配逻辑本身正确（已用真实 xlsx 跑通：解析出 1505/1307ph/1307p/1307s/1503p/1503）。
+- **变更**：
+  1. 新增私有 `_mergeMissingSeed(domain)`：按 id 大小写不敏感，把 JSON 种子中「内存缺失」的芯片**仅追加**进 `_records`（不覆盖、不删除已有编辑），有新增才 `_commit`。
+  2. `syncEarbudsNoisePinkDetail` 改为 `async`，匹配前先 `await _mergeMissingSeed(earbuds)`。
+  3. `admin_page._syncExcel` 调用处加 `await`。
+- **影响**：无需先手动 Reset 即可正确匹配种子里已有的芯片；旧存档自动补齐。
+- **校验**：`flutter analyze` → No issues found；`flutter test` → All tests passed。
+
+---
+
 ## 条目模板
 ```markdown
 ### YYYY-MM-DD · <一句话标题>

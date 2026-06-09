@@ -29,6 +29,8 @@ dependencies:
   archive: ^3.6.1
   # file_picker: admin「Sync Excel」选取 .xlsx/.csv 文件读取 bytes，六端通用。
   file_picker: ^8.1.2
+  # http: admin 与最小后端(tool/chip_server)通信，Save 落地 JSON / 启动从后端加载。
+  http: ^1.2.0
 
 dev_dependencies:
   flutter_test:

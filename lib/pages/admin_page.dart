@@ -795,6 +795,7 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
 
   Future<void> _confirmReset() async {
     final t = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -814,6 +815,14 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
     );
     if (ok == true) {
       await ChipJsonRepository.instance.resetToSeed(widget.domain);
+      try {
+        await ChipJsonRepository.instance.pushToBackend(only: widget.domain);
+      } catch (e) {
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(content: Text(t.adminSaveBackendFailed('$e'))),
+        );
+      }
     }
   }
 
@@ -858,8 +867,20 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
       return;
     }
 
-    final result =
-        ChipJsonRepository.instance.syncEarbudsNoisePinkDetail(details);
+    final result = await ChipJsonRepository.instance
+        .syncEarbudsNoisePinkDetail(details);
+
+    if (result.matched.isNotEmpty) {
+      try {
+        await ChipJsonRepository.instance
+            .pushToBackend(only: ChipJsonDomain.earbuds);
+      } catch (e) {
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(content: Text(t.adminSaveBackendFailed('$e'))),
+        );
+      }
+    }
 
     if (!mounted) return;
     await showDialog<void>(
@@ -1918,8 +1939,9 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
     field.value = '';
   }
 
-  void _save() {
+  Future<void> _save() async {
     final t = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
     final data = <String, dynamic>{};
     for (final field in _fields) {
       final name = field.name.trim();
@@ -1945,9 +1967,16 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
       return;
     }
     setState(() => _error = null);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(t.adminSavedLocal)),
-    );
+    try {
+      await ChipJsonRepository.instance.pushToBackend(only: widget.domain);
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(t.adminSavedJson)));
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.adminSaveBackendFailed('$e'))),
+      );
+    }
   }
 
   static _FieldType _typeOf(dynamic value) {
