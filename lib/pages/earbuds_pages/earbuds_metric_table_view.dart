@@ -592,7 +592,7 @@ class _NoisePinkDetailPanel extends StatelessWidget {
     final es = context.watch<EarbudsState>();
 
     final hasAny =
-        chips.any((c) => c.scene.noisePinkDetail != null);
+        chips.any((c) => c.noisePinkDetail != null);
     if (!hasAny) {
       return const SizedBox.shrink();
     }
@@ -602,7 +602,7 @@ class _NoisePinkDetailPanel extends StatelessWidget {
     );
 
     final isysValues = chips
-        .map((c) => c.scene.noisePinkDetail?.isys)
+        .map((c) => c.noisePinkDetail?.isys)
         .whereType<double>()
         .toList();
     final double? isysMin =
@@ -703,7 +703,7 @@ class _NoisePinkDetailPanel extends StatelessWidget {
                 rows: chips.asMap().entries.map((entry) {
                   final idx = entry.key;
                   final c = entry.value;
-                  final d = c.scene.noisePinkDetail;
+                  final d = c.noisePinkDetail;
                   final colorIdx = es.selectedIds.indexOf(c.id);
                   final chipColor = palette.dataSeries[
                       colorIdx % palette.dataSeries.length];

@@ -1,16 +1,6 @@
 {
+  "version": 1,
   "id": "chip_new",
-  "process": null,
-  "massProduction": false,
-  "scene": {
-    "hotelCal": null,
-    "mute": null,
-    "noisePink": null,
-    "k1Hz": null,
-    "call": null,
-    "standby": null,
-    "powerOff": null,
-    "noisePinkDetail": null,
-    "testConfig": null
-  }
+  "txSweep": null,
+  "mcuRun": null
 }

@@ -204,8 +204,6 @@ class EarbudsScene {
   final double? standby;
   final double? powerOff;
 
-  final NoisePinkDetail? noisePinkDetail;
-
   final SceneTestConfig? testConfig;
 
   const EarbudsScene({
@@ -216,7 +214,6 @@ class EarbudsScene {
     this.call,
     this.standby,
     this.powerOff,
-    this.noisePinkDetail,
     this.testConfig,
   });
 
@@ -228,7 +225,6 @@ class EarbudsScene {
         'call': call,
         'standby': standby,
         'powerOff': powerOff,
-        'noisePinkDetail': noisePinkDetail?.toJson(),
         'testConfig': testConfig?.toJson(),
       };
 
@@ -240,10 +236,6 @@ class EarbudsScene {
         call: _d(j['call']),
         standby: _d(j['standby']),
         powerOff: _d(j['powerOff']),
-        noisePinkDetail: j['noisePinkDetail'] == null
-            ? null
-            : NoisePinkDetail.fromJson(
-                Map<String, dynamic>.from(j['noisePinkDetail'] as Map)),
         testConfig: j['testConfig'] == null
             ? null
             : SceneTestConfig.fromJson(
@@ -299,6 +291,7 @@ class EarbudsChip {
   final SleepCurrent sleep;
   final List<RunCurrent> mcuRun;
   final EarbudsScene scene;
+  final NoisePinkDetail? noisePinkDetail;
   final List<TxSweepVariant> txSweep;
   final RxSweep? rxVana; // RX Current in VANA 域
   final RxSweep? rxVsys; // RX Current in VSYS=3.8V 域
@@ -310,6 +303,7 @@ class EarbudsChip {
     this.sleep = const SleepCurrent(),
     this.mcuRun = const [],
     this.scene = const EarbudsScene(),
+    this.noisePinkDetail,
     this.txSweep = const [],
     this.rxVana,
     this.rxVsys,
@@ -322,6 +316,7 @@ class EarbudsChip {
         'sleep': sleep.toJson(),
         'mcuRun': _runCurrentMap(mcuRun),
         'scene': scene.toJson(),
+        'noisePinkDetail': noisePinkDetail?.toJson(),
         'txSweep': _txSweepMap(txSweep),
         'rxVana': rxVana?.toJson(),
         'rxVsys': rxVsys?.toJson(),
@@ -340,6 +335,10 @@ class EarbudsChip {
             ? const EarbudsScene()
             : EarbudsScene.fromJson(
                 Map<String, dynamic>.from(j['scene'] as Map)),
+        noisePinkDetail: j['noisePinkDetail'] == null
+            ? null
+            : NoisePinkDetail.fromJson(
+                Map<String, dynamic>.from(j['noisePinkDetail'] as Map)),
         txSweep: _txSweepList(j['txSweep']),
         rxVana: j['rxVana'] == null
             ? null

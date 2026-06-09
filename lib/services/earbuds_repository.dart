@@ -142,7 +142,6 @@ class MutableEarbudsScene {
   double? call;
   double? standby;
   double? powerOff;
-  NoisePinkDetail? noisePinkDetail;
   MutableSceneTestConfig testConfig;
 
   MutableEarbudsScene({
@@ -153,7 +152,6 @@ class MutableEarbudsScene {
     this.call,
     this.standby,
     this.powerOff,
-    this.noisePinkDetail,
     MutableSceneTestConfig? testConfig,
   }) : testConfig = testConfig ?? MutableSceneTestConfig();
 
@@ -165,7 +163,6 @@ class MutableEarbudsScene {
         call: s.call,
         standby: s.standby,
         powerOff: s.powerOff,
-        noisePinkDetail: s.noisePinkDetail,
         testConfig: MutableSceneTestConfig.from(s.testConfig),
       );
 
@@ -177,7 +174,6 @@ class MutableEarbudsScene {
         call: call,
         standby: standby,
         powerOff: powerOff,
-        noisePinkDetail: noisePinkDetail,
         testConfig: testConfig.toImmutable(),
       );
 }
@@ -222,6 +218,7 @@ class MutableEarbudsChip {
   MutableSleepCurrent sleep;
   List<MutableRunCurrent> mcuRun;
   MutableEarbudsScene scene;
+  NoisePinkDetail? noisePinkDetail;
   List<MutableTxSweepVariant> txSweep;
   MutableRxSweep rxVana;
   MutableRxSweep rxVsys;
@@ -233,6 +230,7 @@ class MutableEarbudsChip {
     MutableSleepCurrent? sleep,
     List<MutableRunCurrent>? mcuRun,
     MutableEarbudsScene? scene,
+    this.noisePinkDetail,
     List<MutableTxSweepVariant>? txSweep,
     MutableRxSweep? rxVana,
     MutableRxSweep? rxVsys,
@@ -250,6 +248,7 @@ class MutableEarbudsChip {
         sleep: MutableSleepCurrent.from(c.sleep),
         mcuRun: c.mcuRun.map(MutableRunCurrent.from).toList(),
         scene: MutableEarbudsScene.from(c.scene),
+        noisePinkDetail: c.noisePinkDetail,
         txSweep: c.txSweep.map(MutableTxSweepVariant.from).toList(),
         rxVana: MutableRxSweep.from(c.rxVana),
         rxVsys: MutableRxSweep.from(c.rxVsys),
@@ -262,6 +261,7 @@ class MutableEarbudsChip {
         sleep: sleep.toImmutable(),
         mcuRun: mcuRun.map((e) => e.toImmutable()).toList(),
         scene: scene.toImmutable(),
+        noisePinkDetail: noisePinkDetail,
         txSweep: txSweep.map((e) => e.toImmutable()).toList(),
         rxVana: rxVana.toImmutable(),
         rxVsys: rxVsys.toImmutable(),
@@ -280,8 +280,8 @@ class EarbudsRepository extends ChangeNotifier {
 
   static final EarbudsRepository instance = EarbudsRepository._();
 
-  static const String _storageKey = 'earbuds_db_v1';
-  static const int _schemaVersion = 1;
+  static const String _storageKey = 'earbuds_db_v2';
+  static const int _schemaVersion = 2;
 
   final List<MutableEarbudsChip> _records = [];
   List<EarbudsChip> _snapshot = const [];
@@ -309,6 +309,7 @@ class EarbudsRepository extends ChangeNotifier {
           _records
             ..clear()
             ..addAll(chips.map(MutableEarbudsChip.from));
+          _dedupeRecords();
           _rebuildSnapshot();
           _loaded = true;
           notifyListeners();
@@ -341,9 +342,15 @@ class EarbudsRepository extends ChangeNotifier {
   }
 
   void _rebuildSnapshot() {
-    _snapshot = List<EarbudsChip>.unmodifiable(
-      _records.map((e) => e.toImmutable()),
-    );
+    final seen = <String>{};
+    final unique = <EarbudsChip>[];
+    for (final r in _records) {
+      final chip = r.toImmutable();
+      if (chip.id.isEmpty) continue;
+      if (!seen.add(chip.id)) continue;
+      unique.add(chip);
+    }
+    _snapshot = List<EarbudsChip>.unmodifiable(unique);
   }
 
   Future<void> _persist() async {
@@ -469,9 +476,17 @@ class EarbudsRepository extends ChangeNotifier {
     _records
       ..clear()
       ..addAll(chips.map(MutableEarbudsChip.from));
+    _dedupeRecords();
     _rebuildSnapshot();
     notifyListeners();
     unawaited(_persist());
+  }
+
+  /// 按 id 去重内部记录（保留首次出现），防止下游 `DropdownButton` 等
+  /// 依赖唯一 id 的控件因重复芯片触发断言。
+  void _dedupeRecords() {
+    final seen = <String>{};
+    _records.removeWhere((r) => !seen.add(r.id));
   }
 
   /// 把当前内存中的全套芯片数据导出为「拆分文件」格式。

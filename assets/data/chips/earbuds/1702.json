@@ -10,7 +10,6 @@
     "call": 4.5,
     "standby": 0.4,
     "powerOff": 0.004,
-    "noisePinkDetail": null,
     "testConfig": {
       "testPhone": "Pixel 3(Android 9)",
       "vbat": 3.8,
@@ -20,5 +19,8 @@
       "softwareVersion": "BES1702",
       "moduleVoltageDetail": null
     }
-  }
+  },
+  "noisePinkDetail": null,
+  "mcuRun": null,
+  "txSweep": null
 }

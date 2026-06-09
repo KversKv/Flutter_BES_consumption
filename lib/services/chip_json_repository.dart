@@ -78,7 +78,7 @@ class ChipJsonRepository extends ChangeNotifier {
   static final ChipJsonRepository instance = ChipJsonRepository._();
 
   static const int _schemaVersion = 1;
-  static const String _storagePrefix = 'admin_chip_json_db_v1_';
+  static const String _storagePrefix = 'admin_chip_json_db_v2_';
 
   final Map<ChipJsonDomain, List<ChipJsonRecord>> _records = {
     for (final domain in ChipJsonDomain.values) domain: <ChipJsonRecord>[],
@@ -325,21 +325,6 @@ class ChipJsonRepository extends ChangeNotifier {
             'call': null,
             'standby': null,
             'powerOff': null,
-            'noisePinkDetail': {
-              'vsys': null,
-              'vcore': null,
-              'vcoreM': null,
-              'vcoreL': null,
-              'vana': null,
-              'vhppa': null,
-              'isys': null,
-              'icore': null,
-              'icoreM': null,
-              'icoreL': null,
-              'iana': null,
-              'ihppa': null,
-              'isysRemain': null,
-            },
             'testConfig': {
               'testPhone': null,
               'vbat': null,
@@ -349,6 +334,21 @@ class ChipJsonRepository extends ChangeNotifier {
               'softwareVersion': null,
               'moduleVoltageDetail': null,
             },
+          },
+          'noisePinkDetail': {
+            'vsys': null,
+            'vcore': null,
+            'vcoreM': null,
+            'vcoreL': null,
+            'vana': null,
+            'vhppa': null,
+            'isys': null,
+            'icore': null,
+            'icoreM': null,
+            'icoreL': null,
+            'iana': null,
+            'ihppa': null,
+            'isysRemain': null,
           },
         };
       case ChipJsonDomain.earbudsTx:
@@ -484,14 +484,14 @@ class ChipJsonRepository extends ChangeNotifier {
         skipped.add(entry.key);
         continue;
       }
-      final rawScene = record.data['scene'];
-      final scene = rawScene is Map
-          ? Map<String, dynamic>.from(rawScene)
-          : <String, dynamic>{};
-      scene['noisePinkDetail'] =
+      record.data['noisePinkDetail'] =
           ChipJsonRecord._normalizeMap(Map<String, dynamic>.from(entry.value));
-      record.data['scene'] = scene;
-      record.data.remove('noisePinkDetail');
+      final rawScene = record.data['scene'];
+      if (rawScene is Map) {
+        final scene = Map<String, dynamic>.from(rawScene);
+        scene.remove('noisePinkDetail');
+        record.data['scene'] = scene;
+      }
       matched.add(record.id);
     }
     if (matched.isNotEmpty) {

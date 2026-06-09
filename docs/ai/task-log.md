@@ -3,6 +3,20 @@
 > 关键变更与决策流水。**仅记"对未来任务有价值的事"**，琐碎改动不必入账。
 > 格式固定，方便增量写入与检索。
 
+### 2026-06-09 · noisePinkDetail 由 scene 子级上移为芯片一级字段
+- **类型**：refactor / schema
+- **范围**：`models/earbuds.dart`、`services/earbuds_repository.dart`、`services/chip_json_repository.dart`、`pages/earbuds_pages/earbuds_metric_table_view.dart`、`assets/data/chips/earbuds/*.json`（19 个）
+- **动因**：用户要求把 `noisePinkDetail` 从 `scene` 内部提到芯片一级，便于直接编辑。
+- **决策**：**不做向后兼容**（用户确认），完全切换；旧格式（嵌在 scene 内）的值不再被读取。
+- **变更**：
+  1. `EarbudsScene` 移除 `noisePinkDetail`；`EarbudsChip` 新增同名一级字段（含 `toJson`/`fromJson`）。
+  2. `MutableEarbudsScene` 移除、`MutableEarbudsChip` 新增 `noisePinkDetail`，同步 `from`/`toImmutable`。
+  3. `chip_json_repository`：`_skeletonFor` 占位移到一级；`syncEarbudsNoisePinkDetail` 改为写一级并清掉 scene 内旧键。
+  4. 19 个 earbuds JSON 用脚本把 `scene.noisePinkDetail` 上移到根，再用 Python 统一回 2 空格缩进、无 BOM、LF。
+  5. 视图 `c.scene.noisePinkDetail` → `c.noisePinkDetail`。
+- **重置数据**：bump 存档键 `earbuds_db_v1→v2`（`_schemaVersion 1→2`）与 admin 存档前缀 `admin_chip_json_db_v1_→v2_`，下次启动旧存档未命中即自动从新 JSON 种子重建。`chip_json_repository._schemaVersion` 保持 1（导出 index.json 版本号无关本次改动）。
+- **校验**：`flutter analyze` → No issues；`flutter test` → 15 passed。
+
 ### 2026-06-09 · admin 数据落地后端：Save 写回 JSON 源文件 + 启动从 JSON 加载
 - **类型**：feature / infra
 - **范围**：新增 `tool/chip_server/`（独立 Dart shelf 后端）、新增 `lib/services/chip_backend_client.dart`、`services/chip_json_repository.dart`、`pages/admin_page.dart`、`l10n/app_localizations.dart`、`pubspec.yaml`、`.gitignore`

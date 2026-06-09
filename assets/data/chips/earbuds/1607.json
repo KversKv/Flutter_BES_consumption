@@ -10,7 +10,6 @@
     "call": 6.94,
     "standby": 0.3,
     "powerOff": 0.002,
-    "noisePinkDetail": null,
     "testConfig": {
       "testPhone": "Pixel 3(Android 9)",
       "vbat": 3.8,
@@ -20,5 +19,22 @@
       "softwareVersion": "BES1607",
       "moduleVoltageDetail": null
     }
-  }
+  },
+  "noisePinkDetail": {
+    "vsys": 3.8,
+    "vcore": 0.75,
+    "vcoreM": 0.75,
+    "vcoreL": null,
+    "vana": 0.9,
+    "vhppa": 1.7,
+    "isys": 4.322,
+    "icore": 8.798,
+    "icoreM": null,
+    "icoreL": null,
+    "iana": 3.17,
+    "ihppa": 2.118,
+    "isysRemain": 0.162
+  },
+  "mcuRun": "",
+  "txSweep": ""
 }

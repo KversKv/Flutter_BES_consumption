@@ -10,21 +10,23 @@
     "call": 4.52,
     "standby": 0.25,
     "powerOff": 0.005,
-    "noisePinkDetail": {
-      "vsys": 3.8,
-      "vcore": 0.7,
-      "vcoreM": 0.7,
-      "vcoreL": null,
-      "vana": 1.2,
-      "vhppa": 1.7,
-      "isys": 3.183,
-      "icore": 5.411,
-      "icoreM": null,
-      "icoreL": null,
-      "iana": 2.658,
-      "ihppa": 1.553,
-      "isysRemain": 0.045
-    },
     "testConfig": null
-  }
+  },
+  "noisePinkDetail": {
+    "vsys": 3.8,
+    "vcore": 0.7,
+    "vcoreM": 0.7,
+    "vcoreL": null,
+    "vana": 1.2,
+    "vhppa": 1.7,
+    "isys": 3.183,
+    "icore": 5.411,
+    "icoreM": null,
+    "icoreL": null,
+    "iana": 2.658,
+    "ihppa": 1.553,
+    "isysRemain": 0.045
+  },
+  "mcuRun": null,
+  "txSweep": null
 }

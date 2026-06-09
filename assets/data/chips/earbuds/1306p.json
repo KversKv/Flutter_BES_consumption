@@ -10,7 +10,9 @@
     "call": 5.61,
     "standby": 0.4,
     "powerOff": 0.003,
-    "noisePinkDetail": null,
     "testConfig": null
-  }
+  },
+  "noisePinkDetail": null,
+  "mcuRun": null,
+  "txSweep": null
 }
