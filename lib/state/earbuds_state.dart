@@ -258,8 +258,9 @@ class EarbudsState extends ChangeNotifier {
 
   /// 当前（应用筛选后的）可选芯片池。
   List<EarbudsChip> get visibleChips {
-    if (!_massProductionOnly) return allChips;
-    return allChips.where((c) => c.massProduction).toList(growable: false);
+    final base = allChips.where((c) => c.id != 'chip_new');
+    if (!_massProductionOnly) return base.toList(growable: false);
+    return base.where((c) => c.massProduction).toList(growable: false);
   }
 
   /// 当前选中的芯片对象列表（保留点击顺序）。

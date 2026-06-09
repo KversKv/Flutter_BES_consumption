@@ -1,5 +1,19 @@
 # Task Log
 
+### 2026-06-09 - Web 首屏加载性能优化
+- **Type**: performance / deploy
+- **Scope**: `lib/main.dart`, `lib/pages/admin_page.dart`, `lib/theme/app_theme.dart`, `pubspec.yaml`, `web/flutter_bootstrap.js`, `web/font-fallback/`, `.vscode/launch.json`, `start_test.py`, `update_serve.py`, `.TRAE/rules/project-rules.md`, server Nginx config
+- **Reason**: Server deployment first open felt 10s+; browser Network showed WASM content download slow, while curl/scp and probe fetch/compile were sub-100ms.
+- **Change**: Nginx enabled gzip/static gzip and long cache for CanvasKit; added `web/flutter_bootstrap.js` to force local `canvasKitBaseUrl: 'canvaskit/'` instead of gstatic and `fontFallbackBaseUrl: 'font-fallback/'`; bundled the observed Roboto fallback font and all `Noto Sans SC` v37 shards under `web/font-fallback/`; added project rule forbidding Web runtime external CDN resources; made local run/deploy scripts pass `--no-web-resources-cdn`; added VS Code profile launch entries for local startup performance checks because debug DDC loads large `*.dart.lib.js` modules; normal startup no longer awaits admin-only `ChipJsonRepository.load()`; `/admin` loads that repository only after an authenticated session; removed runtime `google_fonts` usage/dependency and rebuilt with icon tree-shake.
+- **Verification**: `flutter analyze` passed; release Web build passed; server curl checks show `main.dart.js` and `canvaskit/chromium/canvaskit.wasm` return quickly; `font-fallback/roboto/v32/KFOmCnqEu92Fr1Me4GZLCzYlKw.woff2` and representative `font-fallback/notosanssc/v37/k3kCo84...woff2` shards return HTTP 200 as `font/woff2`.
+
+### 2026-06-09 - Web deployment manifest/static asset guard
+- **Type**: fix / infra
+- **Scope**: `update_serve.py`
+- **Reason**: Server console reported `manifest.json` syntax errors and `assets/FontManifest.json` 404; local rebuild showed both files are generated correctly, so the risky path is deploying an incomplete or stale `build/web` or an Nginx fallback serving `index.html` for static JSON.
+- **Change**: Added local `build/web` validation for `manifest.json`, `assets/AssetManifest.bin.json`, and `assets/FontManifest.json`; after upload, the deploy script now reloads Nginx and verifies `manifest.json` is served as JSON and `assets/FontManifest.json` returns HTTP 200 from `127.0.0.1:5174`.
+- **Verification**: `flutter build web --release --no-tree-shake-icons --pwa-strategy=none` generated the required files; `python -m py_compile update_serve.py` passed.
+
 > 关键变更与决策流水。**仅记"对未来任务有价值的事"**，琐碎改动不必入账。
 > 格式固定，方便增量写入与检索。
 

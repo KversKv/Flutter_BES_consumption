@@ -13,10 +13,18 @@
     4. 服务器已存在静态站点目录与后端目录（脚本会用 sudo 自动创建/授权）。
 
 用法（项目根目录）：
-    python update_serve.py                 # 前端 + 后端 全量更新
+    python update_serve.py                 # 前端 + 后端 + 数据 全量更新（默认用仓库数据覆盖服务器）
     python update_serve.py --frontend-only # 只更新前端静态
-    python update_serve.py --backend-only  # 只更新后端
+    python update_serve.py --backend-only  # 只更新后端（含数据）
     python update_serve.py --skip-build    # 跳过 flutter build（用已有 build/web）
+    python update_serve.py --skip-data     # 更新后端但不上传 assets，保留线上 admin 编辑的数据
+    python update_serve.py --pull-data     # 把服务器上线编辑的 chips 数据拉回本地仓库（单独用时只拉取）
+
+数据策略：
+    后端 chips 数据落地于服务器 {BACKEND_DIR}/assets/data/chips/**.json。
+    默认部署会用本地仓库的 assets 覆盖服务器（chip_server 写回时会自动备份原文件）；
+    若想保留线上 admin 编辑的数据，加 --skip-data；
+    若想把线上编辑同步回仓库，先 --pull-data 再提交。
 """
 
 import argparse
@@ -38,6 +46,13 @@ SERVICE_NAME = "chip_server"          # systemd 服务名
 
 SSH_TARGET = f"{SSH_USER}@{SSH_HOST}"
 IS_WINDOWS = os.name == "nt"
+WEB_REQUIRED_FILES = (
+    "index.html",
+    "main.dart.js",
+    "manifest.json",
+    os.path.join("assets", "AssetManifest.bin.json"),
+    os.path.join("assets", "FontManifest.json"),
+)
 
 
 def run(cmd, cwd=None, check=True):
@@ -75,10 +90,56 @@ def build_web():
     run(
         [
             flutter_cmd(), "build", "web", "--release",
+            "--no-web-resources-cdn",
             "--no-tree-shake-icons", "--pwa-strategy=none",
         ],
         cwd=PROJECT_ROOT,
     )
+
+
+def validate_web_build(build_dir):
+    missing = [
+        rel_path for rel_path in WEB_REQUIRED_FILES
+        if not os.path.isfile(os.path.join(build_dir, rel_path))
+    ]
+    if missing:
+        print("[update] build/web is incomplete; missing required files:")
+        for rel_path in missing:
+            print(f"[update]   - {rel_path}")
+        print("[update] Please run flutter build web again before deploying.")
+        sys.exit(1)
+
+    manifest_path = os.path.join(build_dir, "manifest.json")
+    with open(manifest_path, "rb") as file:
+        prefix = file.read(1)
+    if prefix != b"{":
+        print("[update] build/web/manifest.json does not look like JSON.")
+        sys.exit(1)
+
+
+def verify_frontend_on_server():
+    remote_check = (
+        "set -e; "
+        f"test -s {WEB_ROOT}/manifest.json; "
+        f"test -s {WEB_ROOT}/assets/FontManifest.json; "
+        f"head -c 1 {WEB_ROOT}/manifest.json | grep -q '{{'; "
+        "manifest_code=$(curl -s -o /tmp/flutter_manifest_check "
+        f"-w '%{{http_code}}' http://127.0.0.1:{WEB_PORT}/manifest.json); "
+        "font_code=$(curl -s -o /dev/null "
+        f"-w '%{{http_code}}' http://127.0.0.1:{WEB_PORT}/assets/FontManifest.json); "
+        "first_char=$(head -c 1 /tmp/flutter_manifest_check); "
+        "rm -f /tmp/flutter_manifest_check; "
+        "if [ \"$manifest_code\" != \"200\" ] || [ \"$first_char\" != \"{\" ]; then "
+        "echo \"manifest.json is not being served as JSON; check Nginx root/try_files.\"; "
+        "exit 1; "
+        "fi; "
+        "if [ \"$font_code\" != \"200\" ]; then "
+        "echo \"assets/FontManifest.json is not reachable; check uploaded build/web/assets.\"; "
+        "exit 1; "
+        "fi; "
+        "echo \"frontend static checks passed\""
+    )
+    ssh(remote_check)
 
 
 def update_frontend():
@@ -86,6 +147,7 @@ def update_frontend():
     if not os.path.isdir(build_dir):
         print(f"[update] 未找到 {build_dir}，请先构建（去掉 --skip-build）。")
         sys.exit(1)
+    validate_web_build(build_dir)
 
     print("[update] 准备服务器静态目录 ...")
     ssh(
@@ -100,10 +162,13 @@ def update_frontend():
         scp(os.path.join(build_dir, name), f"{WEB_ROOT}/", recursive=True)
     # 清理 sourcemap
     ssh(f'sudo find {WEB_ROOT} -name "*.map" -delete', check=False)
+    # reload nginx，确保新静态立即生效
+    ssh("sudo nginx -t && sudo systemctl reload nginx", check=False)
+    verify_frontend_on_server()
     print("[update] 前端更新完成。")
 
 
-def update_backend():
+def update_backend(push_data=True):
     src_dir = os.path.join(PROJECT_ROOT, "tool", "chip_server")
     assets_dir = os.path.join(PROJECT_ROOT, "assets")
     if not os.path.isdir(src_dir):
@@ -116,44 +181,88 @@ def update_backend():
         f"&& sudo chown -R {SSH_USER}:{SSH_USER} {BACKEND_DIR}"
     )
 
-    print("[update] 上传后端源码 + assets ...")
-    # 后端源码（pubspec / bin / lib）
+    print("[update] 上传后端源码 ...")
+    # 后端源码（pubspec / bin）
     scp(os.path.join(src_dir, "pubspec.yaml"), f"{BACKEND_DIR}/")
     scp(os.path.join(src_dir, "bin"), f"{BACKEND_DIR}/")
-    # assets/data/chips 为 admin Save 的落地目标，首次部署需带上种子；
-    # 之后线上编辑的内容以服务器为准，重复部署默认不覆盖（见下方提示）。
-    scp(assets_dir, f"{BACKEND_DIR}/")
+
+    if push_data:
+        # 默认覆盖：用仓库 assets 覆盖服务器（chip_server 写回时会自动备份原文件）。
+        # 若只想更新代码、保留线上 admin 编辑的数据，部署时加 --skip-data。
+        print("[update] 上传 assets（覆盖服务器数据）...")
+        scp(assets_dir, f"{BACKEND_DIR}/")
+    else:
+        print("[update] 跳过 assets 上传（--skip-data），保留服务器上线数据。")
 
     print("[update] 服务器编译后端二进制并安装 systemd 服务 ...")
     remote_setup = (
         f"set -e; cd {BACKEND_DIR}; "
         # 编译：需服务器已装 Dart SDK
-        f"~/.pub-cache/bin/dart --version >/dev/null 2>&1 || true; "
         f"dart pub get; "
         f"dart compile exe bin/server.dart -o {BACKEND_DIR}/chip_server; "
-        # 写 systemd 单元
-        f"echo '[Unit]\\nDescription=BES chip_server\\nAfter=network.target\\n\\n"
-        f"[Service]\\nWorkingDirectory={BACKEND_DIR}\\n"
-        f"Environment=CHIP_SERVER_PORT={BACKEND_PORT}\\n"
-        f"Environment=CHIP_PROJECT_ROOT={BACKEND_DIR}\\n"
-        f"ExecStart={BACKEND_DIR}/chip_server\\nRestart=always\\nUser={SSH_USER}\\n\\n"
-        f"[Install]\\nWantedBy=multi-user.target' "
-        f"| sudo tee /etc/systemd/system/{SERVICE_NAME}.service >/dev/null; "
+        # 写 systemd 单元（用 heredoc 规避 echo '\\n' 在远程 sh 不解析换行的问题）
+        f"sudo tee /etc/systemd/system/{SERVICE_NAME}.service >/dev/null <<'UNIT'\n"
+        f"[Unit]\n"
+        f"Description=BES chip_server\n"
+        f"After=network.target\n"
+        f"\n"
+        f"[Service]\n"
+        f"WorkingDirectory={BACKEND_DIR}\n"
+        f"Environment=CHIP_SERVER_PORT={BACKEND_PORT}\n"
+        f"Environment=CHIP_PROJECT_ROOT={BACKEND_DIR}\n"
+        f"ExecStart={BACKEND_DIR}/chip_server\n"
+        f"Restart=always\n"
+        f"User={SSH_USER}\n"
+        f"\n"
+        f"[Install]\n"
+        f"WantedBy=multi-user.target\n"
+        f"UNIT\n"
         f"sudo systemctl daemon-reload; "
         f"sudo systemctl enable {SERVICE_NAME}; "
         f"sudo systemctl restart {SERVICE_NAME}; "
-        f"sleep 2; sudo systemctl --no-pager status {SERVICE_NAME} | head -n 12"
+        f"sleep 2; sudo systemctl --no-pager status {SERVICE_NAME} | head -n 12; "
+        f"echo '--- 自测 /api/chips ---'; "
+        f"curl -s -o /dev/null -w 'api http_code=%{{http_code}}\\n' "
+        f"http://127.0.0.1:{BACKEND_PORT}/api/chips"
     )
     ssh(remote_setup)
     print("[update] 后端更新完成。")
 
 
+def pull_data():
+    """把服务器上线编辑的 chips 数据拉回本地仓库（覆盖本地 assets/data/chips）。"""
+    local_chips = os.path.join(PROJECT_ROOT, "assets", "data")
+    remote_chips = f"{BACKEND_DIR}/assets/data/chips"
+    print(f"[update] 从服务器拉取数据 -> {local_chips} ...")
+    os.makedirs(local_chips, exist_ok=True)
+    run(["scp", "-r", f"{SSH_TARGET}:{remote_chips}", f"{local_chips}/"])
+    print("[update] 数据拉取完成。")
+
+
 def main():
-    parser = argparse.ArgumentParser(description="一键更新服务器（前端静态 + 后端服务）")
-    parser.add_argument("--frontend-only", action="store_true")
-    parser.add_argument("--backend-only", action="store_true")
-    parser.add_argument("--skip-build", action="store_true")
+    parser = argparse.ArgumentParser(description="一键更新服务器（前端静态 + 后端服务 + 数据）")
+    parser.add_argument("--frontend-only", action="store_true", help="只更新前端静态")
+    parser.add_argument("--backend-only", action="store_true", help="只更新后端")
+    parser.add_argument("--skip-build", action="store_true", help="跳过 flutter build，用已有 build/web")
+    parser.add_argument(
+        "--skip-data", action="store_true",
+        help="后端更新时不上传 assets，保留服务器上线编辑的数据",
+    )
+    parser.add_argument(
+        "--pull-data", action="store_true",
+        help="把服务器上线编辑的 chips 数据拉回本地仓库（与其他更新可叠加；单独使用时只拉取）",
+    )
     args = parser.parse_args()
+
+    # --pull-data 单独使用：只拉数据，不做其他更新
+    only_pull = args.pull_data and not (args.frontend_only or args.backend_only)
+
+    if args.pull_data:
+        pull_data()
+        if only_pull:
+            # 纯拉数据时无需构建/上传，直接结束
+            print("\n[update] 数据已拉回本地仓库。")
+            return
 
     do_frontend = not args.backend_only
     do_backend = not args.frontend_only
@@ -165,7 +274,7 @@ def main():
         update_frontend()
 
     if do_backend:
-        update_backend()
+        update_backend(push_data=not args.skip_data)
 
     print("\n[update] 全部完成。")
     print(f"[update] 访问前端：http://{SSH_HOST}:{WEB_PORT}/")

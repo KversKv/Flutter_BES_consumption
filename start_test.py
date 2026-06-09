@@ -222,6 +222,12 @@ def main():
     parser = argparse.ArgumentParser(description="本地一键启动后端 + Flutter Chrome")
     parser.add_argument("--backend-port", type=int, default=8088)
     parser.add_argument("--web-port", type=int, default=5174)
+    parser.add_argument(
+        "--flutter-mode",
+        choices=("debug", "profile", "release"),
+        default="debug",
+        help="Flutter Web run mode. Use profile/release for local startup performance checks.",
+    )
     args = parser.parse_args()
 
     dart = _require("dart")
@@ -259,15 +265,17 @@ def main():
         # 用 web-server 设备：不依赖 flutter 自行拉起 Chrome（在 shell 子进程下常卡在
         # "Waiting for connection from debug service on Chrome"），改由本脚本主动开 Chrome。
         print(f"[start_test] 启动 Flutter Web :{web_port}（CHIP_API_BASE={api_base}）...")
-        frontend = _popen(
-            [
-                flutter, "run", "-d", "web-server",
-                "--web-hostname", "localhost",
-                "--web-port", str(web_port),
-                "--dart-define", f"CHIP_API_BASE={api_base}",
-            ],
-            cwd=PROJECT_ROOT,
-        )
+        flutter_args = [flutter, "run"]
+        if args.flutter_mode != "debug":
+            flutter_args.append(f"--{args.flutter_mode}")
+        flutter_args += [
+            "-d", "web-server",
+            "--no-web-resources-cdn",
+            "--web-hostname", "localhost",
+            "--web-port", str(web_port),
+            "--dart-define", f"CHIP_API_BASE={api_base}",
+        ]
+        frontend = _popen(flutter_args, cwd=PROJECT_ROOT)
 
         # 3) 前端就绪后用 Chrome 打开首页与 admin 页（后台线程，避免阻塞监控循环）
         threading.Thread(

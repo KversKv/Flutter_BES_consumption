@@ -28,6 +28,7 @@ class _AdminPageState extends State<AdminPage> {
   final _secretCtrl = TextEditingController();
   bool _authed = false;
   bool _sessionReady = false;
+  bool _repoReady = false;
   bool _loginBusy = false;
   bool _secretVisible = false;
   String? _loginError;
@@ -49,6 +50,7 @@ class _AdminPageState extends State<AdminPage> {
     final t = AppLocalizations.of(context);
     if (!_sessionReady) return const _AdminSessionLoadingView();
     if (!_authed) return _loginView(t);
+    if (!_repoReady) return const _AdminSessionLoadingView();
 
     return DefaultTabController(
       length: 6,
@@ -266,12 +268,14 @@ class _AdminPageState extends State<AdminPage> {
     final ok = _secretCtrl.text == widget.secretKey;
     if (ok) {
       await AdminSessionStore.instance.unlock();
+      await ChipJsonRepository.instance.load();
     } else {
       await AdminSessionStore.instance.clear();
     }
     if (!mounted) return;
     setState(() {
       _authed = ok;
+      _repoReady = ok;
       _loginBusy = false;
       _loginError = ok ? null : t.adminInvalidSecret;
     });
@@ -279,9 +283,13 @@ class _AdminPageState extends State<AdminPage> {
 
   Future<void> _restoreSession() async {
     final authed = await AdminSessionStore.instance.isUnlocked();
+    if (authed) {
+      await ChipJsonRepository.instance.load();
+    }
     if (!mounted) return;
     setState(() {
       _authed = authed;
+      _repoReady = authed;
       _sessionReady = true;
     });
   }
@@ -291,6 +299,7 @@ class _AdminPageState extends State<AdminPage> {
     if (!mounted) return;
     setState(() {
       _authed = false;
+      _repoReady = false;
       _secretCtrl.clear();
       _loginError = null;
       _secretVisible = false;

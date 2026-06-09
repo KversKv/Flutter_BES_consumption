@@ -213,6 +213,7 @@
 
 ### 平台
 - [约束] 必须保持六端可构建：Android / iOS / Windows / macOS / Linux / Web
+- [约束] Flutter Web 运行期资源（CanvasKit、字体回退等）不得从外网 CDN 加载；构建/运行脚本必须显式 `--no-web-resources-cdn`，并通过同源静态目录托管所需资源。
 - [待确认] 各平台最低系统版本 / 构建工具链版本（仓库未显式锁定）
 
 ### 文档
@@ -225,6 +226,9 @@
 ## 5. Pitfalls · 坑与禁区
 
 > 改代码前必读。
+
+- [坑] Flutter Web deployment must include root `manifest.json` and `assets/FontManifest.json`; if either is missing or Nginx SPA fallback serves `index.html` for `manifest.json`, Chrome reports a manifest syntax error and Flutter logs the font manifest 404.
+- [坑] Flutter Web debug uses DDC and loads large `*.dart.lib.js` modules through `ddc_module_loader`; seconds-level local debug module loads are expected and must not be used as release first-screen performance evidence. Use profile/release mode for startup timing.
 
 ### 状态管理
 - [坑] `build()` 内调用 `setXxx()` 触发 `notifyListeners()` → 循环重建

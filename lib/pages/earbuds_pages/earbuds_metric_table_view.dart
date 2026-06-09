@@ -698,7 +698,10 @@ class _NoisePinkDetailPanel extends StatelessWidget {
                   _breakdownHeader('IcoreL'),
                   _breakdownHeader(s.ebNpdIana),
                   _breakdownHeader(s.ebNpdIhppa),
-                  _breakdownHeader(s.ebNpdIsysRemain),
+                  _breakdownHeader(
+                    s.ebNpdIsysRemain,
+                    width: _kBreakdownWideColWidth,
+                  ),
                 ],
                 rows: chips.asMap().entries.map((entry) {
                   final idx = entry.key;
@@ -755,7 +758,10 @@ class _NoisePinkDetailPanel extends StatelessWidget {
                       DataCell(_DetailValue(text: _fmt(d?.icoreL))),
                       DataCell(_DetailValue(text: _fmt(d?.iana))),
                       DataCell(_DetailValue(text: _fmt(d?.ihppa))),
-                      DataCell(_DetailValue(text: _fmt(d?.isysRemain))),
+                      DataCell(_DetailValue(
+                        text: _fmt(d?.isysRemain),
+                        width: _kBreakdownWideColWidth,
+                      )),
                     ],
                   );
                 }).toList(),
@@ -772,13 +778,14 @@ class _NoisePinkDetailPanel extends StatelessWidget {
 
 class _DetailValue extends StatelessWidget {
   final String text;
-  const _DetailValue({required this.text});
+  final double width;
+  const _DetailValue({required this.text, this.width = _kBreakdownColWidth});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return SizedBox(
-      width: _kBreakdownColWidth,
+      width: width,
       child: Text(
         text,
         textAlign: TextAlign.center,
@@ -791,11 +798,12 @@ class _DetailValue extends StatelessWidget {
 }
 
 const double _kBreakdownColWidth = 52;
+const double _kBreakdownWideColWidth = 84;
 
-DataColumn _breakdownHeader(String text) {
+DataColumn _breakdownHeader(String text, {double width = _kBreakdownColWidth}) {
   return DataColumn(
     label: SizedBox(
-      width: _kBreakdownColWidth,
+      width: width,
       child: Text(text, textAlign: TextAlign.center),
     ),
   );

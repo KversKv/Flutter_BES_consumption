@@ -5,7 +5,6 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'services/config/config_repository.dart';
-import 'services/chip_json_repository.dart';
 import 'services/earbuds_repository.dart';
 import 'state/app_state.dart';
 import 'state/bt_state.dart';
@@ -31,7 +30,6 @@ Future<void> main() async {
     ConfigRepository.instance.load(),
     EarbudsRepository.instance.load(),
   ]);
-  await ChipJsonRepository.instance.load();
   const appLocale = useChinese ? Locale('zh') : Locale('en');
   runApp(MyApp(locale: appLocale));
 }

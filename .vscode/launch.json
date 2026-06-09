@@ -7,6 +7,7 @@
             "type": "dart",
             "deviceId": "chrome",
             "toolArgs": [
+                "--no-web-resources-cdn",
                 "--web-hostname",
                 "localhost",
                 "--web-port",
@@ -19,6 +20,35 @@
             "type": "dart",
             "deviceId": "web-server",
             "toolArgs": [
+                "--no-web-resources-cdn",
+                "--web-hostname",
+                "localhost",
+                "--web-port",
+                "5174"
+            ]
+        },
+        {
+            "name": "bes_consumption (Chrome profile)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "deviceId": "chrome",
+            "toolArgs": [
+                "--no-web-resources-cdn",
+                "--web-hostname",
+                "localhost",
+                "--web-port",
+                "5174"
+            ]
+        },
+        {
+            "name": "bes_consumption (web-server profile)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "deviceId": "web-server",
+            "toolArgs": [
+                "--no-web-resources-cdn",
                 "--web-hostname",
                 "localhost",
                 "--web-port",
