@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "id": "1501",
+  "sleep": {
+    "vcoreM": 0.675,
+    "vcoreL": null,
+    "vana": 1.3,
+    "vhppa": 1.7,
+    "pdSleep256": null,
+    "pdSleepFull": null,
+    "deepSleep": 182
+  },
+  "mcuRun": {
+    "default": {
+      "wfi24M": 1.79,
+      "cm24M": 2.19,
+      "cm48M": 2.81,
+      "cm96M": 4.01,
+      "cm192M": 9.3
+    }
+  }
+}

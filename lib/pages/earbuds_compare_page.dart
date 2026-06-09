@@ -19,11 +19,9 @@ part 'earbuds_pages/earbuds_left_sidebar.dart';
 part 'earbuds_pages/earbuds_metric_table_view.dart';
 
 part 'earbuds_pages/earbuds_scene_tab.dart';
-part 'earbuds_pages/earbuds_bt_tab.dart';
 part 'earbuds_pages/earbuds_cpu_consumption_tab.dart';
 part 'earbuds_pages/earbuds_tx_sweep_tab.dart';
 part 'earbuds_pages/earbuds_rx_sweep_tab.dart';
-part 'earbuds_pages/earbuds_pa_tab.dart';
 
 class EarbudsComparePage extends StatefulWidget {
   const EarbudsComparePage({super.key});
@@ -41,7 +39,7 @@ class _EarbudsComparePageState extends State<EarbudsComparePage>
     super.initState();
     final es = context.read<EarbudsState>();
     _tabCtrl = TabController(
-      length: 6,
+      length: 4,
       vsync: this,
       initialIndex: es.tabIndex,
     );
@@ -76,11 +74,9 @@ class _EarbudsComparePageState extends State<EarbudsComparePage>
               controller: _tabCtrl,
               children: const [
                 _SceneTab(),
-                _KeepAliveWrapper(child: _BtTab()),
                 _KeepAliveWrapper(child: _CpuConsumptionTab()),
                 _KeepAliveWrapper(child: _TxSweepTab()),
                 _KeepAliveWrapper(child: _RxSweepTab()),
-                _KeepAliveWrapper(child: _PaTab()),
               ],
             ),
           ),

@@ -16,12 +16,22 @@ enum ChipJsonDomain {
   ble('ble', 'BLE CASE'),
   bt('bt', 'BT CASE'),
   earbuds('earbuds', 'Earbuds'),
+  earbudsTx('earbuds/Tx', 'Earbuds TX'),
+  earbudsRx('earbuds/Rx', 'Earbuds RX'),
+  earbudsCpu('earbuds/CPU', 'Earbuds CPU'),
   wifi('wifi', 'Wi-Fi');
 
   final String key;
   final String label;
 
   const ChipJsonDomain(this.key, this.label);
+
+  /// 是否使用 `index.json` 的 `order` 列表（earbuds 家族）而非 `items`。
+  bool get usesOrderIndex =>
+      this == earbuds ||
+      this == earbudsTx ||
+      this == earbudsRx ||
+      this == earbudsCpu;
 }
 
 class ChipJsonRecord {
@@ -76,12 +86,17 @@ class ChipJsonRepository extends ChangeNotifier {
 
   bool _loaded = false;
   ChipJsonDomain? _lastChangedDomain;
+  int _revision = 0;
 
   /// 本次 load 是否成功从后端拉到了数据（决定 Save 是否能真正落地 JSON）。
   bool _backendActive = false;
 
   bool get isLoaded => _loaded;
   ChipJsonDomain? get lastChangedDomain => _lastChangedDomain;
+
+  /// 数据修订号：每次结构性或字段写入（经 `_commit`）后自增，
+  /// 供 UI 把它拼进编辑器 Key 以强制重建、重读最新 `record.data`。
+  int get revision => _revision;
 
   /// 后端是否可用：true 时 Save 会写回服务器 JSON 源文件；false 时只能本地暂存。
   bool get isBackendActive => _backendActive;
@@ -268,7 +283,7 @@ class ChipJsonRepository extends ChangeNotifier {
 
   List<_IndexEntry> _indexEntries(dynamic index, ChipJsonDomain domain) {
     final rawItems = index is Map
-        ? (domain == ChipJsonDomain.earbuds ? index['order'] : index['items'])
+        ? (domain.usesOrderIndex ? index['order'] : index['items'])
         : null;
     if (rawItems is! List) return const [];
     return rawItems
@@ -286,10 +301,83 @@ class ChipJsonRepository extends ChangeNotifier {
   }
 
   ChipJsonRecord add(ChipJsonDomain domain) {
-    final record = ChipJsonRecord({'id': _generateId(domain, 'chip_new')});
+    final id = _generateId(domain, 'chip_new');
+    final record = ChipJsonRecord(_skeletonFor(domain, id));
     _records[domain]!.add(record);
     _commit(domain);
     return record;
+  }
+
+  /// 新增芯片时按 domain 生成归一化字段骨架。
+  /// earbuds 主档生成 15 个展示项 + NoisePink 详情占位；TX/RX/CPU 生成各自结构。
+  static Map<String, dynamic> _skeletonFor(ChipJsonDomain domain, String id) {
+    switch (domain) {
+      case ChipJsonDomain.earbuds:
+        return {
+          'id': id,
+          'process': null,
+          'massProduction': false,
+          'scene': {
+            'hotelCal': null,
+            'mute': null,
+            'noisePink': null,
+            'k1Hz': null,
+            'call': null,
+            'standby': null,
+            'powerOff': null,
+            'noisePinkDetail': {
+              'vsys': null,
+              'vcore': null,
+              'vcoreM': null,
+              'vcoreL': null,
+              'vana': null,
+              'vhppa': null,
+              'isys': null,
+              'icore': null,
+              'icoreM': null,
+              'icoreL': null,
+              'iana': null,
+              'ihppa': null,
+              'isysRemain': null,
+            },
+            'testConfig': {
+              'testPhone': null,
+              'vbat': null,
+              'audioEncoder': null,
+              'outputLoad': null,
+              'audioOutputPower': null,
+              'softwareVersion': null,
+              'moduleVoltageDetail': null,
+            },
+          },
+        };
+      case ChipJsonDomain.earbudsTx:
+        return {'id': id, 'txSweep': <String, dynamic>{}};
+      case ChipJsonDomain.earbudsRx:
+        return {
+          'id': id,
+          'rxVana': {'values': <String, dynamic>{}, 'vana': null},
+          'rxVsys': {'values': <String, dynamic>{}, 'vana': null},
+        };
+      case ChipJsonDomain.earbudsCpu:
+        return {
+          'id': id,
+          'sleep': {
+            'vcoreM': null,
+            'vcoreL': null,
+            'vana': null,
+            'vhppa': null,
+            'pdSleep256': null,
+            'pdSleepFull': null,
+            'deepSleep': null,
+          },
+          'mcuRun': <String, dynamic>{},
+        };
+      case ChipJsonDomain.ble:
+      case ChipJsonDomain.bt:
+      case ChipJsonDomain.wifi:
+        return {'id': id};
+    }
   }
 
   ChipJsonRecord duplicate(ChipJsonDomain domain, String id) {
@@ -418,7 +506,7 @@ class ChipJsonRepository extends ChangeNotifier {
     final files = <String, String>{};
     for (final domain in domains) {
       final list = _records[domain] ?? const <ChipJsonRecord>[];
-      if (domain == ChipJsonDomain.earbuds) {
+      if (domain.usesOrderIndex) {
         final order = <String>[];
         for (final record in list) {
           final id = record.id.trim();
@@ -454,6 +542,7 @@ class ChipJsonRepository extends ChangeNotifier {
   void _commit(ChipJsonDomain domain) {
     _applyDomain(domain);
     _lastChangedDomain = domain;
+    _revision++;
     notifyListeners();
     unawaited(_persist(domain));
     // 后端可用时，结构性改动（增/删/复制/排序）也尽力同步到 JSON 源文件；
@@ -495,6 +584,10 @@ class ChipJsonRepository extends ChangeNotifier {
         break;
       case ChipJsonDomain.earbuds:
         EarbudsRepository.instance.replaceFromJsonRecords(maps);
+        break;
+      case ChipJsonDomain.earbudsTx:
+      case ChipJsonDomain.earbudsRx:
+      case ChipJsonDomain.earbudsCpu:
         break;
       case ChipJsonDomain.wifi:
         ConfigRepository.instance.replaceWifiChips(
@@ -545,6 +638,14 @@ class ChipJsonRepository extends ChangeNotifier {
       case ChipJsonDomain.earbuds:
         data['mcuRun'] = _labeledListToMap(data['mcuRun']);
         data['txSweep'] = _labeledListToMap(data['txSweep']);
+        break;
+      case ChipJsonDomain.earbudsTx:
+        data['txSweep'] = _labeledListToMap(data['txSweep']);
+        break;
+      case ChipJsonDomain.earbudsCpu:
+        data['mcuRun'] = _labeledListToMap(data['mcuRun']);
+        break;
+      case ChipJsonDomain.earbudsRx:
         break;
     }
     return data;

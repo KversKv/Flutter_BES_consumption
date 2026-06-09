@@ -95,7 +95,6 @@ class MutableRunCurrent {
 
 class MutableSceneTestConfig {
   String? testPhone;
-  String? testDate;
   double? vbat;
   String? audioEncoder;
   String? outputLoad;
@@ -105,7 +104,6 @@ class MutableSceneTestConfig {
 
   MutableSceneTestConfig({
     this.testPhone,
-    this.testDate,
     this.vbat,
     this.audioEncoder,
     this.outputLoad,
@@ -117,7 +115,6 @@ class MutableSceneTestConfig {
   factory MutableSceneTestConfig.from(SceneTestConfig? c) =>
       MutableSceneTestConfig(
         testPhone: c?.testPhone,
-        testDate: c?.testDate,
         vbat: c?.vbat,
         audioEncoder: c?.audioEncoder,
         outputLoad: c?.outputLoad,
@@ -128,7 +125,6 @@ class MutableSceneTestConfig {
 
   SceneTestConfig toImmutable() => SceneTestConfig(
         testPhone: testPhone,
-        testDate: testDate,
         vbat: vbat,
         audioEncoder: audioEncoder,
         outputLoad: outputLoad,
@@ -144,15 +140,8 @@ class MutableEarbudsScene {
   double? noisePink;
   double? k1Hz;
   double? call;
-  double? sniffPage;
+  double? standby;
   double? powerOff;
-  double? hotelCalAncOn;
-  double? muteAncOn;
-  double? noisePinkAncOn;
-  double? k1HzAncOn;
-  double? callAncOn;
-  double? sniffPageAncOn;
-  double? powerOffAncOn;
   NoisePinkDetail? noisePinkDetail;
   MutableSceneTestConfig testConfig;
 
@@ -162,15 +151,8 @@ class MutableEarbudsScene {
     this.noisePink,
     this.k1Hz,
     this.call,
-    this.sniffPage,
+    this.standby,
     this.powerOff,
-    this.hotelCalAncOn,
-    this.muteAncOn,
-    this.noisePinkAncOn,
-    this.k1HzAncOn,
-    this.callAncOn,
-    this.sniffPageAncOn,
-    this.powerOffAncOn,
     this.noisePinkDetail,
     MutableSceneTestConfig? testConfig,
   }) : testConfig = testConfig ?? MutableSceneTestConfig();
@@ -181,15 +163,8 @@ class MutableEarbudsScene {
         noisePink: s.noisePink,
         k1Hz: s.k1Hz,
         call: s.call,
-        sniffPage: s.sniffPage,
+        standby: s.standby,
         powerOff: s.powerOff,
-        hotelCalAncOn: s.hotelCalAncOn,
-        muteAncOn: s.muteAncOn,
-        noisePinkAncOn: s.noisePinkAncOn,
-        k1HzAncOn: s.k1HzAncOn,
-        callAncOn: s.callAncOn,
-        sniffPageAncOn: s.sniffPageAncOn,
-        powerOffAncOn: s.powerOffAncOn,
         noisePinkDetail: s.noisePinkDetail,
         testConfig: MutableSceneTestConfig.from(s.testConfig),
       );
@@ -200,57 +175,10 @@ class MutableEarbudsScene {
         noisePink: noisePink,
         k1Hz: k1Hz,
         call: call,
-        sniffPage: sniffPage,
+        standby: standby,
         powerOff: powerOff,
-        hotelCalAncOn: hotelCalAncOn,
-        muteAncOn: muteAncOn,
-        noisePinkAncOn: noisePinkAncOn,
-        k1HzAncOn: k1HzAncOn,
-        callAncOn: callAncOn,
-        sniffPageAncOn: sniffPageAncOn,
-        powerOffAncOn: powerOffAncOn,
         noisePinkDetail: noisePinkDetail,
         testConfig: testConfig.toImmutable(),
-      );
-}
-
-class MutableBtScene {
-  double? btBase;
-  double? bleAdv500_9;
-  double? bleConn200_0;
-  double? bleConn500_0;
-  double? btPagescan9;
-  double? btSniff200_0;
-  double? btSniff500_0;
-
-  MutableBtScene({
-    this.btBase,
-    this.bleAdv500_9,
-    this.bleConn200_0,
-    this.bleConn500_0,
-    this.btPagescan9,
-    this.btSniff200_0,
-    this.btSniff500_0,
-  });
-
-  factory MutableBtScene.from(BtScene b) => MutableBtScene(
-        btBase: b.btBase,
-        bleAdv500_9: b.bleAdv500_9,
-        bleConn200_0: b.bleConn200_0,
-        bleConn500_0: b.bleConn500_0,
-        btPagescan9: b.btPagescan9,
-        btSniff200_0: b.btSniff200_0,
-        btSniff500_0: b.btSniff500_0,
-      );
-
-  BtScene toImmutable() => BtScene(
-        btBase: btBase,
-        bleAdv500_9: bleAdv500_9,
-        bleConn200_0: bleConn200_0,
-        bleConn500_0: bleConn500_0,
-        btPagescan9: btPagescan9,
-        btSniff200_0: btSniff200_0,
-        btSniff500_0: btSniff500_0,
       );
 }
 
@@ -286,89 +214,57 @@ class MutableRxSweep {
       RxSweep(values: Map<int, double>.from(values), vana: vana);
 }
 
-class MutableAudioPa {
-  double? db0;
-  double? dbNeg20;
-  double? dbNegInf;
-
-  MutableAudioPa({this.db0, this.dbNeg20, this.dbNegInf});
-
-  factory MutableAudioPa.from(AudioPa p) =>
-      MutableAudioPa(db0: p.db0, dbNeg20: p.dbNeg20, dbNegInf: p.dbNegInf);
-
-  AudioPa toImmutable() =>
-      AudioPa(db0: db0, dbNeg20: dbNeg20, dbNegInf: dbNegInf);
-}
-
 /// 可变芯片记录（一行）。
 class MutableEarbudsChip {
   String id;
   String? process;
-  String? core;
-  double? fullRamKb;
   bool massProduction;
   MutableSleepCurrent sleep;
   List<MutableRunCurrent> mcuRun;
   MutableEarbudsScene scene;
-  MutableBtScene bt;
   List<MutableTxSweepVariant> txSweep;
   MutableRxSweep rxVana;
   MutableRxSweep rxVsys;
-  MutableAudioPa pa;
 
   MutableEarbudsChip({
     required this.id,
     this.process,
-    this.core,
-    this.fullRamKb,
     this.massProduction = false,
     MutableSleepCurrent? sleep,
     List<MutableRunCurrent>? mcuRun,
     MutableEarbudsScene? scene,
-    MutableBtScene? bt,
     List<MutableTxSweepVariant>? txSweep,
     MutableRxSweep? rxVana,
     MutableRxSweep? rxVsys,
-    MutableAudioPa? pa,
   })  : sleep = sleep ?? MutableSleepCurrent(),
         mcuRun = mcuRun ?? <MutableRunCurrent>[],
         scene = scene ?? MutableEarbudsScene(),
-        bt = bt ?? MutableBtScene(),
         txSweep = txSweep ?? <MutableTxSweepVariant>[],
         rxVana = rxVana ?? MutableRxSweep(values: <int, double>{}),
-        rxVsys = rxVsys ?? MutableRxSweep(values: <int, double>{}),
-        pa = pa ?? MutableAudioPa();
+        rxVsys = rxVsys ?? MutableRxSweep(values: <int, double>{});
 
   factory MutableEarbudsChip.from(EarbudsChip c) => MutableEarbudsChip(
         id: c.id,
         process: c.process,
-        core: c.core,
-        fullRamKb: c.fullRamKb,
         massProduction: c.massProduction,
         sleep: MutableSleepCurrent.from(c.sleep),
         mcuRun: c.mcuRun.map(MutableRunCurrent.from).toList(),
         scene: MutableEarbudsScene.from(c.scene),
-        bt: MutableBtScene.from(c.bt),
         txSweep: c.txSweep.map(MutableTxSweepVariant.from).toList(),
         rxVana: MutableRxSweep.from(c.rxVana),
         rxVsys: MutableRxSweep.from(c.rxVsys),
-        pa: MutableAudioPa.from(c.pa),
       );
 
   EarbudsChip toImmutable() => EarbudsChip(
         id: id,
         process: process,
-        core: core,
-        fullRamKb: fullRamKb,
         massProduction: massProduction,
         sleep: sleep.toImmutable(),
         mcuRun: mcuRun.map((e) => e.toImmutable()).toList(),
         scene: scene.toImmutable(),
-        bt: bt.toImmutable(),
         txSweep: txSweep.map((e) => e.toImmutable()).toList(),
         rxVana: rxVana.toImmutable(),
         rxVsys: rxVsys.toImmutable(),
-        pa: pa.toImmutable(),
       );
 }
 

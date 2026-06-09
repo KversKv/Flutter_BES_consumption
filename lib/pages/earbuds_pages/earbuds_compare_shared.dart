@@ -254,12 +254,8 @@ class _SingleChipMetricView extends StatelessWidget {
     switch (g) {
       case MetricGroup.scene:
         return s.ebTabScene;
-      case MetricGroup.bt:
-        return s.ebTabBt;
       case MetricGroup.cpuConsumption:
         return s.ebTabCpuConsumption;
-      case MetricGroup.pa:
-        return s.ebTabPa;
     }
   }
 }

@@ -130,7 +130,7 @@ class AppLocalizations {
       'eb_metric_noisepink': 'NoisePink 8/15 AAC',
       'eb_metric_1khz': '1kHz -6dB 15/15 AAC',
       'eb_metric_call': 'Call 8/15',
-      'eb_metric_sniffpage': '500ms Sniff & 1.28s Page',
+      'eb_metric_standby': 'Standby',
       'eb_metric_poweroff': 'Power Off',
       'eb_metric_btbase': 'BT Base',
       'eb_metric_ble_adv': 'BLE ADV 500ms 9dBm',
@@ -252,6 +252,10 @@ class AppLocalizations {
       'admin_sync_excel_result_title': 'Sync finished',
       'admin_sync_excel_result_body':
           'Synced {matched} chip(s); skipped {skipped} unmatched.',
+      'admin_sync_excel_result_saved':
+          'All {matched} chip(s) were written back to the JSON files automatically. No need to Save each chip.',
+      'admin_sync_excel_result_unsaved':
+          'Changes for {matched} chip(s) are staged locally but NOT written to JSON (backend unavailable): {error}',
       'admin_delete_confirm_title': 'Delete chip?',
       'admin_delete_confirm_body':
           'Chip "{id}" will be removed from the in-memory store. Continue?',
@@ -471,7 +475,7 @@ class AppLocalizations {
       'eb_metric_noisepink': 'NoisePink 8/15 AAC',
       'eb_metric_1khz': '1kHz -6dB 15/15 AAC',
       'eb_metric_call': 'Call 8/15（通话）',
-      'eb_metric_sniffpage': '500ms Sniff & 1.28s Page',
+      'eb_metric_standby': '待机',
       'eb_metric_poweroff': '关机电流',
       'eb_metric_btbase': 'BT 基础电流',
       'eb_metric_ble_adv': 'BLE ADV 500ms 9dBm',
@@ -588,6 +592,9 @@ class AppLocalizations {
       'admin_sync_excel_empty': '文件中未找到有效的 NoisePink 数据行。',
       'admin_sync_excel_result_title': '同步完成',
       'admin_sync_excel_result_body': '已同步 {matched} 颗芯片；跳过 {skipped} 颗未匹配。',
+      'admin_sync_excel_result_saved': '{matched} 颗芯片已自动写回 JSON 文件，无需逐个点 Save。',
+      'admin_sync_excel_result_unsaved':
+          '{matched} 颗芯片已在本地暂存，但未写回 JSON（后端不可用）：{error}',
       'admin_delete_confirm_title': '确认删除？',
       'admin_delete_confirm_body': '芯片 "{id}" 将从内存仓储中移除，是否继续？',
       'admin_cancel': '取消',
@@ -811,7 +818,7 @@ class AppLocalizations {
   String get ebMetricNoisePink => _t('eb_metric_noisepink');
   String get ebMetric1Khz => _t('eb_metric_1khz');
   String get ebMetricCall => _t('eb_metric_call');
-  String get ebMetricSniffPage => _t('eb_metric_sniffpage');
+  String get ebMetricStandby => _t('eb_metric_standby');
   String get ebMetricPowerOff => _t('eb_metric_poweroff');
   String get ebMetricBtBase => _t('eb_metric_btbase');
   String get ebMetricBleAdv => _t('eb_metric_ble_adv');
@@ -1015,6 +1022,12 @@ class AppLocalizations {
       _t('admin_sync_excel_result_body')
           .replaceFirst('{matched}', '$matched')
           .replaceFirst('{skipped}', '$skipped');
+  String adminSyncExcelResultSaved(int matched) =>
+      _t('admin_sync_excel_result_saved').replaceFirst('{matched}', '$matched');
+  String adminSyncExcelResultUnsaved(int matched, String error) =>
+      _t('admin_sync_excel_result_unsaved')
+          .replaceFirst('{matched}', '$matched')
+          .replaceFirst('{error}', error);
   String get adminExportAll => _t('admin_export_all');
   String get adminOpsHint => _t('admin_ops_hint');
   String get adminHeatHint => _t('admin_heat_hint');

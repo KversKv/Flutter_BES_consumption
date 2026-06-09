@@ -1,60 +1,16 @@
 {
   "id": "1502X",
   "process": "TSMC N22",
-  "core": "M33*4 + BTC (部分DS写M33*3)",
-  "fullRamKb": 2200.0,
   "massProduction": true,
-  "sleep": {
-    "vcoreM": 0.6,
-    "vcoreL": 0.6,
-    "vana": 1.3,
-    "vhppa": 1.7,
-    "pdSleep256": 69.0,
-    "pdSleepFull": 72.4,
-    "deepSleep": 127.0
-  },
-  "mcuRun": {
-    "default": {
-      "wfi24M": 1.47,
-      "cm24M": 1.72,
-      "cm48M": 2.23,
-      "cm96M": 3.22,
-      "cm192M": 7.0
-    }
-  },
   "scene": {
     "hotelCal": null,
     "mute": 4.45,
     "noisePink": 4.65,
     "k1Hz": 18.3,
     "call": 6.62,
-    "sniffPage": 0.34,
+    "standby": 0.34,
     "powerOff": 0.006,
-    "hotelCalAncOn": null,
-    "muteAncOn": null,
-    "noisePinkAncOn": null,
-    "k1HzAncOn": null,
-    "callAncOn": null,
-    "sniffPageAncOn": null,
-    "powerOffAncOn": null,
     "noisePinkDetail": null,
     "testConfig": null
-  },
-  "bt": {
-    "btBase": null,
-    "bleAdv500_9": null,
-    "bleConn200_0": null,
-    "bleConn500_0": null,
-    "btPagescan9": null,
-    "btSniff200_0": null,
-    "btSniff500_0": null
-  },
-  "txSweep": {},
-  "rxVana": null,
-  "rxVsys": null,
-  "pa": {
-    "db0": null,
-    "dbNeg20": null,
-    "dbNegInf": null
   }
 }

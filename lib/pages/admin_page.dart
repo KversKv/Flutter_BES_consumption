@@ -69,7 +69,7 @@ class _AdminPageState extends State<AdminPage> {
                   children: [
                     _DomainAdminTab(domain: ChipJsonDomain.ble),
                     _DomainAdminTab(domain: ChipJsonDomain.bt),
-                    _DomainAdminTab(domain: ChipJsonDomain.earbuds),
+                    const _EarbudsAdminTab(),
                     _DomainAdminTab(domain: ChipJsonDomain.wifi),
                     _InfoPanel(
                       icon: Icons.settings_outlined,
@@ -655,6 +655,57 @@ class _AdminPanel extends StatelessWidget {
   }
 }
 
+class _EarbudsAdminTab extends StatelessWidget {
+  const _EarbudsAdminTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final palette = AppPalette.of(context);
+    return DefaultTabController(
+      length: 4,
+      child: Column(
+        children: [
+          Material(
+            color: palette.bgElevated1,
+            child: Container(
+              alignment: Alignment.centerLeft,
+              decoration: BoxDecoration(
+                border:
+                    Border(bottom: BorderSide(color: palette.borderSubtle)),
+              ),
+              child: TabBar(
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                labelColor: palette.accent,
+                unselectedLabelColor: palette.textSecondary,
+                indicatorColor: palette.accent,
+                indicatorWeight: 2,
+                tabs: [
+                  Tab(text: t.ebTabScene),
+                  Tab(text: t.ebTabTx),
+                  Tab(text: t.ebTabRx),
+                  Tab(text: t.ebTabCpuConsumption),
+                ],
+              ),
+            ),
+          ),
+          const Expanded(
+            child: _LazyAdminTabView(
+              children: [
+                _DomainAdminTab(domain: ChipJsonDomain.earbuds),
+                _DomainAdminTab(domain: ChipJsonDomain.earbudsTx),
+                _DomainAdminTab(domain: ChipJsonDomain.earbudsRx),
+                _DomainAdminTab(domain: ChipJsonDomain.earbudsCpu),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _DomainAdminTab extends StatefulWidget {
   final ChipJsonDomain domain;
 
@@ -740,7 +791,9 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
         final editor = selected == null
             ? Center(child: Text(t.adminNoChipSelected))
             : _JsonRecordEditor(
-                key: ValueKey('${widget.domain.key}_${selected.id}'),
+                key: ValueKey(
+                  '${widget.domain.key}_${selected.id}_${repo.revision}',
+                ),
                 domain: widget.domain,
                 record: selected,
               );
@@ -870,29 +923,35 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
     final result = await ChipJsonRepository.instance
         .syncEarbudsNoisePinkDetail(details);
 
+    String? saveError;
     if (result.matched.isNotEmpty) {
       try {
         await ChipJsonRepository.instance
             .pushToBackend(only: ChipJsonDomain.earbuds);
       } catch (e) {
-        if (!mounted) return;
-        messenger.showSnackBar(
-          SnackBar(content: Text(t.adminSaveBackendFailed('$e'))),
-        );
+        saveError = '$e';
       }
     }
 
     if (!mounted) return;
+    final lines = <String>[
+      t.adminSyncExcelResultBody(
+        result.matched.length,
+        result.skipped.length,
+      ),
+    ];
+    if (result.matched.isNotEmpty) {
+      lines.add(
+        saveError == null
+            ? t.adminSyncExcelResultSaved(result.matched.length)
+            : t.adminSyncExcelResultUnsaved(result.matched.length, saveError),
+      );
+    }
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(t.adminSyncExcelResultTitle),
-        content: Text(
-          t.adminSyncExcelResultBody(
-            result.matched.length,
-            result.skipped.length,
-          ),
-        ),
+        content: Text(lines.join('\n\n')),
         actions: [
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(),

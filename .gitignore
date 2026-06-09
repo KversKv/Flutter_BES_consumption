@@ -50,3 +50,6 @@ temp/
 # chip_server 运行期写前自动备份目录（POST /api/chips 时生成）
 .chip_backups/
 
+
+#python venv
+.venv/

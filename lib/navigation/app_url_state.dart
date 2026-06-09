@@ -158,11 +158,9 @@ class AppUrlState {
   static String _earbudsTabSlug(int index) {
     return switch (index) {
       0 => 'scene',
-      1 => 'bt',
-      2 => 'cpu',
-      3 => 'tx',
-      4 => 'rx',
-      5 => 'pa',
+      1 => 'cpu',
+      2 => 'tx',
+      3 => 'rx',
       _ => 'scene',
     };
   }
@@ -170,11 +168,9 @@ class AppUrlState {
   static int? _earbudsTabIndex(String? slug) {
     return switch (slug) {
       'scene' => 0,
-      'bt' => 1,
-      'cpu' => 2,
-      'tx' => 3,
-      'rx' => 4,
-      'pa' => 5,
+      'cpu' => 1,
+      'tx' => 2,
+      'rx' => 3,
       _ => null,
     };
   }

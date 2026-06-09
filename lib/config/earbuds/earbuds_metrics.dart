@@ -2,7 +2,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/earbuds.dart';
 
 /// 指标分组（与页面 Tab 对应，TxSweep / RxSweep 因为是曲线图另行处理）。
-enum MetricGroup { scene, bt, cpuConsumption, pa }
+enum MetricGroup { scene, cpuConsumption }
 
 /// 单位标签（仅用于坐标轴和表格列头）。
 enum MetricUnit { mA, uA, volt }
@@ -62,8 +62,8 @@ const List<EarbudsMetric> _sceneMetrics = [
     read: _readCall, label: _labelCall,
   ),
   EarbudsMetric(
-    key: 'sniffpage', group: MetricGroup.scene, unit: MetricUnit.mA,
-    read: _readSniffPage, label: _labelSniffPage,
+    key: 'standby', group: MetricGroup.scene, unit: MetricUnit.mA,
+    read: _readStandby, label: _labelStandby,
   ),
   EarbudsMetric(
     key: 'poweroff', group: MetricGroup.scene, unit: MetricUnit.uA,
@@ -82,46 +82,14 @@ double? _read1Khz(EarbudsChip c) => c.scene.k1Hz;
 String _label1Khz(AppLocalizations s) => s.ebMetric1Khz;
 double? _readCall(EarbudsChip c) => c.scene.call;
 String _labelCall(AppLocalizations s) => s.ebMetricCall;
-double? _readSniffPage(EarbudsChip c) => c.scene.sniffPage;
-String _labelSniffPage(AppLocalizations s) => s.ebMetricSniffPage;
+double? _readStandby(EarbudsChip c) => c.scene.standby;
+String _labelStandby(AppLocalizations s) => s.ebMetricStandby;
 // Power off: stored in mA, show in µA
 double? _readPowerOff(EarbudsChip c) {
   final v = c.scene.powerOff;
   return v == null ? null : v * 1000.0;
 }
 String _labelPowerOff(AppLocalizations s) => s.ebMetricPowerOff;
-
-const List<EarbudsMetric> _btMetrics = [
-  EarbudsMetric(key: 'btbase', group: MetricGroup.bt, unit: MetricUnit.mA,
-    read: _readBtBase, label: _labelBtBase),
-  EarbudsMetric(key: 'bleadv', group: MetricGroup.bt, unit: MetricUnit.mA,
-    read: _readBleAdv, label: _labelBleAdv),
-  EarbudsMetric(key: 'bleconn200', group: MetricGroup.bt, unit: MetricUnit.mA,
-    read: _readBleConn200, label: _labelBleConn200),
-  EarbudsMetric(key: 'bleconn500', group: MetricGroup.bt, unit: MetricUnit.mA,
-    read: _readBleConn500, label: _labelBleConn500),
-  EarbudsMetric(key: 'btpagescan', group: MetricGroup.bt, unit: MetricUnit.mA,
-    read: _readBtPagescan, label: _labelBtPagescan),
-  EarbudsMetric(key: 'btsniff200', group: MetricGroup.bt, unit: MetricUnit.mA,
-    read: _readBtSniff200, label: _labelBtSniff200),
-  EarbudsMetric(key: 'btsniff500', group: MetricGroup.bt, unit: MetricUnit.mA,
-    read: _readBtSniff500, label: _labelBtSniff500),
-];
-
-double? _readBtBase(EarbudsChip c) => c.bt.btBase;
-String _labelBtBase(AppLocalizations s) => s.ebMetricBtBase;
-double? _readBleAdv(EarbudsChip c) => c.bt.bleAdv500_9;
-String _labelBleAdv(AppLocalizations s) => s.ebMetricBleAdv;
-double? _readBleConn200(EarbudsChip c) => c.bt.bleConn200_0;
-String _labelBleConn200(AppLocalizations s) => s.ebMetricBleConn200;
-double? _readBleConn500(EarbudsChip c) => c.bt.bleConn500_0;
-String _labelBleConn500(AppLocalizations s) => s.ebMetricBleConn500;
-double? _readBtPagescan(EarbudsChip c) => c.bt.btPagescan9;
-String _labelBtPagescan(AppLocalizations s) => s.ebMetricBtPagescan;
-double? _readBtSniff200(EarbudsChip c) => c.bt.btSniff200_0;
-String _labelBtSniff200(AppLocalizations s) => s.ebMetricBtSniff200;
-double? _readBtSniff500(EarbudsChip c) => c.bt.btSniff500_0;
-String _labelBtSniff500(AppLocalizations s) => s.ebMetricBtSniff500;
 
 const List<EarbudsMetric> _cpuConsumptionMetrics = [
   EarbudsMetric(key: 'pd256', group: MetricGroup.cpuConsumption, unit: MetricUnit.uA,
@@ -176,29 +144,11 @@ String _labelCm96(AppLocalizations s) => s.ebMetricCm96;
 double? _readCm192(EarbudsChip c) => _firstRun(c, (r) => r.cm192M);
 String _labelCm192(AppLocalizations s) => s.ebMetricCm192;
 
-const List<EarbudsMetric> _paMetrics = [
-  EarbudsMetric(key: 'pa0', group: MetricGroup.pa, unit: MetricUnit.mA,
-    read: _readPa0, label: _labelPa0),
-  EarbudsMetric(key: 'paneg20', group: MetricGroup.pa, unit: MetricUnit.mA,
-    read: _readPaNeg20, label: _labelPaNeg20),
-  EarbudsMetric(key: 'paneginf', group: MetricGroup.pa, unit: MetricUnit.mA,
-    read: _readPaNegInf, label: _labelPaNegInf),
-];
-
-double? _readPa0(EarbudsChip c) => c.pa.db0;
-String _labelPa0(AppLocalizations s) => s.ebMetricPa0;
-double? _readPaNeg20(EarbudsChip c) => c.pa.dbNeg20;
-String _labelPaNeg20(AppLocalizations s) => s.ebMetricPaNeg20;
-double? _readPaNegInf(EarbudsChip c) => c.pa.dbNegInf;
-String _labelPaNegInf(AppLocalizations s) => s.ebMetricPaNegInf;
-
 /// 按分组获取指标定义列表。
 List<EarbudsMetric> metricsOf(MetricGroup g) {
   switch (g) {
     case MetricGroup.scene: return _sceneMetrics;
-    case MetricGroup.bt: return _btMetrics;
     case MetricGroup.cpuConsumption: return _cpuConsumptionMetrics;
-    case MetricGroup.pa: return _paMetrics;
   }
 }
 

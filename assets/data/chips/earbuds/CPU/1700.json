@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "id": "1700",
+  "sleep": {
+    "vcoreM": null,
+    "vcoreL": null,
+    "vana": null,
+    "vhppa": null,
+    "pdSleep256": null,
+    "pdSleepFull": null,
+    "deepSleep": null
+  },
+  "mcuRun": {
+    "M55": {
+      "wfi24M": 0.92,
+      "cm24M": 1.03,
+      "cm48M": 1.23,
+      "cm96M": 1.61,
+      "cm192M": 3.28
+    },
+    "M33": {
+      "wfi24M": 0.82,
+      "cm24M": 0.92,
+      "cm48M": 1.08,
+      "cm96M": 1.37,
+      "cm192M": 3.03
+    }
+  }
+}

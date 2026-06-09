@@ -260,35 +260,27 @@ class _SceneDataTable extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    final hasAncOn = scene.hotelCalAncOn != null ||
-        scene.muteAncOn != null ||
-        scene.noisePinkAncOn != null ||
-        scene.k1HzAncOn != null ||
-        scene.callAncOn != null ||
-        scene.powerOffAncOn != null ||
-        scene.sniffPageAncOn != null;
-
     final groups = <_TestCaseGroup>[
       _TestCaseGroup(
         title: s.ebTestCase1,
         rows: [
-          _TestCaseRow(s.ebHotelCal, s.ebVol1325, scene.hotelCal, scene.hotelCalAncOn),
-          _TestCaseRow(s.ebPlay1Khz, s.ebVol2525, scene.k1Hz, scene.k1HzAncOn),
-          _TestCaseRow(s.ebMuteCurrent, s.ebVol025, scene.mute, scene.muteAncOn),
-          _TestCaseRow(s.ebPinkNoise, s.ebVol1325, scene.noisePink, scene.noisePinkAncOn),
+          _TestCaseRow(s.ebHotelCal, s.ebVol1325, scene.hotelCal),
+          _TestCaseRow(s.ebPlay1Khz, s.ebVol2525, scene.k1Hz),
+          _TestCaseRow(s.ebMuteCurrent, s.ebVol025, scene.mute),
+          _TestCaseRow(s.ebPinkNoise, s.ebVol1325, scene.noisePink),
         ],
       ),
       _TestCaseGroup(
         title: s.ebTestCase2,
         rows: [
-          _TestCaseRow(s.ebPhoneCall, s.ebVol10086, scene.call, scene.callAncOn),
+          _TestCaseRow(s.ebPhoneCall, s.ebVol10086, scene.call),
         ],
       ),
       _TestCaseGroup(
         title: s.ebTestCase3,
         rows: [
-          _TestCaseRow(s.ebPowerOffCurrent, s.ebShutdown, scene.powerOff, scene.powerOffAncOn),
-          _TestCaseRow(s.ebStandby, s.ebConnectNoBehavior, scene.sniffPage, scene.sniffPageAncOn),
+          _TestCaseRow(s.ebPowerOffCurrent, s.ebShutdown, scene.powerOff),
+          _TestCaseRow(s.ebStandby, s.ebConnectNoBehavior, scene.standby),
         ],
       ),
     ];
@@ -315,7 +307,6 @@ class _SceneDataTable extends StatelessWidget {
             const SizedBox(height: AppSpacing.x3),
             _GroupedSceneTable(
               groups: groups,
-              hasAncOn: hasAncOn,
             ),
           ],
         ),
@@ -334,14 +325,12 @@ class _TestCaseRow {
   final String music;
   final String volume;
   final double? ancOff;
-  final double? ancOn;
-  const _TestCaseRow(this.music, this.volume, this.ancOff, this.ancOn);
+  const _TestCaseRow(this.music, this.volume, this.ancOff);
 }
 
 class _GroupedSceneTable extends StatelessWidget {
   final List<_TestCaseGroup> groups;
-  final bool hasAncOn;
-  const _GroupedSceneTable({required this.groups, required this.hasAncOn});
+  const _GroupedSceneTable({required this.groups});
 
   static const double _kGroupColWidth = 120;
 
@@ -422,18 +411,6 @@ class _GroupedSceneTable extends StatelessWidget {
               ),
             ),
           ),
-          if (hasAncOn) ...[
-            _vDivider(borderColor),
-            Expanded(
-              flex: 2,
-              child: _cellPad(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(s.ebAncOn, style: style),
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -525,25 +502,6 @@ class _GroupedSceneTable extends StatelessWidget {
                               ),
                             ),
                           ),
-                          if (hasAncOn) ...[
-                            _vDivider(borderColor),
-                            Expanded(
-                              flex: 2,
-                              child: _cellPad(
-                                child: Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Text(
-                                    group.rows[i].ancOn != null
-                                        ? EarbudsQuery.format(group.rows[i].ancOn!)
-                                        : '-',
-                                    style: cellStyle?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
                         ],
                       ),
                     ),

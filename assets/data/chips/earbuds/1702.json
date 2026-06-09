@@ -1,46 +1,18 @@
 {
   "id": "1702",
   "process": "TSMC N6E",
-  "core": "M55*4 + U55 + HIFI5s + BTC",
-  "fullRamKb": 8192.0,
   "massProduction": false,
-  "sleep": {
-    "vcoreM": 0.55,
-    "vcoreL": 0.5,
-    "vana": 1.0,
-    "vhppa": 1.7,
-    "pdSleep256": 53.0,
-    "pdSleepFull": null,
-    "deepSleep": 189.0
-  },
-  "mcuRun": {
-    "default": {
-      "wfi24M": 0.967,
-      "cm24M": null,
-      "cm48M": null,
-      "cm96M": null,
-      "cm192M": null
-    }
-  },
   "scene": {
     "hotelCal": 4.52,
     "mute": 3.3,
     "noisePink": 3.43,
     "k1Hz": 16.85,
     "call": 4.5,
-    "sniffPage": 0.4,
+    "standby": 0.4,
     "powerOff": 0.004,
-    "hotelCalAncOn": null,
-    "muteAncOn": null,
-    "noisePinkAncOn": null,
-    "k1HzAncOn": null,
-    "callAncOn": null,
-    "sniffPageAncOn": null,
-    "powerOffAncOn": null,
     "noisePinkDetail": null,
     "testConfig": {
       "testPhone": "Pixel 3(Android 9)",
-      "testDate": "2025.06.20",
       "vbat": 3.8,
       "audioEncoder": "SBC Audio sampling rate: 44.1 kHz Audio bits per sample: 16",
       "outputLoad": "32 ohm audio output",
@@ -48,73 +20,5 @@
       "softwareVersion": "BES1702",
       "moduleVoltageDetail": null
     }
-  },
-  "bt": {
-    "btBase": null,
-    "bleAdv500_9": null,
-    "bleConn200_0": null,
-    "bleConn500_0": null,
-    "btPagescan9": null,
-    "btSniff200_0": null,
-    "btSniff500_0": null
-  },
-  "txSweep": {
-    "2point": {
-      "values": {
-        "0": 10.9,
-        "1": 11.0,
-        "2": 11.4,
-        "3": 11.5,
-        "4": 12.1,
-        "5": 22.0,
-        "6": 23.0,
-        "7": 26.0,
-        "8": 28.0,
-        "9": 30.0,
-        "10": 33.0,
-        "11": 35.0,
-        "12": 41.0,
-        "13": 44.0,
-        "14": 52.0
-      }
-    },
-    "polar": {
-      "values": {
-        "0": 12.7,
-        "1": 12.9,
-        "2": 13.3,
-        "3": 13.5,
-        "4": 25.0,
-        "5": 24.0,
-        "6": 27.0,
-        "7": 30.0,
-        "8": 32.0,
-        "9": 33.0,
-        "10": 34.0,
-        "11": 40.0,
-        "12": 44.0,
-        "13": 48.0,
-        "14": 60.0
-      }
-    }
-  },
-  "rxVana": {
-    "values": {
-      "0": 11.05,
-      "1": 10.93,
-      "2": 9.87,
-      "3": 9.87,
-      "4": 9.22,
-      "5": 9.22,
-      "6": 9.22,
-      "7": 9.22
-    },
-    "vana": 1.0
-  },
-  "rxVsys": null,
-  "pa": {
-    "db0": 13.6169,
-    "dbNeg20": 2.218,
-    "dbNegInf": 0.558
   }
 }

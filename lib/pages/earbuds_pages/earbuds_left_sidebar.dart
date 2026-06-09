@@ -366,7 +366,11 @@ class _FocusedChipDropdown extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    final current = es.focusedChipId ?? (chips.isNotEmpty ? chips.first.id : null);
+    final ids = chips.map((c) => c.id).toSet();
+    final focused = es.focusedChipId;
+    final current = focused != null && ids.contains(focused)
+        ? focused
+        : (chips.isNotEmpty ? chips.first.id : null);
 
     return SizedBox(
       height: 36,
@@ -540,7 +544,7 @@ class _ChipListTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    chip.process ?? chip.core ?? '-',
+                    chip.process ?? '-',
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: cs.onSurfaceVariant,
                     ),

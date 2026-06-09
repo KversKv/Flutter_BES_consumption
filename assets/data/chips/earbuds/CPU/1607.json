@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "id": "1607",
+  "sleep": {
+    "vcoreM": 0.65,
+    "vcoreL": 0.6,
+    "vana": 0.9,
+    "vhppa": 1.7,
+    "pdSleep256": null,
+    "pdSleepFull": null,
+    "deepSleep": null
+  },
+  "mcuRun": {}
+}

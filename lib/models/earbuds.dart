@@ -89,7 +89,6 @@ class RunCurrent {
 /// 单芯片场景测试配置元信息
 class SceneTestConfig {
   final String? testPhone;
-  final String? testDate;
   final double? vbat;
   final String? audioEncoder;
   final String? outputLoad;
@@ -99,7 +98,6 @@ class SceneTestConfig {
 
   const SceneTestConfig({
     this.testPhone,
-    this.testDate,
     this.vbat,
     this.audioEncoder,
     this.outputLoad,
@@ -110,7 +108,6 @@ class SceneTestConfig {
 
   Map<String, dynamic> toJson() => {
         'testPhone': testPhone,
-        'testDate': testDate,
         'vbat': vbat,
         'audioEncoder': audioEncoder,
         'outputLoad': outputLoad,
@@ -121,7 +118,6 @@ class SceneTestConfig {
 
   factory SceneTestConfig.fromJson(Map<String, dynamic> j) => SceneTestConfig(
         testPhone: j['testPhone'] as String?,
-        testDate: j['testDate'] as String?,
         vbat: _d(j['vbat']),
         audioEncoder: j['audioEncoder'] as String?,
         outputLoad: j['outputLoad'] as String?,
@@ -205,16 +201,8 @@ class EarbudsScene {
   final double? noisePink;
   final double? k1Hz;
   final double? call;
-  final double? sniffPage;
+  final double? standby;
   final double? powerOff;
-
-  final double? hotelCalAncOn;
-  final double? muteAncOn;
-  final double? noisePinkAncOn;
-  final double? k1HzAncOn;
-  final double? callAncOn;
-  final double? sniffPageAncOn;
-  final double? powerOffAncOn;
 
   final NoisePinkDetail? noisePinkDetail;
 
@@ -226,15 +214,8 @@ class EarbudsScene {
     this.noisePink,
     this.k1Hz,
     this.call,
-    this.sniffPage,
+    this.standby,
     this.powerOff,
-    this.hotelCalAncOn,
-    this.muteAncOn,
-    this.noisePinkAncOn,
-    this.k1HzAncOn,
-    this.callAncOn,
-    this.sniffPageAncOn,
-    this.powerOffAncOn,
     this.noisePinkDetail,
     this.testConfig,
   });
@@ -245,15 +226,8 @@ class EarbudsScene {
         'noisePink': noisePink,
         'k1Hz': k1Hz,
         'call': call,
-        'sniffPage': sniffPage,
+        'standby': standby,
         'powerOff': powerOff,
-        'hotelCalAncOn': hotelCalAncOn,
-        'muteAncOn': muteAncOn,
-        'noisePinkAncOn': noisePinkAncOn,
-        'k1HzAncOn': k1HzAncOn,
-        'callAncOn': callAncOn,
-        'sniffPageAncOn': sniffPageAncOn,
-        'powerOffAncOn': powerOffAncOn,
         'noisePinkDetail': noisePinkDetail?.toJson(),
         'testConfig': testConfig?.toJson(),
       };
@@ -264,15 +238,8 @@ class EarbudsScene {
         noisePink: _d(j['noisePink']),
         k1Hz: _d(j['k1Hz']),
         call: _d(j['call']),
-        sniffPage: _d(j['sniffPage']),
+        standby: _d(j['standby']),
         powerOff: _d(j['powerOff']),
-        hotelCalAncOn: _d(j['hotelCalAncOn']),
-        muteAncOn: _d(j['muteAncOn']),
-        noisePinkAncOn: _d(j['noisePinkAncOn']),
-        k1HzAncOn: _d(j['k1HzAncOn']),
-        callAncOn: _d(j['callAncOn']),
-        sniffPageAncOn: _d(j['sniffPageAncOn']),
-        powerOffAncOn: _d(j['powerOffAncOn']),
         noisePinkDetail: j['noisePinkDetail'] == null
             ? null
             : NoisePinkDetail.fromJson(
@@ -281,47 +248,6 @@ class EarbudsScene {
             ? null
             : SceneTestConfig.fromJson(
                 Map<String, dynamic>.from(j['testConfig'] as Map)),
-      );
-}
-
-/// BT & BLE 场景电流（mA）
-class BtScene {
-  final double? btBase; // BT Base Current
-  final double? bleAdv500_9; // BLE ADV 500ms 9dBm
-  final double? bleConn200_0; // BLE Connect 200ms 0dBm
-  final double? bleConn500_0; // BLE Connect 500ms 0dBm
-  final double? btPagescan9; // BT Pagescan 1.28s 9dBm
-  final double? btSniff200_0; // BT Sniff 200ms 0dBm
-  final double? btSniff500_0; // BT Sniff 500ms 0dBm
-
-  const BtScene({
-    this.btBase,
-    this.bleAdv500_9,
-    this.bleConn200_0,
-    this.bleConn500_0,
-    this.btPagescan9,
-    this.btSniff200_0,
-    this.btSniff500_0,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'btBase': btBase,
-        'bleAdv500_9': bleAdv500_9,
-        'bleConn200_0': bleConn200_0,
-        'bleConn500_0': bleConn500_0,
-        'btPagescan9': btPagescan9,
-        'btSniff200_0': btSniff200_0,
-        'btSniff500_0': btSniff500_0,
-      };
-
-  factory BtScene.fromJson(Map<String, dynamic> j) => BtScene(
-        btBase: _d(j['btBase']),
-        bleAdv500_9: _d(j['bleAdv500_9']),
-        bleConn200_0: _d(j['bleConn200_0']),
-        bleConn500_0: _d(j['bleConn500_0']),
-        btPagescan9: _d(j['btPagescan9']),
-        btSniff200_0: _d(j['btSniff200_0']),
-        btSniff500_0: _d(j['btSniff500_0']),
       );
 }
 
@@ -361,27 +287,6 @@ class RxSweep {
       );
 }
 
-/// Audio PA 电流（mA，单边/耳机典型值）
-class AudioPa {
-  final double? db0; // 0dB 信号
-  final double? dbNeg20; // -20dB 信号
-  final double? dbNegInf; // -∞dB（静音底噪）
-
-  const AudioPa({this.db0, this.dbNeg20, this.dbNegInf});
-
-  Map<String, dynamic> toJson() => {
-        'db0': db0,
-        'dbNeg20': dbNeg20,
-        'dbNegInf': dbNegInf,
-      };
-
-  factory AudioPa.fromJson(Map<String, dynamic> j) => AudioPa(
-        db0: _d(j['db0']),
-        dbNeg20: _d(j['dbNeg20']),
-        dbNegInf: _d(j['dbNegInf']),
-      );
-}
-
 /// 芯片综合功耗档案。
 ///
 /// 运行期数据从 `assets/data/earbuds_chips.json` 装载（见 `services/earbuds_chip_loader.dart`）。
@@ -389,56 +294,42 @@ class AudioPa {
 class EarbudsChip {
   final String id; // e.g. '1607'
   final String? process; // e.g. 'SS_N14' / 'tsmc6n'
-  final String? core; // e.g. 'M55*3 + U55 + BTC'
-  final double? fullRamKb; // Full RAM size in KB
   final bool massProduction;
 
   final SleepCurrent sleep;
   final List<RunCurrent> mcuRun;
   final EarbudsScene scene;
-  final BtScene bt;
   final List<TxSweepVariant> txSweep;
   final RxSweep? rxVana; // RX Current in VANA 域
   final RxSweep? rxVsys; // RX Current in VSYS=3.8V 域
-  final AudioPa pa;
 
   const EarbudsChip({
     required this.id,
     this.process,
-    this.core,
-    this.fullRamKb,
     required this.massProduction,
     this.sleep = const SleepCurrent(),
     this.mcuRun = const [],
     this.scene = const EarbudsScene(),
-    this.bt = const BtScene(),
     this.txSweep = const [],
     this.rxVana,
     this.rxVsys,
-    this.pa = const AudioPa(),
   });
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'process': process,
-        'core': core,
-        'fullRamKb': fullRamKb,
         'massProduction': massProduction,
         'sleep': sleep.toJson(),
         'mcuRun': _runCurrentMap(mcuRun),
         'scene': scene.toJson(),
-        'bt': bt.toJson(),
         'txSweep': _txSweepMap(txSweep),
         'rxVana': rxVana?.toJson(),
         'rxVsys': rxVsys?.toJson(),
-        'pa': pa.toJson(),
       };
 
   factory EarbudsChip.fromJson(Map<String, dynamic> j) => EarbudsChip(
         id: (j['id'] as String?) ?? '',
         process: j['process'] as String?,
-        core: j['core'] as String?,
-        fullRamKb: _d(j['fullRamKb']),
         massProduction: (j['massProduction'] as bool?) ?? false,
         sleep: j['sleep'] == null
             ? const SleepCurrent()
@@ -449,9 +340,6 @@ class EarbudsChip {
             ? const EarbudsScene()
             : EarbudsScene.fromJson(
                 Map<String, dynamic>.from(j['scene'] as Map)),
-        bt: j['bt'] == null
-            ? const BtScene()
-            : BtScene.fromJson(Map<String, dynamic>.from(j['bt'] as Map)),
         txSweep: _txSweepList(j['txSweep']),
         rxVana: j['rxVana'] == null
             ? null
@@ -459,9 +347,6 @@ class EarbudsChip {
         rxVsys: j['rxVsys'] == null
             ? null
             : RxSweep.fromJson(Map<String, dynamic>.from(j['rxVsys'] as Map)),
-        pa: j['pa'] == null
-            ? const AudioPa()
-            : AudioPa.fromJson(Map<String, dynamic>.from(j['pa'] as Map)),
       );
 }
 
