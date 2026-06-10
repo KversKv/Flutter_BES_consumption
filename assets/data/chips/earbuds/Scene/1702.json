@@ -20,7 +20,21 @@
       "moduleVoltageDetail": null
     }
   },
-  "noisePinkDetail": null,
+  "noisePinkDetail": {
+    "vsys": 3.8,
+    "vcore": 0.65,
+    "vcoreM": 0.65,
+    "vcoreL": 0.55,
+    "vana": 1,
+    "vhppa": 1.7,
+    "isys": 3.44,
+    "icore": 6.91,
+    "icoreM": 1.68,
+    "icoreL": 5.22,
+    "iana": 2.72,
+    "ihppa": 1.72,
+    "isysRemain": 0.116
+  },
   "mcuRun": null,
   "txSweep": null
 }

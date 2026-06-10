@@ -492,8 +492,8 @@ class EarbudsRepository extends ChangeNotifier {
   /// 把当前内存中的全套芯片数据导出为「拆分文件」格式。
   ///
   /// 返回 `{ 相对路径 -> JSON 字符串 }`，包括：
-  ///   - `chips/earbuds/index.json`
-  ///   - `chips/earbuds/<id>.json`（每芯片一个）
+  ///   - `chips/earbuds/Scene/index.json`
+  ///   - `chips/earbuds/Scene/<id>.json`（每芯片一个）
   ///
   /// 调用方负责把它们打包 / 下载 / 落盘；本方法不触碰 IO。
   Map<String, String> exportAsJsonFiles() {
@@ -504,12 +504,12 @@ class EarbudsRepository extends ChangeNotifier {
       final id = r.id.trim();
       if (id.isEmpty) continue;
       final safe = _safeFileName(id);
-      if (files.containsKey('chips/earbuds/$safe.json')) continue;
-      files['chips/earbuds/$safe.json'] =
+      if (files.containsKey('chips/earbuds/Scene/$safe.json')) continue;
+      files['chips/earbuds/Scene/$safe.json'] =
           encoder.convert(r.toImmutable().toJson());
       order.add(safe);
     }
-    files['chips/earbuds/index.json'] = encoder.convert(<String, Object>{
+    files['chips/earbuds/Scene/index.json'] = encoder.convert(<String, Object>{
       'version': _schemaVersion,
       'order': order,
     });

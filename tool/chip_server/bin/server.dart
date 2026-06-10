@@ -13,7 +13,7 @@ import 'package:shelf_router/shelf_router.dart';
 ///   - 其余路径：静态托管 web build 产物（若存在），便于部署时一个服务同时发前端 + API
 ///
 /// 协议中的「相对路径」与前端 ChipJsonRepository.exportFiles() 完全一致，
-/// 形如 `chips/earbuds/index.json`、`chips/earbuds/1607.json`，
+/// 形如 `chips/earbuds/Scene/index.json`、`chips/earbuds/Scene/1607.json`，
 /// 落盘根目录为 <projectRoot>/assets/data/。
 void main(List<String> args) async {
   final projectRoot = _resolveProjectRoot();

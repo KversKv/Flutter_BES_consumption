@@ -43,6 +43,7 @@ flutter:
     - assets/data/config_manifest.json
     - assets/data/chips/
     - assets/data/chips/earbuds/
+    - assets/data/chips/earbuds/Scene/
     - assets/data/chips/earbuds/Tx/
     - assets/data/chips/earbuds/Rx/
     - assets/data/chips/earbuds/CPU/

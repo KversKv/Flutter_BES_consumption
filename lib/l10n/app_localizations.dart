@@ -256,6 +256,10 @@ class AppLocalizations {
           'All {matched} chip(s) were written back to the JSON files automatically. No need to Save each chip.',
       'admin_sync_excel_result_unsaved':
           'Changes for {matched} chip(s) are staged locally but NOT written to JSON (backend unavailable): {error}',
+      'admin_sync_excel_matched_title': 'Synced ({n})',
+      'admin_sync_excel_skipped_title': 'Skipped ({n})',
+      'admin_sync_excel_skipped_hint':
+          'These IDs appear in the Excel file but no matching chip exists in the in-memory store, so they were ignored.',
       'admin_delete_confirm_title': 'Delete chip?',
       'admin_delete_confirm_body':
           'Chip "{id}" will be removed from the in-memory store. Continue?',
@@ -285,6 +289,10 @@ class AppLocalizations {
       'admin_no_chip_selected': 'Select a chip on the left to edit.',
       'admin_total_chips': 'Total: {n}',
       'admin_invalid_id': 'ID cannot be empty or duplicated.',
+      'admin_invalid_id_empty':
+          'ID cannot be empty (or left as the "chip_new" placeholder). Please enter a unique ID.',
+      'admin_invalid_id_duplicate':
+          'ID "{id}" already exists. Please choose a different one.',
       'admin_drag_handle': 'Drag to reorder',
       'admin_reorder_disabled_in_search':
           'Clear the search to drag-reorder chips.',
@@ -595,6 +603,9 @@ class AppLocalizations {
       'admin_sync_excel_result_saved': '{matched} 颗芯片已自动写回 JSON 文件，无需逐个点 Save。',
       'admin_sync_excel_result_unsaved':
           '{matched} 颗芯片已在本地暂存，但未写回 JSON（后端不可用）：{error}',
+      'admin_sync_excel_matched_title': '已同步（{n}）',
+      'admin_sync_excel_skipped_title': '已跳过（{n}）',
+      'admin_sync_excel_skipped_hint': '这些 ID 在 Excel 中存在，但内存仓储里没有匹配的芯片，已被忽略。',
       'admin_delete_confirm_title': '确认删除？',
       'admin_delete_confirm_body': '芯片 "{id}" 将从内存仓储中移除，是否继续？',
       'admin_cancel': '取消',
@@ -622,6 +633,8 @@ class AppLocalizations {
       'admin_no_chip_selected': '请在左侧选择一个芯片进行编辑。',
       'admin_total_chips': '共 {n} 颗',
       'admin_invalid_id': 'ID 不能为空或与已有 ID 重复。',
+      'admin_invalid_id_empty': 'ID 不能为空（也不能保留 "chip_new" 占位值），请填写一个唯一的 ID。',
+      'admin_invalid_id_duplicate': 'ID "{id}" 已存在，请改为其它值。',
       'admin_drag_handle': '拖拽排序',
       'admin_reorder_disabled_in_search': '请先清空搜索,才能拖拽排序。',
       'admin_sort_hint': '可拖拽手柄，或使用上移 / 下移；导出 JSON 会把当前顺序写入 index.json。',
@@ -960,6 +973,9 @@ class AppLocalizations {
   String adminTotalChips(int n) =>
       _t('admin_total_chips').replaceFirst('{n}', '$n');
   String get adminInvalidId => _t('admin_invalid_id');
+  String get adminInvalidIdEmpty => _t('admin_invalid_id_empty');
+  String adminInvalidIdDuplicate(String id) =>
+      _t('admin_invalid_id_duplicate').replaceFirst('{id}', id);
   String get adminDragHandle => _t('admin_drag_handle');
   String get adminReorderDisabledInSearch =>
       _t('admin_reorder_disabled_in_search');
@@ -1028,6 +1044,11 @@ class AppLocalizations {
       _t('admin_sync_excel_result_unsaved')
           .replaceFirst('{matched}', '$matched')
           .replaceFirst('{error}', error);
+  String adminSyncExcelMatchedTitle(int n) =>
+      _t('admin_sync_excel_matched_title').replaceFirst('{n}', '$n');
+  String adminSyncExcelSkippedTitle(int n) =>
+      _t('admin_sync_excel_skipped_title').replaceFirst('{n}', '$n');
+  String get adminSyncExcelSkippedHint => _t('admin_sync_excel_skipped_hint');
   String get adminExportAll => _t('admin_export_all');
   String get adminOpsHint => _t('admin_ops_hint');
   String get adminHeatHint => _t('admin_heat_hint');

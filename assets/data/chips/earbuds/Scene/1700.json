@@ -12,7 +12,21 @@
     "powerOff": 0.004,
     "testConfig": null
   },
-  "noisePinkDetail": null,
+  "noisePinkDetail": {
+    "vsys": 3.8,
+    "vcore": 0.65,
+    "vcoreM": 0.65,
+    "vcoreL": 0.6,
+    "vana": 1.2,
+    "vhppa": 1.7,
+    "isys": 3.25,
+    "icore": 5.75,
+    "icoreM": null,
+    "icoreL": null,
+    "iana": 2.533,
+    "ihppa": 1.927,
+    "isysRemain": 0.153
+  },
   "mcuRun": null,
   "txSweep": null
 }

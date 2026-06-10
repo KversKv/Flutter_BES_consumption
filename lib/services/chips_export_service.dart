@@ -7,7 +7,7 @@ import 'chips_export_io.dart'
 
 /// admin「导出 JSON」按钮的统一入口。
 ///
-/// [files] 形如 `{ 'chips/earbuds/index.json': '...', 'chips/earbuds/1607.json': '...' }`，
+/// [files] 形如 `{ 'chips/earbuds/Scene/index.json': '...', 'chips/earbuds/Scene/1607.json': '...' }`，
 /// 由 `EarbudsRepository.exportAsJsonFiles()` 提供。
 ///
 /// 行为：

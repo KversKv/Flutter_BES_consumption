@@ -15,7 +15,7 @@ import 'earbuds_repository.dart';
 enum ChipJsonDomain {
   ble('ble', 'BLE CASE'),
   bt('bt', 'BT CASE'),
-  earbuds('earbuds', 'Earbuds'),
+  earbuds('earbuds/Scene', 'Earbuds Scene'),
   earbudsTx('earbuds/Tx', 'Earbuds TX'),
   earbudsRx('earbuds/Rx', 'Earbuds RX'),
   earbudsCpu('earbuds/CPU', 'Earbuds CPU'),
@@ -72,10 +72,23 @@ class ChipJsonRecord {
   }
 }
 
+/// `update()` 返回的细分结果，便于 UI 显示精准的错误提示。
+enum ChipUpdateResult {
+  success,
+  idEmpty,
+  idDuplicate,
+  notFound,
+}
+
 class ChipJsonRepository extends ChangeNotifier {
   ChipJsonRepository._();
 
   static final ChipJsonRepository instance = ChipJsonRepository._();
+
+  /// 新增芯片时的占位 ID。该 ID 仅用于 admin 编辑器内填值；
+  /// 不应出现在任何用户可见列表（Comparison / 校验池）。
+  /// 用户把它改成有效 ID 后才视为"真正存在"。
+  static const String placeholderId = 'chip_new';
 
   static const int _schemaVersion = 1;
   static const String _storagePrefix = 'admin_chip_json_db_v2_';
@@ -176,10 +189,13 @@ class ChipJsonRepository extends ChangeNotifier {
   ) {
     final prefix = 'chips/${domain.key}/';
     final indexRaw = files['${prefix}index.json'];
+    // 只取该 domain 目录下的"直系"文件：剥掉 prefix 后不能再含 '/'，
+    // 防止后端 recursive 扫描时把更深层子目录文件误纳入本 domain。
     final domainFiles = <String, String>{
       for (final entry in files.entries)
         if (entry.key.startsWith(prefix) &&
-            entry.key != '${prefix}index.json')
+            entry.key != '${prefix}index.json' &&
+            !entry.key.substring(prefix.length).contains('/'))
           entry.key.substring(prefix.length): entry.value,
     };
     if (indexRaw == null && domainFiles.isEmpty) return null;
@@ -202,11 +218,14 @@ class ChipJsonRepository extends ChangeNotifier {
         consumed.add(entry.file);
       }
     }
-    // index 未覆盖到的孤立文件也纳入，避免漏数据。
+    // index 未覆盖到的孤立文件也纳入，避免漏数据；
+    // 但 placeholder（chip_new）仅是 admin 临时占位，绝不能被当作"真实芯片"补回来。
     for (final fileEntry in domainFiles.entries) {
       if (consumed.contains(fileEntry.key)) continue;
       final record = _recordFromRaw(domain, fileEntry.value, null);
-      if (record != null) out.add(record);
+      if (record == null) continue;
+      if (record.id == placeholderId) continue;
+      out.add(record);
     }
     return out;
   }
@@ -267,12 +286,20 @@ class ChipJsonRepository extends ChangeNotifier {
     final index = jsonDecode(indexRaw);
     final entries = _indexEntries(index, domain);
     final futures = entries.map((entry) async {
-      final raw = await rootBundle.loadString('$dir/${entry.file}');
-      final decoded = jsonDecode(raw);
-      if (decoded is Map) {
-        final data = _canonicalData(domain, Map<String, dynamic>.from(decoded));
-        data['id'] ??= entry.id;
-        return ChipJsonRecord(data);
+      // placeholder 不应出现在磁盘上；如果 index 里残留也跳过，避免 404 抛异常。
+      if (entry.id == placeholderId) return null;
+      try {
+        final raw = await rootBundle.loadString('$dir/${entry.file}');
+        final decoded = jsonDecode(raw);
+        if (decoded is Map) {
+          final data =
+              _canonicalData(domain, Map<String, dynamic>.from(decoded));
+          data['id'] ??= entry.id;
+          return ChipJsonRecord(data);
+        }
+      } catch (e) {
+        debugPrint(
+            '[ChipJsonRepository] seed skip ${domain.key}/${entry.file}: $e');
       }
       return null;
     });
@@ -301,9 +328,17 @@ class ChipJsonRepository extends ChangeNotifier {
   }
 
   ChipJsonRecord add(ChipJsonDomain domain) {
-    final id = _generateId(domain, 'chip_new');
-    final record = ChipJsonRecord(_skeletonFor(domain, id));
-    _records[domain]!.add(record);
+    // 复用已有的占位项：避免重复点 "+ Add" 不断累积 chip_new / chip_new_2…
+    final list = _records[domain]!;
+    final existing = list.firstWhere(
+      (r) => r.id == placeholderId,
+      orElse: () => ChipJsonRecord(const {}),
+    );
+    if (existing.id == placeholderId) {
+      return existing;
+    }
+    final record = ChipJsonRecord(_skeletonFor(domain, placeholderId));
+    list.add(record);
     _commit(domain);
     return record;
   }
@@ -410,23 +445,31 @@ class ChipJsonRepository extends ChangeNotifier {
     _commit(domain);
   }
 
-  bool update(
+  ChipUpdateResult update(
     ChipJsonDomain domain,
     String oldId,
     Map<String, dynamic> data,
   ) {
     final newRecord = ChipJsonRecord(_canonicalData(domain, data));
     final newId = newRecord.id.trim();
-    if (newId.isEmpty) return false;
-    final duplicate =
-        recordById(domain, newId) != null && oldId.trim() != newId;
-    if (duplicate) return false;
+    if (newId.isEmpty || newId == placeholderId) {
+      return ChipUpdateResult.idEmpty;
+    }
     final list = _records[domain]!;
     final idx = list.indexWhere((e) => e.id == oldId);
-    if (idx < 0) return false;
+    if (idx < 0) return ChipUpdateResult.notFound;
+    // 查重时排除"自身条目"（同一行改回原 id 不算重复），
+    // 也排除其它仍在编辑中的占位 placeholder（它们不算真实芯片）。
+    final duplicate = list.asMap().entries.any((entry) {
+      if (entry.key == idx) return false;
+      final existingId = entry.value.id;
+      if (existingId == placeholderId) return false;
+      return existingId == newId;
+    });
+    if (duplicate) return ChipUpdateResult.idDuplicate;
     list[idx] = newRecord;
     _commit(domain);
-    return true;
+    return ChipUpdateResult.success;
   }
 
   Future<void> resetToSeed(ChipJsonDomain domain) async {
@@ -510,7 +553,9 @@ class ChipJsonRepository extends ChangeNotifier {
         final order = <String>[];
         for (final record in list) {
           final id = record.id.trim();
-          if (id.isEmpty) continue;
+          // placeholder 仅是 admin 的"待编辑占位"，不写入 index.json / 主档文件，
+          // 避免 seed 加载时去 fetch 不存在的 chip_new.json 抛 404 异常。
+          if (id.isEmpty || id == placeholderId) continue;
           final file = _safeFileName(id);
           order.add(file);
           files['chips/${domain.key}/$file.json'] =
@@ -524,7 +569,7 @@ class ChipJsonRepository extends ChangeNotifier {
         final items = <Map<String, String>>[];
         for (final record in list) {
           final id = record.id.trim();
-          if (id.isEmpty) continue;
+          if (id.isEmpty || id == placeholderId) continue;
           final file = '${_safeFileName(id)}.json';
           items.add({'id': id, 'file': file});
           files['chips/${domain.key}/$file'] =
@@ -598,7 +643,7 @@ class ChipJsonRepository extends ChangeNotifier {
   }
 
   String _generateId(ChipJsonDomain domain, String hint) {
-    final base = hint.trim().isEmpty ? 'chip_new' : hint.trim();
+    final base = hint.trim().isEmpty ? placeholderId : hint.trim();
     if (recordById(domain, base) == null) return base;
     var i = 2;
     while (recordById(domain, '${base}_$i') != null) {

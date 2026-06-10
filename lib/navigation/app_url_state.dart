@@ -52,6 +52,9 @@ class AppUrlState {
     final query = <String, String>{
       'tab': _earbudsTabSlug(state.tabIndex),
     };
+    if (state.currentTabSupportsViewMode) {
+      query['view'] = _earbudsViewSlug(state.sceneViewMode);
+    }
     if (state.selectedIds.isNotEmpty) {
       query['chips'] = state.selectedIds.join(',');
     }
@@ -103,6 +106,11 @@ class AppUrlState {
     final tab = _earbudsTabIndex(uri.queryParameters['tab']);
     if (tab != null) {
       state.setTabIndex(tab);
+    }
+
+    final view = _earbudsViewMode(uri.queryParameters['view']);
+    if (view != null) {
+      state.setSceneViewMode(view);
     }
 
     final chips = uri.queryParameters['chips']
@@ -171,6 +179,21 @@ class AppUrlState {
       'cpu' => 1,
       'tx' => 2,
       'rx' => 3,
+      _ => null,
+    };
+  }
+
+  static String _earbudsViewSlug(EarbudsSceneViewMode mode) {
+    return switch (mode) {
+      EarbudsSceneViewMode.singleChip => 'single',
+      EarbudsSceneViewMode.comparison => 'compare',
+    };
+  }
+
+  static EarbudsSceneViewMode? _earbudsViewMode(String? slug) {
+    return switch (slug) {
+      'single' => EarbudsSceneViewMode.singleChip,
+      'compare' => EarbudsSceneViewMode.comparison,
       _ => null,
     };
   }

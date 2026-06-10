@@ -760,7 +760,12 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final repo = ChipJsonRepository.instance;
-    final all = repo.records(widget.domain);
+    // 列表里只展示"真正的芯片"；placeholder（chip_new）作为新增临时容器，
+    // 不进入列表也不参与计数与重复校验，等用户填好 ID 保存后才会"转正"。
+    final all = repo
+        .records(widget.domain)
+        .where((r) => r.id != ChipJsonRepository.placeholderId)
+        .toList();
     final query = _query.trim().toLowerCase();
     final filtered = query.isEmpty
         ? all
@@ -892,22 +897,47 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
     final t = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
 
+    Future<void> showInfoDialog(String message) async {
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(t.adminSyncExcelResultTitle),
+          content: Text(message),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(t.adminConfirm),
+            ),
+          ],
+        ),
+      );
+    }
+
     FilePickerResult? picked;
+    Object? pickError;
     try {
       picked = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: const ['xlsx', 'csv'],
         withData: true,
       );
-    } catch (_) {
+    } catch (e) {
+      pickError = e;
       picked = null;
     }
 
+    if (!mounted) return;
     final file = picked?.files.isNotEmpty == true ? picked!.files.first : null;
     final bytes = file?.bytes;
     if (file == null || bytes == null) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(t.adminSyncExcelPickFailed)),
+      // 用户主动取消（pickError == null && picked == null）时静默返回，
+      // 其他情况（IO 错误 / 拿不到 bytes）改用 dialog 提示，避免被 SnackBar 一闪错过。
+      if (pickError == null && picked == null) return;
+      await showInfoDialog(
+        pickError == null
+            ? t.adminSyncExcelPickFailed
+            : '${t.adminSyncExcelPickFailed}\n$pickError',
       );
       return;
     }
@@ -915,17 +945,13 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
     Map<String, Map<String, dynamic>> details;
     try {
       details = NoisePinkSyncService.parse(file.name, bytes);
-    } catch (_) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(t.adminSyncExcelParseFailed)),
-      );
+    } catch (e) {
+      await showInfoDialog('${t.adminSyncExcelParseFailed}\n$e');
       return;
     }
 
     if (details.isEmpty) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(t.adminSyncExcelEmpty)),
-      );
+      await showInfoDialog(t.adminSyncExcelEmpty);
       return;
     }
 
@@ -943,30 +969,196 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
     }
 
     if (!mounted) return;
-    final lines = <String>[
-      t.adminSyncExcelResultBody(
-        result.matched.length,
-        result.skipped.length,
-      ),
-    ];
-    if (result.matched.isNotEmpty) {
-      lines.add(
-        saveError == null
+    final summary = t.adminSyncExcelResultBody(
+      result.matched.length,
+      result.skipped.length,
+    );
+    final saveLine = result.matched.isEmpty
+        ? null
+        : (saveError == null
             ? t.adminSyncExcelResultSaved(result.matched.length)
-            : t.adminSyncExcelResultUnsaved(result.matched.length, saveError),
+            : t.adminSyncExcelResultUnsaved(result.matched.length, saveError));
+    try {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (ctx) => AlertDialog(
+          title: Text(t.adminSyncExcelResultTitle),
+          content: _SyncExcelResultContent(
+            summary: summary,
+            saveLine: saveLine,
+            saveLineIsError: saveError != null,
+            matched: result.matched,
+            skipped: result.skipped,
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(t.adminConfirm),
+            ),
+          ],
+        ),
+      );
+    } catch (e, st) {
+      debugPrint('[admin] sync excel dialog failed: $e\n$st');
+      messenger.showSnackBar(
+        SnackBar(content: Text('$summary${saveLine == null ? '' : '\n$saveLine'}')),
       );
     }
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(t.adminSyncExcelResultTitle),
-        content: Text(lines.join('\n\n')),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(t.adminConfirm),
+  }
+}
+
+/// Sync Excel 完成后的明细弹窗内容：汇总 + 已同步 ID 列表 + 跳过 ID 列表。
+class _SyncExcelResultContent extends StatelessWidget {
+  final String summary;
+  final String? saveLine;
+  final bool saveLineIsError;
+  final List<String> matched;
+  final List<String> skipped;
+
+  const _SyncExcelResultContent({
+    required this.summary,
+    required this.saveLine,
+    required this.saveLineIsError,
+    required this.matched,
+    required this.skipped,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final palette = AppPalette.of(context);
+    final theme = Theme.of(context);
+    final mq = MediaQuery.of(context);
+    final width = mq.size.width < 560 ? mq.size.width - 48.0 : 480.0;
+
+    return SizedBox(
+      width: width,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(summary, style: theme.textTheme.bodyMedium),
+          if (saveLine != null) ...[
+            const SizedBox(height: AppSpacing.x2),
+            Text(
+              saveLine!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: saveLineIsError ? palette.danger : palette.textMuted,
+              ),
+            ),
+          ],
+          if (matched.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.x4),
+            _SyncIdSection(
+              title: t.adminSyncExcelMatchedTitle(matched.length),
+              ids: matched,
+              color: palette.success,
+            ),
+          ],
+          if (skipped.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.x4),
+            _SyncIdSection(
+              title: t.adminSyncExcelSkippedTitle(skipped.length),
+              ids: skipped,
+              color: palette.warning,
+              hint: t.adminSyncExcelSkippedHint,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SyncIdSection extends StatelessWidget {
+  final String title;
+  final List<String> ids;
+  final Color color;
+  final String? hint;
+
+  const _SyncIdSection({
+    required this.title,
+    required this.ids,
+    required this.color,
+    this.hint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.x2),
+            Expanded(
+              child: Text(
+                title,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (hint != null) ...[
+          const SizedBox(height: AppSpacing.x1),
+          Text(
+            hint!,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppPalette.of(context).textMuted,
+            ),
           ),
         ],
+        const SizedBox(height: AppSpacing.x2),
+        Wrap(
+          spacing: AppSpacing.x2,
+          runSpacing: AppSpacing.x2,
+          children: [
+            for (final id in ids) _IdChip(label: id, color: color),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _IdChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _IdChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.x2,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: color,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
       ),
     );
   }
@@ -2021,18 +2213,28 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
         return;
       }
     }
-    if ((data['id'] ?? '').toString().trim().isEmpty) {
-      setState(() => _error = t.adminInvalidId);
+    final newId = (data['id'] ?? '').toString().trim();
+    if (newId.isEmpty || newId == ChipJsonRepository.placeholderId) {
+      setState(() => _error = t.adminInvalidIdEmpty);
       return;
     }
-    final ok = ChipJsonRepository.instance.update(
+    final result = ChipJsonRepository.instance.update(
       widget.domain,
       widget.record.id,
       data,
     );
-    if (!ok) {
-      setState(() => _error = t.adminInvalidId);
-      return;
+    switch (result) {
+      case ChipUpdateResult.idEmpty:
+        setState(() => _error = t.adminInvalidIdEmpty);
+        return;
+      case ChipUpdateResult.idDuplicate:
+        setState(() => _error = t.adminInvalidIdDuplicate(newId));
+        return;
+      case ChipUpdateResult.notFound:
+        setState(() => _error = t.adminInvalidId);
+        return;
+      case ChipUpdateResult.success:
+        break;
     }
     setState(() => _error = null);
     try {

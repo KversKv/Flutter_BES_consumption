@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 /// 与最小后端 `tool/chip_server` 通信的客户端。
 ///
 /// 协议（与 ChipJsonRepository.exportFiles() 的 map 结构一致）：
-///   - GET  $base/api/chips        -> { "files": { "chips/earbuds/index.json": "...", ... } }
+///   - GET  $base/api/chips        -> { "files": { "chips/earbuds/Scene/index.json": "...", ... } }
 ///   - POST $base/api/chips        body { "files": { 相对路径: JSON字符串 } }
 ///
 /// base 地址解析顺序：
