@@ -1,5 +1,13 @@
 # Task Log
 
+### 2026-06-10 - User/Admin 体验与完整性评估
+- **Type**: docs / evaluation
+- **Scope**: `docs/user/260610_eva.md`, `docs/ai/task-log.md`
+- **Reason**: 用户要求基于线上内网网页，从完整性、交互性、UI 界面等维度评估项目，并补充 `/admin` 管理界面评估；用户侧为内网公开项目，不需要登录流程。
+- **Change**: 新增评估报告，覆盖用户侧桌面/移动体验、核心功能完整性、交互与视觉、数据可信度、部署状态、admin 功能和 admin 写入安全边界；明确将用户免登录视为符合定位，将 admin 前端密码与后端写入鉴权作为独立风险评估。
+- **Impact**: 不修改源码；后续优先项建议聚焦 admin POST API 服务端保护、移动响应式、资源大小写 404 噪音、i18n 硬编码、导出分享和 admin 大文件拆分。
+- **Verification**: 访问线上 `http://172.25.10.143:5174/` 及 `/ble`、`/bt`、`/earbuds`、`/wifi`、`/admin`；检查 `manifest.json`、`assets/FontManifest.json`、`/api/chips`；结合源码确认 admin 登录、会话、写入 API 与 CORS 边界。
+
 ### 2026-06-09 - Web 首屏加载性能优化
 - **Type**: performance / deploy
 - **Scope**: `lib/main.dart`, `lib/pages/admin_page.dart`, `lib/theme/app_theme.dart`, `pubspec.yaml`, `web/flutter_bootstrap.js`, `web/font-fallback/`, `.vscode/launch.json`, `start_test.py`, `update_serve.py`, `.TRAE/rules/project-rules.md`, server Nginx config

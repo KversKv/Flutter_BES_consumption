@@ -340,7 +340,12 @@ class AppLocalizations {
       'admin_group_radio': 'Radio & payload parameters',
       'admin_group_hardware': 'Crystal & hardware parameters',
       'admin_group_other': 'Other parameters',
+      'admin_group_scene': 'System & Scene Definition',
       'admin_object_editor_subtitle': '{n} nested fields',
+      'admin_add_category_field': 'Add new field...',
+      'admin_field_edit': 'Edit',
+      'admin_field_non_editable': 'Non-editable',
+      'admin_fields_count': '{n} fields',
       'admin_saved_local': 'Saved locally. Export JSON to update seed files.',
       'admin_saved_json': 'Saved to JSON files on the server.',
       'admin_save_backend_failed':
@@ -679,7 +684,12 @@ class AppLocalizations {
       'admin_group_radio': '射频与负载参数',
       'admin_group_hardware': '晶振与硬件参数',
       'admin_group_other': '其他参数',
+      'admin_group_scene': '系统与场景定义',
       'admin_object_editor_subtitle': '{n} 个嵌套字段',
+      'admin_add_category_field': '新增字段...',
+      'admin_field_edit': '编辑',
+      'admin_field_non_editable': '不可编辑',
+      'admin_fields_count': '{n} 个字段',
       'admin_saved_local': '已保存到本地，导出 JSON 后可更新种子文件。',
       'admin_saved_json': '已保存到服务器 JSON 文件。',
       'admin_save_backend_failed': '后端不可达，未保存到 JSON：{error}',
@@ -1022,8 +1032,14 @@ class AppLocalizations {
   String get adminGroupRadio => _t('admin_group_radio');
   String get adminGroupHardware => _t('admin_group_hardware');
   String get adminGroupOther => _t('admin_group_other');
+  String get adminGroupScene => _t('admin_group_scene');
   String adminObjectEditorSubtitle(int n) =>
       _t('admin_object_editor_subtitle').replaceFirst('{n}', '$n');
+  String get adminAddCategoryField => _t('admin_add_category_field');
+  String get adminFieldEdit => _t('admin_field_edit');
+  String get adminFieldNonEditable => _t('admin_field_non_editable');
+  String adminFieldsCount(int n) =>
+      _t('admin_fields_count').replaceFirst('{n}', '$n');
   String get adminSavedLocal => _t('admin_saved_local');
   String get adminSavedJson => _t('admin_saved_json');
   String adminSaveBackendFailed(String error) =>

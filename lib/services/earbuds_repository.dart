@@ -280,8 +280,8 @@ class EarbudsRepository extends ChangeNotifier {
 
   static final EarbudsRepository instance = EarbudsRepository._();
 
-  static const String _storageKey = 'earbuds_db_v2';
-  static const int _schemaVersion = 2;
+  static const String _storageKey = 'earbuds_db_v3';
+  static const int _schemaVersion = 3;
 
   final List<MutableEarbudsChip> _records = [];
   List<EarbudsChip> _snapshot = const [];

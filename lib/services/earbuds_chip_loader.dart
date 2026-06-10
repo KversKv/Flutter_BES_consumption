@@ -69,23 +69,26 @@ class EarbudsChipLoader {
 
   /// 读取单个芯片的主档 + Tx/Rx/CPU 子档并合并成一个 JSON。
   static Future<Map<String, dynamic>> _loadMerged(String id) async {
-    final mainRaw = await rootBundle.loadString('$chipsAssetDir/$id.json');
+    final mainRaw = await _loadStringAnyCase(chipsAssetDir, id);
+    if (mainRaw == null) {
+      throw FormatException('$id.json: not found in $chipsAssetDir');
+    }
     final decoded = jsonDecode(mainRaw);
     if (decoded is! Map) {
       throw FormatException('$id.json: root is not an object');
     }
     final merged = Map<String, dynamic>.from(decoded);
 
-    final tx = await _tryLoadObject('$txAssetDir/$id.json');
+    final tx = await _tryLoadObject(txAssetDir, id);
     if (tx != null) merged['txSweep'] = tx['txSweep'];
 
-    final rx = await _tryLoadObject('$rxAssetDir/$id.json');
+    final rx = await _tryLoadObject(rxAssetDir, id);
     if (rx != null) {
       merged['rxVana'] = rx['rxVana'];
       merged['rxVsys'] = rx['rxVsys'];
     }
 
-    final cpu = await _tryLoadObject('$cpuAssetDir/$id.json');
+    final cpu = await _tryLoadObject(cpuAssetDir, id);
     if (cpu != null) {
       merged['sleep'] = cpu['sleep'];
       merged['mcuRun'] = cpu['mcuRun'];
@@ -95,14 +98,38 @@ class EarbudsChipLoader {
   }
 
   /// 尝试读取可选子档；文件缺失或非对象时返回 null。
-  static Future<Map<String, dynamic>?> _tryLoadObject(String path) async {
+  /// [事实] index.json 中的 id 可能为大写（如 `1306P`），而磁盘上的文件名为小写
+  /// （如 `1306p.json`）。Flutter web/Linux 的资源系统大小写敏感，需要回退尝试。
+  static Future<Map<String, dynamic>?> _tryLoadObject(
+    String dir,
+    String id,
+  ) async {
+    final raw = await _loadStringAnyCase(dir, id);
+    if (raw == null) return null;
     try {
-      final raw = await rootBundle.loadString(path);
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return null;
       return Map<String, dynamic>.from(decoded);
     } catch (_) {
       return null;
     }
+  }
+
+  /// 依次尝试 `<dir>/<id>.json` / `<dir>/<id_lower>.json` / `<dir>/<id_upper>.json`
+  /// ，第一个成功命中的资源返回其字符串内容，全部失败返回 null。
+  static Future<String?> _loadStringAnyCase(String dir, String id) async {
+    final candidates = <String>{
+      id,
+      id.toLowerCase(),
+      id.toUpperCase(),
+    };
+    for (final c in candidates) {
+      try {
+        return await rootBundle.loadString('$dir/$c.json');
+      } catch (_) {
+        // try next casing
+      }
+    }
+    return null;
   }
 }

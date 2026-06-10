@@ -159,9 +159,9 @@ class EarbudsState extends ChangeNotifier {
   }
 
   /// 当前 Tab 是否支持视图模式切换（Single Chip / Comparison）。
-  /// 仅 Earbuds Scene(0) / BT&BLE(1) / CPU Consumption(2) 三个 tab 支持。
-  bool get currentTabSupportsViewMode =>
-      _tabIndex == 0 || _tabIndex == 1 || _tabIndex == 2;
+  /// 仅 Earbuds Scene(0) / CPU Consumption(1) 两个 tab 支持；
+  /// TX Sweep(2) / RX Sweep(3) 始终为 Comparison 模式，不显示切换器。
+  bool get currentTabSupportsViewMode => _tabIndex == 0 || _tabIndex == 1;
 
   // --- Comparison 模式：选中的对比 case (按 metric key 区分) ------------------
 

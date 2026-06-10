@@ -1451,7 +1451,7 @@ class _CountPill extends StatelessWidget {
 
 enum _FieldType { string, number, boolean, json }
 
-enum _FieldCategory { identity, timing, current, radio, hardware, other }
+enum _FieldCategory { identity, timing, current, radio, hardware, scene, other }
 
 class _FieldDraft {
   String name;
@@ -1503,6 +1503,7 @@ class _JsonRecordEditor extends StatefulWidget {
 class _JsonRecordEditorState extends State<_JsonRecordEditor> {
   late List<_FieldDraft> _fields;
   String? _error;
+  int? _editingIndex;
 
   @override
   void initState() {
@@ -1520,97 +1521,10 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Material(
-          color: palette.bgElevated2,
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: palette.borderSubtle)),
-            ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.x4,
-              vertical: AppSpacing.x3,
-            ),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final narrow = constraints.maxWidth < 560;
-                final title = Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: palette.accentMuted,
-                        borderRadius:
-                            BorderRadius.circular(AppSpacing.radiusMd),
-                        border: Border.all(color: palette.borderStrong),
-                      ),
-                      child: Icon(
-                        Icons.data_object_outlined,
-                        size: 20,
-                        color: palette.accent,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.x3),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.record.id,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          Text(
-                            t.adminJsonEditor,
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: palette.textSecondary,
-                                    ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-                final actions = Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextButton.icon(
-                      onPressed: _addField,
-                      icon: const Icon(Icons.add),
-                      label: Text(t.adminAddField),
-                    ),
-                    const SizedBox(width: AppSpacing.x2),
-                    FilledButton.icon(
-                      onPressed: _save,
-                      icon: const Icon(Icons.save_outlined),
-                      label: Text(t.adminSave),
-                    ),
-                  ],
-                );
-
-                if (narrow) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      title,
-                      const SizedBox(height: AppSpacing.x3),
-                      Align(alignment: Alignment.centerRight, child: actions),
-                    ],
-                  );
-                }
-
-                return Row(
-                  children: [
-                    Expanded(child: title),
-                    const SizedBox(width: AppSpacing.x3),
-                    actions,
-                  ],
-                );
-              },
-            ),
-          ),
+        _EditorTopBar(
+          chipId: widget.record.id,
+          onAddField: _addField,
+          onSave: _save,
         ),
         if (_error != null)
           Padding(
@@ -1643,33 +1557,29 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
         Expanded(
           child: ColoredBox(
             color: palette.bgBase,
-            child: ListView.builder(
-              padding: const EdgeInsets.all(AppSpacing.x4),
-              itemCount: sections.length,
-              itemBuilder: (context, sectionIndex) {
-                final section = sections[sectionIndex];
-                return Padding(
-                  padding: EdgeInsets.only(
-                    bottom:
-                        sectionIndex == sections.length - 1 ? 0 : AppSpacing.x4,
-                  ),
-                  child: _FieldGroupPanel(
-                    icon: _categoryIcon(section.category),
-                    title: _categoryTitle(t, section.category),
-                    count: section.indexes.length,
-                    child: Column(
-                      children: [
-                        for (int i = 0; i < section.indexes.length; i++) ...[
-                          if (i > 0)
-                            Divider(
-                              height: AppSpacing.x4,
-                              color: palette.borderSubtle,
-                            ),
-                          _fieldRow(t, section.indexes[i], _fields),
-                        ],
-                      ],
-                    ),
-                  ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final wide = constraints.maxWidth >= 960;
+                if (wide) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(AppSpacing.x4),
+                    child: _buildGrid(t, sections, crossAxisCount: 2),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.all(AppSpacing.x4),
+                  itemCount: sections.length,
+                  itemBuilder: (context, sectionIndex) {
+                    final section = sections[sectionIndex];
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        bottom: sectionIndex == sections.length - 1
+                            ? 0
+                            : AppSpacing.x4,
+                      ),
+                      child: _buildCategoryCard(t, section),
+                    );
+                  },
                 );
               },
             ),
@@ -1677,6 +1587,453 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
         ),
       ],
     );
+  }
+
+  Widget _buildGrid(
+    AppLocalizations t,
+    List<_FieldSection> sections, {
+    required int crossAxisCount,
+  }) {
+    final rows = <Widget>[];
+    for (int i = 0; i < sections.length; i += crossAxisCount) {
+      final rowChildren = <Widget>[];
+      for (int j = i; j < i + crossAxisCount && j < sections.length; j++) {
+        rowChildren.add(Expanded(child: _buildCategoryCard(t, sections[j])));
+        if (j < i + crossAxisCount - 1 && j < sections.length - 1) {
+          rowChildren.add(const SizedBox(width: AppSpacing.x4));
+        }
+      }
+      if (rowChildren.length == 1) {
+        rowChildren.add(const Expanded(child: SizedBox.shrink()));
+      }
+      rows.add(Padding(
+        padding:
+            EdgeInsets.only(bottom: i + crossAxisCount < sections.length ? AppSpacing.x4 : 0),
+        child: IntrinsicHeight(child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: rowChildren,
+        )),
+      ));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
+    );
+  }
+
+  Widget _buildCategoryCard(AppLocalizations t, _FieldSection section) {
+    final palette = AppPalette.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: palette.bgElevated2,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        border: Border.all(color: palette.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.x4, AppSpacing.x3, AppSpacing.x4, AppSpacing.x2,
+            ),
+            child: Text(
+              _categoryTitle(t, section.category),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: palette.textPrimary,
+                  ),
+            ),
+          ),
+          for (int i = 0; i < section.indexes.length; i++) ...[
+            if (i > 0)
+              Divider(height: 1, color: palette.borderSubtle, indent: AppSpacing.x4, endIndent: AppSpacing.x4),
+            _structuredFieldRow(t, section.indexes[i]),
+          ],
+          Divider(height: 1, color: palette.borderSubtle, indent: AppSpacing.x4, endIndent: AppSpacing.x4),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.x3),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              onTap: () => _addFieldToCategory(section.category),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppSpacing.x1,
+                  horizontal: AppSpacing.x2,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.add, size: 16, color: palette.accent),
+                    const SizedBox(width: AppSpacing.x1),
+                    Text(
+                      t.adminAddCategoryField,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: palette.accent,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _structuredFieldRow(AppLocalizations t, int index) {
+    final palette = AppPalette.of(context);
+    final field = _fields[index];
+    final isObject = field.hasObjectChildren;
+    final isEditing = _editingIndex == index;
+
+    if (isEditing) {
+      return _inlineEditRow(t, index);
+    }
+
+    if (isObject) {
+      return _objectFieldCard(t, index, field);
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => setState(() => _editingIndex = index),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.x4,
+            vertical: AppSpacing.x3,
+          ),
+          child: Row(
+            children: [
+              _FieldTypeIcon(type: field.type),
+              const SizedBox(width: AppSpacing.x3),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  field.name.isEmpty ? '-' : field.name,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.x2),
+              if (field.type == _FieldType.boolean) ...[
+                Expanded(
+                  flex: 2,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Switch(
+                      value: field.value.trim().toLowerCase() == 'true',
+                      onChanged: (v) {
+                        setState(() => field.value = v.toString());
+                      },
+                    ),
+                  ),
+                ),
+              ] else ...[
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    field.value.isEmpty ? '-' : field.value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: palette.textSecondary,
+                        ),
+                  ),
+                ),
+              ],
+              const SizedBox(width: AppSpacing.x2),
+              _FieldTypeBadge(type: field.type),
+              const SizedBox(width: AppSpacing.x2),
+              IconButton(
+                tooltip: t.adminFieldEdit,
+                onPressed: () => setState(() => _editingIndex = index),
+                icon: Icon(Icons.edit_outlined, size: 18, color: palette.accent),
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                padding: EdgeInsets.zero,
+                splashRadius: 18,
+              ),
+              IconButton(
+                tooltip: t.adminRemoveRow,
+                onPressed: () => _confirmRemoveField(
+                  field.name,
+                  () => setState(() => _fields.removeAt(index)),
+                ),
+                icon: Icon(Icons.delete_outline, size: 18, color: palette.danger),
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                padding: EdgeInsets.zero,
+                splashRadius: 18,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _inlineEditRow(AppLocalizations t, int index) {
+    final palette = AppPalette.of(context);
+    final field = _fields[index];
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.x3,
+        vertical: AppSpacing.x2,
+      ),
+      padding: const EdgeInsets.all(AppSpacing.x3),
+      decoration: BoxDecoration(
+        color: palette.accentMuted.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        border: Border.all(color: palette.accent.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  initialValue: field.name,
+                  decoration: InputDecoration(
+                    labelText: t.adminFieldName,
+                    prefixIcon: const Icon(Icons.label_outline, size: 18),
+                    isDense: true,
+                  ),
+                  onChanged: (v) => field.name = v,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.x2),
+              SizedBox(
+                width: 140,
+                child: DropdownButtonFormField<_FieldType>(
+                  initialValue: field.type,
+                  decoration: InputDecoration(
+                    labelText: t.adminFieldType,
+                    isDense: true,
+                  ),
+                  items: _fieldTypeItems(t),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() {
+                      field.type = value;
+                      if (value != _FieldType.json) {
+                        field.children = [];
+                        field.rawValue = null;
+                      }
+                      if (value == _FieldType.json &&
+                          field.children.isEmpty &&
+                          field.rawValue == null &&
+                          field.value.trim().isEmpty) {
+                        field.value = '{}';
+                      }
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.x2),
+          if (field.type == _FieldType.boolean)
+            Row(
+              children: [
+                Text(t.adminFieldValue, style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(width: AppSpacing.x2),
+                Switch(
+                  value: field.value.trim().toLowerCase() == 'true',
+                  onChanged: (v) => setState(() => field.value = v.toString()),
+                ),
+              ],
+            )
+          else
+            TextFormField(
+              initialValue: field.value,
+              minLines: field.type == _FieldType.json ? 2 : 1,
+              maxLines: field.type == _FieldType.json ? 6 : 1,
+              decoration: InputDecoration(
+                labelText: t.adminFieldValue,
+                prefixIcon: const Icon(Icons.edit_note, size: 18),
+                isDense: true,
+              ),
+              onChanged: (v) => field.value = v,
+            ),
+          const SizedBox(height: AppSpacing.x2),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () => setState(() => _editingIndex = null),
+              child: Text(t.adminConfirm),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _objectFieldCard(AppLocalizations t, int index, _FieldDraft field) {
+    final palette = AppPalette.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.x4,
+        vertical: AppSpacing.x2,
+      ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: palette.bgElevated3.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          border: Border.all(color: palette.borderSubtle),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            InkWell(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppSpacing.radiusMd),
+              ),
+              onTap: () => setState(() => field.expanded = !field.expanded),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.x3,
+                  vertical: AppSpacing.x2,
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.data_object_outlined, size: 16, color: palette.accent),
+                    const SizedBox(width: AppSpacing.x2),
+                    Expanded(
+                      child: Text(
+                        field.name,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ),
+                    _CountPill(text: t.adminFieldsCount(field.childCount)),
+                    const SizedBox(width: AppSpacing.x2),
+                    Icon(
+                      field.expanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      size: 20,
+                      color: palette.textSecondary,
+                    ),
+                    const SizedBox(width: AppSpacing.x1),
+                    IconButton(
+                      tooltip: t.adminFieldEdit,
+                      onPressed: () => _openObjectEditor(t, field),
+                      icon: Icon(Icons.edit_outlined, size: 16, color: palette.accent),
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      padding: EdgeInsets.zero,
+                      splashRadius: 16,
+                    ),
+                    IconButton(
+                      tooltip: t.adminRemoveRow,
+                      onPressed: () => _confirmRemoveField(
+                        field.name,
+                        () => setState(() => _fields.removeAt(index)),
+                      ),
+                      icon: Icon(Icons.delete_outline, size: 16, color: palette.danger),
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      padding: EdgeInsets.zero,
+                      splashRadius: 16,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (field.expanded) ...[
+              Divider(height: 1, color: palette.borderSubtle),
+              _buildNestedPreview(t, field),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNestedPreview(AppLocalizations t, _FieldDraft field) {
+    final palette = AppPalette.of(context);
+    _ensureChildren(field);
+    final children = field.children;
+    final displayCount = children.length > 4 ? 4 : children.length;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.x3,
+        vertical: AppSpacing.x2,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (int i = 0; i < displayCount; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: [
+                  _FieldTypeIcon(type: children[i].type, size: 14),
+                  const SizedBox(width: AppSpacing.x2),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      children[i].name,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      children[i].hasObjectChildren
+                          ? '{...}'
+                          : (children[i].value.isEmpty ? '-' : children[i].value),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: palette.textSecondary,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (children.length > 4)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.x1),
+              child: Text(
+                '... +${children.length - 4}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: palette.textMuted,
+                      fontStyle: FontStyle.italic,
+                    ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _addFieldToCategory(_FieldCategory category) {
+    final insertIndex = _findInsertIndex(category);
+    setState(() {
+      _fields.insert(
+        insertIndex,
+        _FieldDraft(name: '', value: '', type: _FieldType.string),
+      );
+      _editingIndex = insertIndex;
+    });
+  }
+
+  int _findInsertIndex(_FieldCategory category) {
+    int lastIndex = _fields.length;
+    for (int i = _fields.length - 1; i >= 0; i--) {
+      if (_categoryFor(_fields[i].name) == category) {
+        lastIndex = i + 1;
+        break;
+      }
+    }
+    return lastIndex;
   }
 
   List<_FieldSection> _fieldSections() {
@@ -1765,28 +2122,22 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
     ])) {
       return _FieldCategory.radio;
     }
+    if (_matchesAny(key, [
+      'scene',
+      'noise',
+      'mcu',
+      'anc',
+      'eq',
+      'mode',
+      'profile',
+    ])) {
+      return _FieldCategory.scene;
+    }
     return _FieldCategory.other;
   }
 
   bool _matchesAny(String value, List<String> patterns) {
     return patterns.any(value.contains);
-  }
-
-  IconData _categoryIcon(_FieldCategory category) {
-    switch (category) {
-      case _FieldCategory.identity:
-        return Icons.badge_outlined;
-      case _FieldCategory.timing:
-        return Icons.timer_outlined;
-      case _FieldCategory.current:
-        return Icons.bolt_outlined;
-      case _FieldCategory.radio:
-        return Icons.settings_input_antenna_outlined;
-      case _FieldCategory.hardware:
-        return Icons.memory_outlined;
-      case _FieldCategory.other:
-        return Icons.tune_outlined;
-    }
   }
 
   String _categoryTitle(AppLocalizations t, _FieldCategory category) {
@@ -1801,6 +2152,8 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
         return t.adminGroupRadio;
       case _FieldCategory.hardware:
         return t.adminGroupHardware;
+      case _FieldCategory.scene:
+        return t.adminGroupScene;
       case _FieldCategory.other:
         return t.adminGroupOther;
     }
@@ -1853,129 +2206,6 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
     if (ok == true) onConfirmed();
   }
 
-  Widget _fieldRow(AppLocalizations t, int index, List<_FieldDraft> fields) {
-    final palette = AppPalette.of(context);
-    final field = fields[index];
-    final isObject = field.hasObjectChildren;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x1),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final narrow = constraints.maxWidth < 760;
-          final nameInput = _FieldInputFrame(
-            child: TextFormField(
-              initialValue: field.name,
-              decoration: InputDecoration(
-                hintText: t.adminFieldName,
-                prefixIcon: const Icon(Icons.label_outline, size: 18),
-              ),
-              onChanged: (value) => field.name = value,
-            ),
-          );
-          final typeInput = _FieldInputFrame(
-            child: DropdownButtonFormField<_FieldType>(
-              initialValue: field.type,
-              decoration: InputDecoration(
-                hintText: t.adminFieldType,
-                prefixIcon: const Icon(Icons.tune_outlined, size: 18),
-              ),
-              items: _fieldTypeItems(t),
-              onChanged: (value) {
-                if (value == null) return;
-                setState(() {
-                  field.type = value;
-                  if (value != _FieldType.json) {
-                    field.children = [];
-                    field.rawValue = null;
-                  }
-                  if (value == _FieldType.json &&
-                      field.children.isEmpty &&
-                      field.rawValue == null &&
-                      field.value.trim().isEmpty) {
-                    field.value = '{}';
-                  }
-                });
-              },
-            ),
-          );
-          final valueInput = isObject
-              ? _ObjectFieldButton(
-                  label: t.adminNestedFields,
-                  childCount: field.childCount,
-                  onTap: () => _openObjectEditor(t, field),
-                )
-              : _FieldInputFrame(
-                  child: TextFormField(
-                    initialValue: field.value,
-                    minLines: field.type == _FieldType.json ? 3 : 1,
-                    maxLines: field.type == _FieldType.json ? 8 : 1,
-                    decoration: InputDecoration(
-                      hintText: t.adminFieldValue,
-                      prefixIcon: const Icon(Icons.edit_note, size: 18),
-                    ),
-                    onChanged: (value) => field.value = value,
-                  ),
-                );
-          final removeButton = Padding(
-            padding: const EdgeInsets.only(left: AppSpacing.x2),
-            child: IconButton.filledTonal(
-              tooltip: t.adminRemoveRow,
-              onPressed: () => _confirmRemoveField(
-                field.name,
-                () => setState(() => fields.removeAt(index)),
-              ),
-              icon: const Icon(Icons.delete_outline),
-            ),
-          );
-          final grip = Padding(
-            padding: EdgeInsets.only(
-              right: narrow ? 0 : AppSpacing.x2,
-              top: narrow ? 0 : AppSpacing.x3,
-            ),
-            child: Icon(
-              Icons.drag_indicator,
-              size: 18,
-              color: palette.textMuted,
-            ),
-          );
-
-          if (narrow) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    grip,
-                    const SizedBox(width: AppSpacing.x2),
-                    Expanded(child: nameInput),
-                    removeButton,
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.x2),
-                typeInput,
-                const SizedBox(height: AppSpacing.x2),
-                valueInput,
-              ],
-            );
-          }
-
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              grip,
-              SizedBox(width: 220, child: nameInput),
-              const SizedBox(width: AppSpacing.x2),
-              SizedBox(width: 150, child: typeInput),
-              const SizedBox(width: AppSpacing.x2),
-              Expanded(child: valueInput),
-              removeButton,
-            ],
-          );
-        },
-      ),
-    );
-  }
-
   Widget _nestedFieldRow(
     AppLocalizations t,
     List<_FieldDraft> fields,
@@ -1987,25 +2217,29 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
     final isObject = field.hasObjectChildren;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.x1),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final narrow = constraints.maxWidth < 700;
-          final nameInput = _FieldInputFrame(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          _FieldTypeIcon(type: field.type, size: 16),
+          const SizedBox(width: AppSpacing.x2),
+          Expanded(
+            flex: 2,
             child: TextFormField(
               initialValue: field.name,
               decoration: InputDecoration(
                 hintText: t.adminFieldName,
-                prefixIcon: const Icon(Icons.label_outline, size: 18),
+                isDense: true,
               ),
               onChanged: (value) => field.name = value,
             ),
-          );
-          final typeInput = _FieldInputFrame(
+          ),
+          const SizedBox(width: AppSpacing.x2),
+          SizedBox(
+            width: 120,
             child: DropdownButtonFormField<_FieldType>(
               initialValue: field.type,
               decoration: InputDecoration(
-                hintText: t.adminFieldType,
-                prefixIcon: const Icon(Icons.tune_outlined, size: 18),
+                isDense: true,
               ),
               items: _fieldTypeItems(t),
               onChanged: (value) {
@@ -2019,81 +2253,49 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                 });
               },
             ),
-          );
-          final valueInput = isObject
-              ? _ObjectFieldButton(
-                  label: t.adminNestedFields,
-                  childCount: field.childCount,
-                  onTap: () => _openObjectEditor(t, field),
-                )
-              : _FieldInputFrame(
-                  child: TextFormField(
+          ),
+          const SizedBox(width: AppSpacing.x2),
+          Expanded(
+            flex: 3,
+            child: isObject
+                ? InkWell(
+                    onTap: () => _openObjectEditor(t, field),
+                    child: Row(
+                      children: [
+                        Icon(Icons.data_object_outlined, size: 14, color: palette.accent),
+                        const SizedBox(width: AppSpacing.x1),
+                        Text(
+                          '${field.childCount} fields',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: palette.accent,
+                              ),
+                        ),
+                      ],
+                    ),
+                  )
+                : TextFormField(
                     initialValue: field.value,
-                    minLines: field.type == _FieldType.json ? 2 : 1,
-                    maxLines: field.type == _FieldType.json ? 6 : 1,
+                    maxLines: 1,
                     decoration: InputDecoration(
                       hintText: t.adminFieldValue,
-                      prefixIcon: const Icon(Icons.edit_note, size: 18),
+                      isDense: true,
                     ),
                     onChanged: (value) => field.value = value,
                   ),
-                );
-          final removeButton = Padding(
-            padding: const EdgeInsets.only(left: AppSpacing.x2),
-            child: IconButton.filledTonal(
-              tooltip: t.adminRemoveRow,
-              onPressed: () => _confirmRemoveField(
-                field.name,
-                () => mutate(() => fields.removeAt(index)),
-              ),
-              icon: const Icon(Icons.delete_outline),
+          ),
+          const SizedBox(width: AppSpacing.x1),
+          IconButton(
+            tooltip: t.adminRemoveRow,
+            onPressed: () => _confirmRemoveField(
+              field.name,
+              () => mutate(() => fields.removeAt(index)),
             ),
-          );
-          final grip = Padding(
-            padding: EdgeInsets.only(
-              right: narrow ? 0 : AppSpacing.x2,
-              top: narrow ? 0 : AppSpacing.x3,
-            ),
-            child: Icon(
-              Icons.drag_indicator,
-              size: 18,
-              color: palette.textMuted,
-            ),
-          );
-
-          if (narrow) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    grip,
-                    const SizedBox(width: AppSpacing.x2),
-                    Expanded(child: nameInput),
-                    removeButton,
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.x2),
-                typeInput,
-                const SizedBox(height: AppSpacing.x2),
-                valueInput,
-              ],
-            );
-          }
-
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              grip,
-              SizedBox(width: 220, child: nameInput),
-              const SizedBox(width: AppSpacing.x2),
-              SizedBox(width: 150, child: typeInput),
-              const SizedBox(width: AppSpacing.x2),
-              Expanded(child: valueInput),
-              removeButton,
-            ],
-          );
-        },
+            icon: Icon(Icons.delete_outline, size: 16, color: palette.danger),
+            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+            padding: EdgeInsets.zero,
+            splashRadius: 16,
+          ),
+        ],
       ),
     );
   }
@@ -2310,143 +2512,176 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
   }
 }
 
-class _FieldGroupPanel extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final int count;
-  final Widget child;
+class _EditorTopBar extends StatelessWidget {
+  final String chipId;
+  final VoidCallback onAddField;
+  final VoidCallback onSave;
 
-  const _FieldGroupPanel({
-    required this.icon,
-    required this.title,
-    required this.count,
-    required this.child,
+  const _EditorTopBar({
+    required this.chipId,
+    required this.onAddField,
+    required this.onSave,
   });
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final palette = AppPalette.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: palette.bgElevated2.withValues(alpha: palette.isDark ? 0.7 : 1),
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: palette.borderSubtle),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.x3),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
+    return Material(
+      color: palette.bgElevated2,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: palette.borderSubtle)),
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.x4,
+          vertical: AppSpacing.x3,
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final narrow = constraints.maxWidth < 560;
+            final title = Row(
               children: [
-                Icon(icon, size: 18, color: palette.accent),
-                const SizedBox(width: AppSpacing.x2),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleSmall,
+                Container(
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: palette.accentMuted,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                    border: Border.all(color: palette.borderStrong),
+                  ),
+                  child: Icon(
+                    Icons.data_object_outlined,
+                    size: 20,
+                    color: palette.accent,
                   ),
                 ),
-                _CountPill(text: '$count'),
+                const SizedBox(width: AppSpacing.x3),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        chipId,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      Text(
+                        t.adminJsonEditor,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: palette.textSecondary,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
-            ),
-            const SizedBox(height: AppSpacing.x3),
-            child,
-          ],
+            );
+            final actions = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton.icon(
+                  onPressed: onAddField,
+                  icon: const Icon(Icons.add),
+                  label: Text(t.adminAddField),
+                ),
+                const SizedBox(width: AppSpacing.x2),
+                FilledButton.icon(
+                  onPressed: onSave,
+                  icon: const Icon(Icons.save_outlined),
+                  label: Text(t.adminSave),
+                ),
+              ],
+            );
+
+            if (narrow) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  title,
+                  const SizedBox(height: AppSpacing.x3),
+                  Align(alignment: Alignment.centerRight, child: actions),
+                ],
+              );
+            }
+
+            return Row(
+              children: [
+                Expanded(child: title),
+                const SizedBox(width: AppSpacing.x3),
+                actions,
+              ],
+            );
+          },
         ),
       ),
     );
   }
 }
 
-class _FieldInputFrame extends StatelessWidget {
-  final Widget child;
+class _FieldTypeIcon extends StatelessWidget {
+  final _FieldType type;
+  final double size;
 
-  const _FieldInputFrame({required this.child});
+  const _FieldTypeIcon({required this.type, this.size = 18});
 
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        boxShadow: palette.isDark
-            ? const []
-            : const [
-                BoxShadow(
-                  color: Color(0x120F172A),
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
-                ),
-              ],
-      ),
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          inputDecorationTheme: Theme.of(context).inputDecorationTheme.copyWith(
-                fillColor: palette.bgElevated2,
-              ),
-        ),
-        child: child,
-      ),
-    );
+    final IconData icon;
+    switch (type) {
+      case _FieldType.string:
+        icon = Icons.text_fields_outlined;
+      case _FieldType.number:
+        icon = Icons.tag;
+      case _FieldType.boolean:
+        icon = Icons.toggle_on_outlined;
+      case _FieldType.json:
+        icon = Icons.data_object_outlined;
+    }
+    return Icon(icon, size: size, color: palette.textMuted);
   }
 }
 
-class _ObjectFieldButton extends StatelessWidget {
-  final String label;
-  final int childCount;
-  final VoidCallback onTap;
+class _FieldTypeBadge extends StatelessWidget {
+  final _FieldType type;
 
-  const _ObjectFieldButton({
-    required this.label,
-    required this.childCount,
-    required this.onTap,
-  });
+  const _FieldTypeBadge({required this.type});
 
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
-    return _FieldInputFrame(
-      child: Material(
-        color: palette.bgElevated2,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          onTap: onTap,
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 48),
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              border: Border.all(color: palette.borderSubtle),
+    final String label;
+    final Color color;
+    switch (type) {
+      case _FieldType.string:
+        label = 'A';
+        color = palette.info;
+      case _FieldType.number:
+        label = '#';
+        color = palette.success;
+      case _FieldType.boolean:
+        label = '⊘';
+        color = palette.warning;
+      case _FieldType.json:
+        label = '{}';
+        color = palette.accent;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+              fontSize: 10,
             ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.account_tree_outlined,
-                  size: 18,
-                  color: palette.accent,
-                ),
-                const SizedBox(width: AppSpacing.x2),
-                Expanded(
-                  child: Text(
-                    '$label · $childCount',
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: palette.textSecondary,
-                        ),
-                  ),
-                ),
-                Icon(
-                  Icons.open_in_new_outlined,
-                  size: 18,
-                  color: palette.textSecondary,
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

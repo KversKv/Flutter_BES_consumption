@@ -195,28 +195,37 @@ def update_backend(push_data=True):
         print("[update] 跳过 assets 上传（--skip-data），保留服务器上线数据。")
 
     print("[update] 服务器编译后端二进制并安装 systemd 服务 ...")
+    # 用 printf 拼 systemd 单元，避免 heredoc 在跨平台 SSH 单行命令中被截断；
+    # 用 \n 作为换行写入临时文件后再 sudo mv，规避 here-document 结束符问题。
+    unit_lines = [
+        "[Unit]",
+        "Description=BES chip_server",
+        "After=network.target",
+        "",
+        "[Service]",
+        f"WorkingDirectory={BACKEND_DIR}",
+        f"Environment=CHIP_SERVER_PORT={BACKEND_PORT}",
+        f"Environment=CHIP_PROJECT_ROOT={BACKEND_DIR}",
+        f"ExecStart={BACKEND_DIR}/chip_server",
+        "Restart=always",
+        f"User={SSH_USER}",
+        "",
+        "[Install]",
+        "WantedBy=multi-user.target",
+    ]
+    # 用单引号包裹，shell 不会展开内部 \n；交给 printf 解释为真正换行。
+    unit_payload = "\\n".join(unit_lines) + "\\n"
     remote_setup = (
         f"set -e; cd {BACKEND_DIR}; "
+        # 关键修复：先停止可能在跑的旧服务，避免 'Text file busy' 导致 dart compile 失败
+        f"sudo systemctl stop {SERVICE_NAME} 2>/dev/null || true; "
         # 编译：需服务器已装 Dart SDK
         f"dart pub get; "
         f"dart compile exe bin/server.dart -o {BACKEND_DIR}/chip_server; "
-        # 写 systemd 单元（用 heredoc 规避 echo '\\n' 在远程 sh 不解析换行的问题）
-        f"sudo tee /etc/systemd/system/{SERVICE_NAME}.service >/dev/null <<'UNIT'\n"
-        f"[Unit]\n"
-        f"Description=BES chip_server\n"
-        f"After=network.target\n"
-        f"\n"
-        f"[Service]\n"
-        f"WorkingDirectory={BACKEND_DIR}\n"
-        f"Environment=CHIP_SERVER_PORT={BACKEND_PORT}\n"
-        f"Environment=CHIP_PROJECT_ROOT={BACKEND_DIR}\n"
-        f"ExecStart={BACKEND_DIR}/chip_server\n"
-        f"Restart=always\n"
-        f"User={SSH_USER}\n"
-        f"\n"
-        f"[Install]\n"
-        f"WantedBy=multi-user.target\n"
-        f"UNIT\n"
+        # 用 printf 写入临时文件，再 sudo mv 到 systemd 目录，避免 heredoc 跨平台问题
+        f"printf '{unit_payload}' > /tmp/{SERVICE_NAME}.service; "
+        f"sudo mv /tmp/{SERVICE_NAME}.service /etc/systemd/system/{SERVICE_NAME}.service; "
+        f"sudo chmod 644 /etc/systemd/system/{SERVICE_NAME}.service; "
         f"sudo systemctl daemon-reload; "
         f"sudo systemctl enable {SERVICE_NAME}; "
         f"sudo systemctl restart {SERVICE_NAME}; "
