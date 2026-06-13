@@ -2662,7 +2662,7 @@ class _FieldTypeBadge extends StatelessWidget {
         label = '#';
         color = palette.success;
       case _FieldType.boolean:
-        label = '⊘';
+        label = 'B';
         color = palette.warning;
       case _FieldType.json:
         label = '{}';
