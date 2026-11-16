@@ -26,6 +26,9 @@ class AppState extends ChangeNotifier {
 
   bool hideLowPowerGaps = true;
 
+  // true = Nordic OPP 模型；false = 原始 legacy 模型
+  bool useNordicModel = true;
+
   // HDT specific options (exposed for BLE-mode HDT UI)
   HdtModule hdtModule = HdtModule.sink;
   String hdtBand = '2.4G';
@@ -167,6 +170,13 @@ class AppState extends ChangeNotifier {
     recompute();
   }
 
+  void setUseNordicModel(bool v) {
+    useNordicModel = v;
+    // 简易模式单包上限 251B，回切时收敛 payload
+    if (!v) params.payloadBytes = params.payloadBytes.clamp(0, 251);
+    recompute();
+  }
+
   void setBatteryCapacity(double mAh) {
     batteryCapacity_mAh = mAh;
     recompute();
@@ -184,45 +194,84 @@ class AppState extends ChangeNotifier {
 
   void recompute() {
     if (params.mode == Mode.advertisingTxOnly) {
-      // Nordic 模型：adv 周期含固定 5ms advDelay
-      final intervalUs =
-          ((params.advIntervalMs + 5) * 1000).clamp(25000, 3_005_000).toDouble();
+      // Nordic 模型：adv 周期含固定 5ms advDelay；legacy 不含
+      final intervalUs = useNordicModel
+          ? ((params.advIntervalMs + 5) * 1000)
+              .clamp(25000, 3_005_000)
+              .toDouble()
+          : (params.advIntervalMs * 1000).clamp(20000, 3_000_000).toDouble();
       periodUs = intervalUs;
-      events = PowerCalculator.generateBleAdvertisingTxOnly(
-        chip: chip,
-        params: params,
-        periodUs: periodUs,
-      );
+      events = useNordicModel
+          ? PowerCalculator.generateBleAdvertisingTxOnly(
+              chip: chip,
+              params: params,
+              periodUs: periodUs,
+            )
+          : PowerCalculator.generateBleAdvertisingTxOnlyLegacy(
+              chip: chip,
+              params: params,
+              periodUs: periodUs,
+            );
     } else if (params.mode == Mode.advertisingTxRx) {
-      final intervalUs =
-          ((params.advIntervalMs + 5) * 1000).clamp(25000, 3_005_000).toDouble();
+      final intervalUs = useNordicModel
+          ? ((params.advIntervalMs + 5) * 1000)
+              .clamp(25000, 3_005_000)
+              .toDouble()
+          : (params.advIntervalMs * 1000).clamp(20000, 3_000_000).toDouble();
       periodUs = intervalUs;
-      events = PowerCalculator.generateBleAdvertisingTxRx(
-        chip: chip,
-        params: params,
-        periodUs: periodUs,
-        rxCurrentMa: rxCurrentConnected_mA,
-      );
+      events = useNordicModel
+          ? PowerCalculator.generateBleAdvertisingTxRx(
+              chip: chip,
+              params: params,
+              periodUs: periodUs,
+              rxCurrentMa: rxCurrentConnected_mA,
+            )
+          : PowerCalculator.generateBleAdvertisingTxRxLegacy(
+              chip: chip,
+              params: params,
+              periodUs: periodUs,
+              rxCurrentMa: rxCurrentConnected_mA,
+            );
     } else if (params.mode == Mode.bleConnectionCentral) {
       final intervalUs =
           (params.connIntervalMs * 1000).clamp(7500, 4_000_000).toDouble();
-      periodUs = intervalUs * (params.slaveLatency + 1);
-      events = PowerCalculator.generateBleConnectedCentral(
-        chip: chip,
-        params: params,
-        periodUs: periodUs,
-        rxCurrentMa: rxCurrentConnected_mA,
-      );
+      periodUs = useNordicModel
+          ? intervalUs * (params.slaveLatency + 1)
+          : intervalUs;
+      events = useNordicModel
+          ? PowerCalculator.generateBleConnectedCentral(
+              chip: chip,
+              params: params,
+              periodUs: periodUs,
+              rxCurrentMa: rxCurrentConnected_mA,
+            )
+          : PowerCalculator.generateBleConnectedCentralLegacy(
+              chip: chip,
+              params: params,
+              periodUs: periodUs,
+              rxWindowUs: rxWindowConnectedUs,
+              rxCurrentMa: rxCurrentConnected_mA,
+            );
     } else if (params.mode == Mode.bleConnectionPeripheral) {
       final intervalUs =
           (params.connIntervalMs * 1000).clamp(7500, 4_000_000).toDouble();
-      periodUs = intervalUs * (params.slaveLatency + 1);
-      events = PowerCalculator.generateBleConnectedPeripheral(
-        chip: chip,
-        params: params,
-        periodUs: periodUs,
-        rxCurrentMa: rxCurrentConnected_mA,
-      );
+      periodUs = useNordicModel
+          ? intervalUs * (params.slaveLatency + 1)
+          : intervalUs;
+      events = useNordicModel
+          ? PowerCalculator.generateBleConnectedPeripheral(
+              chip: chip,
+              params: params,
+              periodUs: periodUs,
+              rxCurrentMa: rxCurrentConnected_mA,
+            )
+          : PowerCalculator.generateBleConnectedPeripheralLegacy(
+              chip: chip,
+              params: params,
+              periodUs: periodUs,
+              rxWindowUs: rxWindowConnectedUs,
+              rxCurrentMa: rxCurrentConnected_mA,
+            );
     } else if (params.mode == Mode.hdt) {
       // Use HDT configuration from AppState HDT fields
       final intervalUs = 500.0; // default HDT period (us)
@@ -265,10 +314,14 @@ class AppState extends ChangeNotifier {
 
   double _throughput_bps(int payloadBytes) {
     if (periodUs <= 0) return 0;
-    final pdu = PowerCalculator.llPduMax(params.dle);
-    final perEvent = params.eventLengthExt
-        ? payloadBytes
-        : (payloadBytes < pdu ? payloadBytes : pdu);
+    // legacy 模型每事件单包全量 payload，无 DLE/CELE 钳位
+    final perEvent = useNordicModel
+        ? (params.eventLengthExt
+            ? payloadBytes
+            : (payloadBytes < PowerCalculator.llPduMax(params.dle)
+                ? payloadBytes
+                : PowerCalculator.llPduMax(params.dle)))
+        : payloadBytes;
     return perEvent * 8 * 1e6 / periodUs;
   }
 

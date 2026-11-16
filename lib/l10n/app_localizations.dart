@@ -65,6 +65,8 @@ class AppLocalizations {
       'lf_clock_label': 'LF clock',
       'lf_xo': 'External crystal',
       'lf_rc': 'Internal RC',
+      'mode_simple': 'Simple mode',
+      'mode_multi': 'Multi-param mode',
       'bt_page_config': 'BT Page configuration',
       'bt_page_placeholder': 'Placeholder area — BT Page specific params',
       'bt_pagescan_config': 'BT PageScan configuration',
@@ -436,6 +438,8 @@ class AppLocalizations {
       'lf_clock_label': '低频时钟',
       'lf_xo': '外部晶振',
       'lf_rc': '内部 RC',
+      'mode_simple': '简易模式',
+      'mode_multi': '多参计算模式',
       'bt_page_config': 'BT Page 配置',
       'bt_page_placeholder': '此处为占位设计，后续集成 BT Page 专有参数',
       'bt_pagescan_config': 'BT PageScan 配置',
@@ -842,6 +846,8 @@ class AppLocalizations {
   String get lfClockLabel => _t('lf_clock_label');
   String get lfXo => _t('lf_xo');
   String get lfRc => _t('lf_rc');
+  String get modeSimple => _t('mode_simple');
+  String get modeMulti => _t('mode_multi');
 
   // ===== Earbuds =====
   String get ebTitle => _t('eb_title');

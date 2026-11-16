@@ -109,6 +109,8 @@
 ### BLE 模型（2026-11-16）
 - [决策] BLE 时序/算法切换为 Nordic OPP 结构（airtime 10B/11B、widening=Σppm×T_eff+32、advDelay+5ms、DLE/CELE 多包、CPU 重叠 227us、latency 倍周期）；**电流仍全部取自芯片 JSON**；放弃旧固定 RX 窗/硬编码 adv TX/0.625ms 量化。
 - [决策] 新参数进 `ProfileParams`（rxPayload/dle/cele/latency/ppm×2/lfRc）+ 高级卡 UI；芯片新增可选 `tailStandby_us`；`rxWindow_us`/`advGap_us` 退役为 schema 保留字段。
+- [决策] 简易/多参计算模式开关=`AppState.useNordicModel`（默认 true），UI 为图表头 Hide sleep/Gap 右侧 Switch（仅 BLE 页渲染）；简易走 `PowerCalculator.*Legacy`（原始算法原样），左侧参数/KPI/payload 上限随模式自动增减。
+- [坑] 本机 `flutter test` 多套件同进程并发必死锁（flutter_tester 空转）；强停会损坏 `build/test_cache` 致后续 loading 卡死；解法：单套件串行 + 清 `build/test_cache`。
 
 ### 状态管理
 - [决策] 采用 `provider + ChangeNotifier`

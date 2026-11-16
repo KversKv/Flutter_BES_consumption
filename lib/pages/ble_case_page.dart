@@ -78,6 +78,8 @@ class _BleCasePageState extends State<BleCasePage> {
                         maxCurrent: appState.maxCurrent_mA,
                         hideLowPowerGaps: appState.hideLowPowerGaps,
                         onToggleHideGaps: (val) => appState.setHideLowPowerGaps(val),
+                        useNordicModel: appState.useNordicModel,
+                        onToggleModel: (val) => appState.setUseNordicModel(val),
                       ),
                     ),
                   ),

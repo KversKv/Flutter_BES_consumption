@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:bes_consumption/models/ble_chip.dart';
 import 'package:bes_consumption/models/profile_params.dart';
 import 'package:bes_consumption/services/power_calculator.dart';
+import 'package:bes_consumption/state/app_state.dart';
 
 BleChip _chip() => BleChip.fromJson({
       'id': 't',
@@ -153,6 +154,60 @@ void main() {
     expect(events.where((e) => e.label.endsWith('TX')).length, 3);
     expect(events.where((e) => e.label == 'RX').length, 3);
     expect(events.where((e) => e.label == 'ADV_GAP').length, 2);
+  });
+
+  test('legacy peripheral keeps fixed RX window and no widening', () {
+    final events = PowerCalculator.generateBleConnectedPeripheralLegacy(
+      chip: _chip(),
+      params: _params(tx: 3),
+      periodUs: 100000,
+      rxWindowUs: 300,
+      rxCurrentMa: 0,
+    );
+    expect(
+      events.map((e) => e.label).toList(),
+      [
+        'Pre-processing',
+        'Crystal ramp-up',
+        'Standby',
+        'RX',
+        'TIFS',
+        'TX',
+        'Post',
+        'Sleep',
+      ],
+    );
+    expect(events[3].durationUs, 300);
+    expect(events[5].durationUs, 104);
+  });
+
+  test('legacy adv TxRx keeps hardcoded TX and per-channel start radio', () {
+    final events = PowerCalculator.generateBleAdvertisingTxRxLegacy(
+      chip: _chip(),
+      params: _params(mode: Mode.advertisingTxRx),
+      periodUs: 100000,
+      rxCurrentMa: 0,
+    );
+    expect(events.where((e) => e.label == 'Start radio').length, 3);
+    expect(
+        events.where((e) => e.label.endsWith('TX')).first.durationUs, 225.28);
+    expect(events.where((e) => e.label == 'RX').first.durationUs, 100);
+    expect(events.where((e) => e.label == 'ADV_GAP').first.durationUs, 62);
+  });
+
+  test('AppState mode switch swaps model, period rules and payload cap', () {
+    final state = AppState();
+    expect(state.useNordicModel, isTrue);
+    state.setSlaveLatency(9);
+    expect(state.periodUs, 200000 * 10);
+    state.setPayloadBytes(1000);
+    state.setUseNordicModel(false);
+    expect(state.periodUs, 200000);
+    expect(state.params.payloadBytes, 251);
+    expect(state.events.any((e) => e.label == 'Window widening'), isFalse);
+    state.setUseNordicModel(true);
+    expect(state.periodUs, 200000 * 10);
+    expect(state.events.any((e) => e.label == 'Window widening'), isTrue);
   });
 
   test('charge excludes sleep and average matches charge/period + idle', () {

@@ -1,5 +1,12 @@
 # Task Log
 
+### 2026-11-16 - 简易/多参计算模式开关（legacy/Nordic）
+- **Type**: feature
+- **Scope**: `services/power_calculator.dart`（新增 `*Legacy` 生成器，原样恢复旧算法）、`state/app_state.dart`（`useNordicModel` 默认 true + setter + recompute/吞吐量分支 + 回切 payload 收敛 251）、`widgets/chart_widgets.dart`（图表头 Hide sleep/Gap 开关右侧新增模式 Switch，标签随模式显示「简易模式/多参计算模式」；可选参数仅 BLE 页传入）、`pages/ble_case_page.dart`（传参）、`widgets/config_panels.dart`（Nordic 专属控件仅多参模式显示；TX payload 上限 251/2000 随模式）、`widgets/kpi_widgets.dart`（电荷/吞吐量 KPI 仅多参模式）、`l10n`（mode_simple/mode_multi zh/en）、`test/power_calculator_test.dart`（+2 legacy 用例 +1 状态切换用例）
+- **Reason**: 用户要求保留原始数据与算法；开关做成界面滑动开关，置于 Hide sleep/Gap 右侧；切换后左侧仅显示该模式支持的参数。
+- **Change**: 简易模式=legacy（conn 周期不含 latency 倍乘、adv 无 +5ms、RX 取 `rxWindow_us`、adv TX=225.28us/每信道 Start radio/`advGap_us` 间隙、单包全量 payload）；多参模式=Nordic。曾试 Device 卡 Switch 与面板顶 SegmentedButton，按用户反馈最终落位图表头 Switch。
+- **Verification**: `flutter analyze` 0 issue；power_calculator（12 用例）清 `build/test_cache` 后单套件复跑（本机多套件同进程并发必死锁）。
+
 ### 2026-11-16 - BLE 模型切换为 Nordic OPP 结构（电流仍用我方芯片数据）
 - **Type**: feature / model
 - **Scope**: `models/profile_params.dart`、`models/ble_chip.dart`、`services/power_calculator.dart`、`state/app_state.dart`、`widgets/config_panels.dart`、`widgets/kpi_widgets.dart`、`l10n/app_localizations.dart`、新增 `test/power_calculator_test.dart`

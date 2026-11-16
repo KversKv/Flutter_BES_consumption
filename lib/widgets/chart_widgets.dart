@@ -17,6 +17,9 @@ class UnifiedPowerChart extends StatefulWidget {
   final double maxCurrent;
   final bool hideLowPowerGaps;
   final ValueChanged<bool> onToggleHideGaps;
+  // 仅 BLE 页传入；其余页面不渲染模式开关
+  final bool? useNordicModel;
+  final ValueChanged<bool>? onToggleModel;
 
   const UnifiedPowerChart({
     super.key,
@@ -25,6 +28,8 @@ class UnifiedPowerChart extends StatefulWidget {
     required this.maxCurrent,
     required this.hideLowPowerGaps,
     required this.onToggleHideGaps,
+    this.useNordicModel,
+    this.onToggleModel,
   });
 
   @override
@@ -55,6 +60,22 @@ class _UnifiedPowerChartState extends State<UnifiedPowerChart> {
                 ),
               ],
             ),
+            // 简易模式(legacy) / 多参计算模式(Nordic) 切换
+            if (widget.useNordicModel != null &&
+                widget.onToggleModel != null)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.useNordicModel! ? l10n.modeMulti : l10n.modeSimple,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  Switch(
+                    value: widget.useNordicModel!,
+                    onChanged: widget.onToggleModel,
+                  ),
+                ],
+              ),
             Text(
               widget.hideLowPowerGaps
                   ? l10n.chartTimelineCompressed

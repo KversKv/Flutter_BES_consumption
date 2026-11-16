@@ -176,8 +176,8 @@ class _ConfigPanelState extends State<ConfigPanel> {
                   label: l10n.payloadBytesLabel,
                   value: app.params.payloadBytes.toDouble(),
                   min: 0,
-                  max: 2000,
-                  divisions: 2000,
+                  max: app.useNordicModel ? 2000 : 251,
+                  divisions: app.useNordicModel ? 2000 : 251,
                   decimals: 0,
                   suffixText: 'bytes',
                   onChanged: (v) =>
@@ -313,7 +313,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
                       ),
                     ),
                   ),
-                  if (app.params.mode != Mode.hdt) ...[
+                  if (app.useNordicModel && app.params.mode != Mode.hdt) ...[
                     const SizedBox(height: 12),
                     _NumberSliderInput(
                       label: l10n.rxPayloadLabel,
