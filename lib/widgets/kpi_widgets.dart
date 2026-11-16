@@ -147,6 +147,18 @@ class KPIRowAppState extends StatelessWidget {
             icon: Icons.signal_cellular_alt,
             accent: palette.warning,
           ),
+          _KPI(
+            title: AppLocalizations.of(context).kpiEventCharge,
+            value: '${app.eventCharge_uC.toStringAsFixed(2)} µC',
+            icon: Icons.electric_meter,
+            accent: palette.info,
+          ),
+          _KPI(
+            title: AppLocalizations.of(context).kpiTxThroughput,
+            value: '${(app.txThroughput_bps / 1000).toStringAsFixed(2)} kbps',
+            icon: Icons.speed,
+            accent: palette.accent,
+          ),
         ],
       ),
     );

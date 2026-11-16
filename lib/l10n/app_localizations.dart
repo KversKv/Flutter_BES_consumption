@@ -54,6 +54,17 @@ class AppLocalizations {
       'kpi_sleep_current': 'Sleep current',
       'kpi_battery_life_est': 'Battery life (est)',
       'kpi_peak_current': 'Peak current',
+      'kpi_event_charge': 'Event charge',
+      'kpi_tx_throughput': 'TX throughput',
+      'rx_payload_label': 'RX payload bytes:',
+      'dle_label': 'Data Length Extension (DLE)',
+      'cele_label': 'Connection Event Length Extension',
+      'slave_latency_label': 'Slave latency',
+      'central_ppm_label': 'Master sleep clock (ppm)',
+      'peripheral_ppm_label': 'Slave sleep clock (ppm)',
+      'lf_clock_label': 'LF clock',
+      'lf_xo': 'External crystal',
+      'lf_rc': 'Internal RC',
       'bt_page_config': 'BT Page configuration',
       'bt_page_placeholder': 'Placeholder area — BT Page specific params',
       'bt_pagescan_config': 'BT PageScan configuration',
@@ -414,6 +425,17 @@ class AppLocalizations {
       'kpi_sleep_current': '睡眠电流',
       'kpi_battery_life_est': '电池寿命(估)',
       'kpi_peak_current': '峰值电流',
+      'kpi_event_charge': '事件电荷',
+      'kpi_tx_throughput': 'TX 吞吐量',
+      'rx_payload_label': 'RX 负载字节数:',
+      'dle_label': '数据长度扩展 (DLE)',
+      'cele_label': '连接事件长度扩展',
+      'slave_latency_label': '从机延迟',
+      'central_ppm_label': '主机睡眠时钟 (ppm)',
+      'peripheral_ppm_label': '从机睡眠时钟 (ppm)',
+      'lf_clock_label': '低频时钟',
+      'lf_xo': '外部晶振',
+      'lf_rc': '内部 RC',
       'bt_page_config': 'BT Page 配置',
       'bt_page_placeholder': '此处为占位设计，后续集成 BT Page 专有参数',
       'bt_pagescan_config': 'BT PageScan 配置',
@@ -809,6 +831,17 @@ class AppLocalizations {
   String get configSectionManual => _t('config_section_manual');
   String get kpiBatteryLifeEst => _t('kpi_battery_life_est');
   String get kpiPeakCurrent => _t('kpi_peak_current');
+  String get kpiEventCharge => _t('kpi_event_charge');
+  String get kpiTxThroughput => _t('kpi_tx_throughput');
+  String get rxPayloadLabel => _t('rx_payload_label');
+  String get dleLabel => _t('dle_label');
+  String get celeLabel => _t('cele_label');
+  String get slaveLatencyLabel => _t('slave_latency_label');
+  String get centralPpmLabel => _t('central_ppm_label');
+  String get peripheralPpmLabel => _t('peripheral_ppm_label');
+  String get lfClockLabel => _t('lf_clock_label');
+  String get lfXo => _t('lf_xo');
+  String get lfRc => _t('lf_rc');
 
   // ===== Earbuds =====
   String get ebTitle => _t('eb_title');

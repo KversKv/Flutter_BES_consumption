@@ -42,6 +42,8 @@ class BleChip {
   // BLE 广播通道间固定间隙（仅用于 CH37->CH38、CH38->CH39）
   final double advGap_us;
   final double advGapCurrent_mA;
+  // 事件尾部 Standby 时长（Nordic 模型，54L 系列典型 300us；0 表示无此阶段）
+  final double tailStandby_us;
   // 芯片简短描述（用于 UI 展示）
   final String description;
   // HDT 模式下的 IDLE 电流（mA），由芯片厂商给定
@@ -77,6 +79,7 @@ class BleChip {
     required this.startRadioCurrent_mA,
     required this.advGap_us,
     required this.advGapCurrent_mA,
+    this.tailStandby_us = 0,
     required this.description,
     required this.hdtIdleCurrent_mA,
     this.supportsHDT = false,
@@ -115,6 +118,7 @@ class BleChip {
         'startRadioCurrent_mA': startRadioCurrent_mA,
         'advGap_us': advGap_us,
         'advGapCurrent_mA': advGapCurrent_mA,
+        'tailStandby_us': tailStandby_us,
         'description': description,
         'hdtIdleCurrent_mA': hdtIdleCurrent_mA,
         'supportsHDT': supportsHDT,
@@ -152,6 +156,7 @@ class BleChip {
         startRadioCurrent_mA: _d(j['startRadioCurrent_mA']) ?? 0,
         advGap_us: _d(j['advGap_us']) ?? 0,
         advGapCurrent_mA: _d(j['advGapCurrent_mA']) ?? 0,
+        tailStandby_us: _d(j['tailStandby_us']) ?? 0,
         description: (j['description'] as String?) ?? '',
         hdtIdleCurrent_mA: _d(j['hdtIdleCurrent_mA']) ?? 0,
         supportsHDT: (j['supportsHDT'] as bool?) ?? false,

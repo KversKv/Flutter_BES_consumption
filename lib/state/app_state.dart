@@ -132,6 +132,41 @@ class AppState extends ChangeNotifier {
     recompute();
   }
 
+  void setRxPayloadBytes(int bytes) {
+    params.rxPayloadBytes = bytes;
+    recompute();
+  }
+
+  void setDle(bool v) {
+    params.dle = v;
+    recompute();
+  }
+
+  void setEventLengthExt(bool v) {
+    params.eventLengthExt = v;
+    recompute();
+  }
+
+  void setSlaveLatency(int v) {
+    params.slaveLatency = v.clamp(0, 159);
+    recompute();
+  }
+
+  void setCentralPpm(int v) {
+    params.centralPpm = v.clamp(20, 500);
+    recompute();
+  }
+
+  void setPeripheralPpm(int v) {
+    params.peripheralPpm = v.clamp(20, 500);
+    recompute();
+  }
+
+  void setLfRc(bool v) {
+    params.lfRc = v;
+    recompute();
+  }
+
   void setBatteryCapacity(double mAh) {
     batteryCapacity_mAh = mAh;
     recompute();
@@ -149,8 +184,9 @@ class AppState extends ChangeNotifier {
 
   void recompute() {
     if (params.mode == Mode.advertisingTxOnly) {
+      // Nordic 模型：adv 周期含固定 5ms advDelay
       final intervalUs =
-          (params.advIntervalMs * 1000).clamp(20000, 3_000_000).toDouble();
+          ((params.advIntervalMs + 5) * 1000).clamp(25000, 3_005_000).toDouble();
       periodUs = intervalUs;
       events = PowerCalculator.generateBleAdvertisingTxOnly(
         chip: chip,
@@ -159,7 +195,7 @@ class AppState extends ChangeNotifier {
       );
     } else if (params.mode == Mode.advertisingTxRx) {
       final intervalUs =
-          (params.advIntervalMs * 1000).clamp(20000, 3_000_000).toDouble();
+          ((params.advIntervalMs + 5) * 1000).clamp(25000, 3_005_000).toDouble();
       periodUs = intervalUs;
       events = PowerCalculator.generateBleAdvertisingTxRx(
         chip: chip,
@@ -170,23 +206,21 @@ class AppState extends ChangeNotifier {
     } else if (params.mode == Mode.bleConnectionCentral) {
       final intervalUs =
           (params.connIntervalMs * 1000).clamp(7500, 4_000_000).toDouble();
-      periodUs = intervalUs;
+      periodUs = intervalUs * (params.slaveLatency + 1);
       events = PowerCalculator.generateBleConnectedCentral(
         chip: chip,
         params: params,
         periodUs: periodUs,
-        rxWindowUs: rxWindowConnectedUs,
         rxCurrentMa: rxCurrentConnected_mA,
       );
     } else if (params.mode == Mode.bleConnectionPeripheral) {
       final intervalUs =
           (params.connIntervalMs * 1000).clamp(7500, 4_000_000).toDouble();
-      periodUs = intervalUs;
+      periodUs = intervalUs * (params.slaveLatency + 1);
       events = PowerCalculator.generateBleConnectedPeripheral(
         chip: chip,
         params: params,
         periodUs: periodUs,
-        rxWindowUs: rxWindowConnectedUs,
         rxCurrentMa: rxCurrentConnected_mA,
       );
     } else if (params.mode == Mode.hdt) {
@@ -222,6 +256,21 @@ class AppState extends ChangeNotifier {
   }
 
   double get period_ms => periodUs / 1000.0;
+
+  double get eventCharge_uC => PowerCalculator.computeEventCharge_uC(events);
+
+  double get txThroughput_bps => _throughput_bps(params.payloadBytes);
+
+  double get rxThroughput_bps => _throughput_bps(params.rxPayloadBytes);
+
+  double _throughput_bps(int payloadBytes) {
+    if (periodUs <= 0) return 0;
+    final pdu = PowerCalculator.llPduMax(params.dle);
+    final perEvent = params.eventLengthExt
+        ? payloadBytes
+        : (payloadBytes < pdu ? payloadBytes : pdu);
+    return perEvent * 8 * 1e6 / periodUs;
+  }
 
   String formatCurrentAuto(double currentMa) {
     if (currentMa < 1.0) {

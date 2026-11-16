@@ -10,6 +10,13 @@ class ProfileParams {
   double advIntervalMs;
   double connIntervalMs;
   int payloadBytes;
+  int rxPayloadBytes;
+  bool dle;
+  bool eventLengthExt;
+  int slaveLatency;
+  int centralPpm;
+  int peripheralPpm;
+  bool lfRc;
 
   ProfileParams({
     required this.mode,
@@ -18,5 +25,12 @@ class ProfileParams {
     required this.advIntervalMs,
     required this.connIntervalMs,
     required this.payloadBytes,
+    this.rxPayloadBytes = 0,
+    this.dle = true,
+    this.eventLengthExt = true,
+    this.slaveLatency = 0,
+    this.centralPpm = 20,
+    this.peripheralPpm = 20,
+    this.lfRc = false,
   });
 }

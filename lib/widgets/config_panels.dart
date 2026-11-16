@@ -20,7 +20,7 @@ class _ConfigPanelState extends State<ConfigPanel> {
 
   static const double _connMin = 7.5;
   static const double _connMax = 4000.0;
-  static const double _connStep = 0.625;
+  static const double _connStep = 1.25;
 
   @override
   void dispose() {
@@ -176,8 +176,8 @@ class _ConfigPanelState extends State<ConfigPanel> {
                   label: l10n.payloadBytesLabel,
                   value: app.params.payloadBytes.toDouble(),
                   min: 0,
-                  max: 251,
-                  divisions: 251,
+                  max: 2000,
+                  divisions: 2000,
                   decimals: 0,
                   suffixText: 'bytes',
                   onChanged: (v) =>
@@ -313,6 +313,87 @@ class _ConfigPanelState extends State<ConfigPanel> {
                       ),
                     ),
                   ),
+                  if (app.params.mode != Mode.hdt) ...[
+                    const SizedBox(height: 12),
+                    _NumberSliderInput(
+                      label: l10n.rxPayloadLabel,
+                      value: app.params.rxPayloadBytes.toDouble(),
+                      min: 0,
+                      max: 251,
+                      divisions: 251,
+                      decimals: 0,
+                      suffixText: 'bytes',
+                      onChanged: (v) => context
+                          .read<AppState>()
+                          .setRxPayloadBytes(v.round()),
+                    ),
+                    const SizedBox(height: 12),
+                    ConfigSwitchTile(
+                      title: l10n.dleLabel,
+                      value: app.params.dle,
+                      onChanged: (v) => context.read<AppState>().setDle(v),
+                    ),
+                    const SizedBox(height: 12),
+                    ConfigSwitchTile(
+                      title: l10n.celeLabel,
+                      value: app.params.eventLengthExt,
+                      onChanged: (v) =>
+                          context.read<AppState>().setEventLengthExt(v),
+                    ),
+                    const SizedBox(height: 12),
+                    _NumberSliderInput(
+                      label: l10n.slaveLatencyLabel,
+                      value: app.params.slaveLatency.toDouble(),
+                      min: 0,
+                      max: 159,
+                      divisions: 159,
+                      decimals: 0,
+                      onChanged: (v) =>
+                          context.read<AppState>().setSlaveLatency(v.round()),
+                    ),
+                    const SizedBox(height: 12),
+                    _NumberSliderInput(
+                      label: l10n.centralPpmLabel,
+                      value: app.params.centralPpm.toDouble(),
+                      min: 20,
+                      max: 500,
+                      divisions: 48,
+                      decimals: 0,
+                      suffixText: 'ppm',
+                      onChanged: (v) =>
+                          context.read<AppState>().setCentralPpm(v.round()),
+                    ),
+                    const SizedBox(height: 12),
+                    _NumberSliderInput(
+                      label: l10n.peripheralPpmLabel,
+                      value: app.params.peripheralPpm.toDouble(),
+                      min: 20,
+                      max: 500,
+                      divisions: 48,
+                      decimals: 0,
+                      suffixText: 'ppm',
+                      onChanged: (v) =>
+                          context.read<AppState>().setPeripheralPpm(v.round()),
+                    ),
+                    const SizedBox(height: 12),
+                    ConfigField(
+                      label: l10n.lfClockLabel,
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: SegmentedButton<bool>(
+                          segments: [
+                            ButtonSegment(
+                                value: false, label: Text(l10n.lfXo)),
+                            ButtonSegment(
+                                value: true, label: Text(l10n.lfRc)),
+                          ],
+                          selected: {app.params.lfRc},
+                          onSelectionChanged: (s) =>
+                              context.read<AppState>().setLfRc(s.first),
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   // When BLE mode is HDT, expose HDT-specific role and band here
                   if (app.params.mode == Mode.hdt)

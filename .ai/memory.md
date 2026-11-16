@@ -53,6 +53,10 @@
 - [事实] `/admin` 为密钥登录管理界面，密钥常量在 `lib/main.dart` 的 `adminSecretKey`，默认值 `admin`；芯片编辑统一走 `lib/services/chip_json_repository.dart`，支持对象字段展开、自定义字段保留和按当前列表顺序导出 `index.json`。
 - [事实] `/admin` 登录态由 `lib/services/admin_session_store.dart` 通过 `shared_preferences` 持久化；刷新页面保持已登录，点击 Logout 会清除本地登录态。
 
+### 外部参照 · Nordic OPP（2026-11-16 反推，详见 task-log 同日）
+- [事实] Nordic OPP(BLE) 无开源、Azure 后端计算；`POST power-profiler.azurewebsites.net/profiler/content/?prot=ble` 返回全精度分段波形，可作我方模型校准/数值验证基准。
+- [事实] OPP 模型=每芯片实测阶段表(电流按电压×稳压器×TX功率查表)+协议公式：airtime=(10B@1M/11B@2M+payload)×8/rate(adv+6B+6us)；widening=Σppm×(latency+1)×interval+C(33/32us,LFRC→slave=500ppm)；adv 周期+5ms；avg=charge/T+idle。
+
 ### 工程基础
 - [事实] 工程名：`bes_consumption`；历史拼写 `bes_comsuption` 为待修正遗留（散布于六端工程与 `pubspec.yaml`）
 - [事实] 包名 / ApplicationId：`com.example.bes_consumption`
@@ -101,6 +105,10 @@
 
 ### 页面域配置
 - [决策] BLE/BT/Wi-Fi 页面只从 `ConfigRepository` 读取各自芯片 seed（`assets/data/chips/{ble,bt,wifi}/index.json` + 单芯片 JSON）；不设 `assets/data/pages` defaults 层，interval/payload/battery 等 UI 初始值保留在 State。
+
+### BLE 模型（2026-11-16）
+- [决策] BLE 时序/算法切换为 Nordic OPP 结构（airtime 10B/11B、widening=Σppm×T_eff+32、advDelay+5ms、DLE/CELE 多包、CPU 重叠 227us、latency 倍周期）；**电流仍全部取自芯片 JSON**；放弃旧固定 RX 窗/硬编码 adv TX/0.625ms 量化。
+- [决策] 新参数进 `ProfileParams`（rxPayload/dle/cele/latency/ppm×2/lfRc）+ 高级卡 UI；芯片新增可选 `tailStandby_us`；`rxWindow_us`/`advGap_us` 退役为 schema 保留字段。
 
 ### 状态管理
 - [决策] 采用 `provider + ChangeNotifier`

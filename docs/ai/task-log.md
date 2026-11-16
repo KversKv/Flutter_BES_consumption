@@ -1,5 +1,43 @@
 # Task Log
 
+### 2026-11-16 - BLE 模型切换为 Nordic OPP 结构（电流仍用我方芯片数据）
+- **Type**: feature / model
+- **Scope**: `models/profile_params.dart`、`models/ble_chip.dart`、`services/power_calculator.dart`、`state/app_state.dart`、`widgets/config_panels.dart`、`widgets/kpi_widgets.dart`、`l10n/app_localizations.dart`、新增 `test/power_calculator_test.dart`
+- **Reason**: 用户要求把模型与算法改为反推所得的 Nordic OPP 模型，电流取样仍来自我方芯片 JSON。
+- **Change**:
+  1. 协议时序：airtime=(10B@1M/11B@2M+payload)×8/rate，adv +6B AdvA+6us；widening=(central_ppm+slave_ppm)×T_eff+32us（LFRC→slave=500ppm，central 无）；T_eff=(latency+1)×connInterval；adv 周期+5ms advDelay；adv 单次 Start radio、RX 窗 59us、信道间隙 62/58us。
+  2. DLE/CELE：PDU 上限 251/27，CELE off 每事件钳位单 PDU；多包波形 [RX,sw,TX]+(n-1)×[sw,RX,sw,TX]；RX 含 payload 触发 CPU 重叠（227µs 常数，重叠电流=txI+postCurrent）与 post 延长。
+  3. 电流映射：各阶段电流全部取自芯片字段；widening 电流=rxCurrent；含 payload RX 后的 TIFS 电流=rxCurrent；CPU 增量电流=postCurrent；新增可选芯片字段 `tailStandby_us`（默认 0）。
+  4. 新参数（ProfileParams+UI 高级卡+zh/en）：rxPayloadBytes/dle/eventLengthExt/slaveLatency/centralPpm/peripheralPpm/lfRc；TX payload 上限 251→2000；conn 量化 0.625→**1.25ms**（spec）。
+  5. 新输出：事件电荷 µC、TX/RX 吞吐量 getter + 两张 KPI 卡；平均电流聚合数学不变。
+  6. 遗留数据字段 `rxWindow_us`/`advGap_us` 不再被 BLE 模型消费（保留 schema/admin 可见）。
+- **Verification**: `flutter analyze` 0 issue；全部测试通过：power_calculator 9/9、bt_state 8/8、tx_power_levels 3/3、widget_test 1/1。期间全量套件死锁为 `build/test_cache` 损坏所致（强停进程遗留），清除该缓存后各套件秒过；与代码无关。
+
+### 2026-11-16 - 反推 Nordic OPP 计算模型（数值探针法）
+- **Type**: research / evaluation
+- **Scope**: `docs/ai/task-log.md`、`.ai/memory.md`（未改源码）；探针脚本在 `%TEMP%\nordic_opp\probe.py / probe2.py`（临时，不入库）
+- **Reason**: 用户要求反推 Nordic Online Power Profiler (BLE) 的计算模型与方式。
+- **方法**: 无开源仓库；计算在 Azure 后端。`POST https://power-profiler.azurewebsites.net/profiler/content/?prot=ble`（form 参数：chip/voltage/dcdc/lf_clock/radio_tx/ble_type/ble_int/tx_size/rx_size/dle/event_length_ext/phy/slave_latency/central_ppm/peripheral_ppm）返回结果表 + plotly 分段波形（每阶段 µs/mA 全精度）。36 组受控探针数值验证。
+- **结论（已验证）**:
+  1. 模型 = 每芯片实测阶段表（时长固定；电流按 电压×稳压器×TX功率 查表插值）+ 协议时序公式 + 电荷聚合。
+  2. airtime=(O+payload)×8/rate；O=10B@1M、11B@2M；adv 另加 6B AdvA 且 +6us（空包 134us）。
+  3. Window widening=(central_ppm+slave_ppm)×T_eff+C_chip；C: 54L15=33us、52832/840/5340=32us；LFRC 强制 slave_ppm=500；central 无 widening；T_eff=(slave_latency+1)×connInterval。
+  4. adv 周期=advInterval+5ms（固定 advDelay）；adv 仅一次 Start radio，3 信道×(TX→switch143us→RX59us→gap62us)。
+  5. DLE off→LL PDU 钳 27B、packets=ceil(payload/27)；CELE on→ceil(payload/251) 同事件多包，off→钳 251；多包波形=[RX,sw,TX]+(n-1)×[sw,RX,sw,TX]；sw≈TIFS 实测 138/140/150us。
+  6. RX payload>0 → "Radio TX + CPU" 重叠段（TX 电流 +≈0.75mA）与 post 延长（115→262us）。
+  7. charge=ΣI·Δt；avg=charge/T_eff+idle；throughput=payload×8/T_eff。
+  8. 稳压器：52832 LDO vs DCDC 差异大（RX 12.20 vs 6.73mA；standby 反低 0.222 vs 0.434）；54L15 两档完全相同（模型仅 DCDC）。idle 随电压/LFRC 变化（54L15: 2.9@3V/3.3@1.8/4.8@3.6/3.5@LFRC µA）。
+  9. 电压为每阶段非线性实测曲线（TX: 7.172@1.8/5.424@2.5/4.7845@3/4.525@3.3/4.355@3.6 mA），非统一缩放。
+- **对我方模型的发现**: conn interval 量化应为 1.25ms（现 0.625，违 spec）；adv TxRx 的 TX 硬编码 225.28us 忽略 payload；adv Start radio 重复 3 次（Nordic 1 次）；缺 advDelay+5ms；2M 开销应 11B；RX 窗口固定缺 widening/ppm/latency；缺 DLE/CELE/多包；电流单值缺电压/稳压器/LF 维度；`nrf52832.json` 种子与实测表偏差大（ramp 60us@6mA vs 400us@1.56mA 等），可用反推表校准。平均电流聚合数学与我方一致。
+- **Verification**: 36 组探针输出 `%TEMP%\nordic_opp\probe_out.txt / probe2_out.txt`；公式逐组数值闭环（widening 5 组、电压 5 组、多包 3 组等）。
+
+### 2026-11-16 - BLE 页与 Nordic Online Power Profiler 差异对比
+- **Type**: docs / evaluation
+- **Scope**: `docs/ai/task-log.md`（未改源码）
+- **Reason**: 用户要求对比本项目页面与 Nordic OPP for Bluetooth LE 在线工具。
+- **Change**: 浏览器实测 Nordic 页（Advertising 与 Connection peripheral 两模式）；核对 `ble_case_page / config_panels / kpi_widgets / chart_widgets / app_state / power_calculator`。结论：我方多出续航/峰值 KPI、睡眠压缩视图、hover 图例、URL 参数分享、多协议与可编辑芯片库（含 nrf52832 跨厂对比）、HDT；缺口为 DCDC/LDO 与 LF clock 选项、slave latency / 睡眠时钟精度（window widening）、DLE/CELE 开关、独立 RX payload、电荷 µC / LL 吞吐量 / 事件明细表输出；BLE 页电压滑杆未参与 BLE 计算（仅 BT/Sniff 消费）。
+- **Verification**: 浏览器 snapshot + 截图；源码核对。
+
 ### 2026-06-10 - User/Admin 体验与完整性评估
 - **Type**: docs / evaluation
 - **Scope**: `docs/user/260610_eva.md`, `docs/ai/task-log.md`
