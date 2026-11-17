@@ -50,32 +50,41 @@ class _UnifiedPowerChartState extends State<UnifiedPowerChart> {
           runSpacing: 8,
           alignment: WrapAlignment.spaceBetween,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
+            // 两个开关靠左排布；窄屏时内部自动换行
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
               children: [
-                Text(l10n.chartHideSleepGaps),
-                Switch(
-                  value: widget.hideLowPowerGaps,
-                  onChanged: widget.onToggleHideGaps,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(l10n.chartHideSleepGaps),
+                    Switch(
+                      value: widget.hideLowPowerGaps,
+                      onChanged: widget.onToggleHideGaps,
+                    ),
+                  ],
                 ),
+                // 简易模式(legacy) / 多参计算模式(Nordic) 切换
+                if (widget.useNordicModel != null &&
+                    widget.onToggleModel != null)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.useNordicModel!
+                            ? l10n.modeMulti
+                            : l10n.modeSimple,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      Switch(
+                        value: widget.useNordicModel!,
+                        onChanged: widget.onToggleModel,
+                      ),
+                    ],
+                  ),
               ],
             ),
-            // 简易模式(legacy) / 多参计算模式(Nordic) 切换
-            if (widget.useNordicModel != null &&
-                widget.onToggleModel != null)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.useNordicModel! ? l10n.modeMulti : l10n.modeSimple,
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  Switch(
-                    value: widget.useNordicModel!,
-                    onChanged: widget.onToggleModel,
-                  ),
-                ],
-              ),
             Text(
               widget.hideLowPowerGaps
                   ? l10n.chartTimelineCompressed
