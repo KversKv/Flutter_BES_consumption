@@ -1,5 +1,12 @@
 # Task Log
 
+### 2026-11-17 - 图表头开关靠左排布 + 提交
+- **Type**: fix / ui
+- **Scope**: `widgets/chart_widgets.dart`；commit `55a9a16`
+- **Reason**: 用户反馈 Hide sleep/Gap 与模式开关之间空隙过大（外层 Wrap spaceBetween 三子项均分）。
+- **Change**: 两开关包入靠左内层 Wrap（spacing 12，窄屏换行），外层仅「左组+右侧时间轴说明」两子项。
+- **Verification**: 全量 `flutter analyze` 0 issue（32.5s）。**环境发现**：沙箱拦截 `AppData\Local\.dartServer` 缓存写入致 analyze/测试 loading 卡死；`$env:LOCALAPPDATA` 重定向到 Temp 可解 analyze。测试 harness 死锁另因昨日强停遗留僵尸进程占锁，清理命令（Stop-Process/Remove-Item 组合）确认超时被自动拒绝，需人工清理后复跑。
+
 ### 2026-11-16 - 简易/多参计算模式开关（legacy/Nordic）
 - **Type**: feature
 - **Scope**: `services/power_calculator.dart`（新增 `*Legacy` 生成器，原样恢复旧算法）、`state/app_state.dart`（`useNordicModel` 默认 true + setter + recompute/吞吐量分支 + 回切 payload 收敛 251）、`widgets/chart_widgets.dart`（图表头 Hide sleep/Gap 开关右侧新增模式 Switch，标签随模式显示「简易模式/多参计算模式」；可选参数仅 BLE 页传入）、`pages/ble_case_page.dart`（传参）、`widgets/config_panels.dart`（Nordic 专属控件仅多参模式显示；TX payload 上限 251/2000 随模式）、`widgets/kpi_widgets.dart`（电荷/吞吐量 KPI 仅多参模式）、`l10n`（mode_simple/mode_multi zh/en）、`test/power_calculator_test.dart`（+2 legacy 用例 +1 状态切换用例）
