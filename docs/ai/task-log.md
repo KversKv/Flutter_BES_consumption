@@ -1,5 +1,12 @@
 # Task Log
 
+### 2026-11-19 - BLE 新增 BES2720IMC
+- **Type**: data
+- **Scope**: `config/ble_chip_config.dart`、`assets/data/chips/ble/{index.json,BES2720IMC.json}`
+- **Reason**: 用户要求按给定参数新增 BLE 芯片 BES2720IMC。
+- **Change**: 默认芯片列表与运行时 JSON 种子同步新增该型号；[推断] snippet 未提供的 HDT RX 电流沿用现有 BES 配置 13/18mA，`hdtIdleCurrent_mA` 由休眠电流 29.23µA 换算为 0.02923mA，`supportsHDT` 保持默认 false。
+- **Verification**: `flutter analyze` 0 issue。
+
 ### 2026-11-17 - 图表头开关靠左排布 + 提交
 - **Type**: fix / ui
 - **Scope**: `widgets/chart_widgets.dart`；commit `55a9a16`

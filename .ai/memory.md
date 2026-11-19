@@ -306,6 +306,7 @@
 
 ## 7. Open Questions · 未决 / 待验证
 
+- [待确认] BES2720IMC 的 HDT 2.4G/5G RX 电流暂沿用现有 BES 配置 13/18mA；`supportsHDT=false`，不影响默认 BLE 场景。
 - [待验证] Web 端 `fl_chart` 在大数据点下的性能表现
 - [待验证] 是否需要 CSV / 截图导出功能
 - [待验证] `bes_comsuption` → `bes_consumption` 一次性跨六端重命名的启动时机

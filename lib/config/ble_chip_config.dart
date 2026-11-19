@@ -149,6 +149,38 @@ final List<BleChip> defaultBleChips = [
     hdtIdleCurrent_mA: 0.025,
   ),
   BleChip(
+    id: 'BES2720IMC',
+    name: 'BES2720IMC',
+    vbat: 3.8,
+    sleepCurrent_uA: 29.23,
+    rxCurrent_mA: 6.96,
+    rxCurrent_mA_HDT_2G4: 13.0,
+    rxCurrent_mA_HDT_5G: 18.0,
+    rxWindow_us: 340.469,
+    tifs_us: 150,
+    tifsCurrent_mA: 2.63,
+    txCurrent_mA_forDbm: {
+      0: 24,
+      9: 38.7,
+    },
+    // Setup拆分（总计约 2744us）
+    preProcess_us: 0,
+    preProcessCurrent_mA: 0,
+    crystalRampUp_us: 644.58,
+    crystalRampUpCurrent_mA: 1.551,
+    standby_us: 2482,
+    standbyCurrent_mA: 1.132,
+    startRadio_us: 0,
+    startRadioCurrent_mA: 0,
+    // 广播通道间固定 ADV GAP（示例：5ms，电流取近似低功耗）
+    advGap_us: 100.0,
+    advGapCurrent_mA: 1.5, // 1.5mA
+    postProcess_us: 819.46,
+    postCurrent_mA: 1.155,
+    description: 'BES2720IMC: BT | BLE High Low Power SOC.',
+    hdtIdleCurrent_mA: 0.02923,
+  ),
+  BleChip(
     id: 'BES2700IMP',
     name: 'BES2700IMP',
     vbat: 3.8,
