@@ -1,5 +1,12 @@
 # Task Log
 
+### 2026-11-23 - NewPlan P2 服务器芯片数据同步
+- **Type**: feature / test
+- **Scope**: 新增 `sync_from_server.py`、`tool/tests/test_sync.py`；更新 `docs/ai/current-focus.md`、`.ai/memory.md`、`docs/NewPlan/01_芯片数据GitOps架构与路线.md`。
+- **Reason**: 执行 `docs/NewPlan/02_AI_Coding_Prompts.md` 的 P2，让开发者主动获取并合并服务器 admin 提交，避免发布前人工处理远端差异。
+- **Change**: 同步前拒绝未提交芯片改动；复用 P1 服务器常量与 JSON 校验器，自动配置 `server` 远端并 fetch；展示芯片提交日志，支持 `--dry-run` 与 `--check`；使用 Git 原生合并，冲突列文件并返回 2，预检/校验失败返回 1；合并后校验并汇总提交和文件。隐藏 `--remote-url` 仅用于临时本地远端测试。
+- **Verification**: `python -m unittest discover -s tool/tests -p "test_sync.py" -v` 3 项通过（服务器 A + 本地 B 自动合并、同字段冲突退出 2、dry-run 不改 HEAD）；`python tool/chip_data_check.py` 与 `python sync_from_server.py --check` 通过。未访问真实服务器或执行部署。
+
 ### 2026-11-23 - NewPlan P1 服务器 Git 化 + Git 发布
 - **Type**: feature / infrastructure
 - **Scope**: 新增 `tool/chip_data_check.py`；`tool/chip_server/bin/server.dart`、`update_serve.py`、`docs/admin/{服务器更新流程,部署流程}.md`、`docs/NewPlan/01_芯片数据GitOps架构与路线.md`。

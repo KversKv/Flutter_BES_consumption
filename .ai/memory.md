@@ -290,6 +290,7 @@
   - 现象：`flutter run -d chrome` 每次随机分配端口，导致 admin 改的数据"看着没保存"
   - 解法：`.vscode/launch.json` 通过 `toolArgs` 固定 `--web-port=5174 --web-hostname=localhost`；权威数据用 admin 导出 zip 覆写 `assets/data/chips/`，与 SP 解耦
 - [坑] Flutter Web release 若出现服务器部署后图标缺失，优先检查 `uses-material-design`、`cupertino_icons` 字体依赖和 icon tree-shake；本项目用 `MaterialIconFontAnchor` 显式保留 Material glyph。
+- [坑] 本机临时 Git 仓库清理时 `.git/hooks/pre-push` 会被重建，Windows `TemporaryDirectory.cleanup()` 可能报 WinError 145；此类 unittest 用 `mkdtemp` + `shutil.rmtree(ignore_errors=True)` 尽力清理。
 
 ### 文档
 - [禁区] 不得再向 `docs/ai/memory.md` 追加事实 / 决策（已降级为导航）
@@ -300,6 +301,7 @@
 
 ## 6. Progress · 高价值里程碑
 
+- [事实] 2026-11-23 · NewPlan P2 完成：`sync_from_server.py` 支持 fetch/merge、dry-run/check 与冲突退出码 2；临时本地远端 3 项 unittest 通过，未访问真实服务器。
 - [事实] 2026-11-23 · NewPlan P1 完成：admin 后端支持 Git 提交/revision，发布改为 Git 推送且不再覆盖 chips；临时仓库集成验证通过，未实际部署。
 - [事实] 2026-11-19 · Admin BLE 支持草稿驱动的图表/KPI 实时预览及图表选阶段编辑，User/Admin 共用功耗计算入口，预览不落库。
 - [事实] 2026-05-09 · AI 文档体系 v1：`.TRAE/rules/project-rules.md` + `docs/ai/` 九文件 + `CLAUDE.md` + `.ai/memory.md`（单文件按章节组织）
