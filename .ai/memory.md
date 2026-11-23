@@ -113,6 +113,10 @@
 - [坑] 本机 `flutter test` 多套件同进程并发必死锁（flutter_tester 空转）；强停会损坏 `build/test_cache` 致后续 loading 卡死；解法：单套件串行 + 清 `build/test_cache`。
 - [坑] 沙箱拦截 `AppData\Local\.dartServer`/`Dart\perf` 写入 → `flutter analyze`/`dart analyze` 卡死或 restricted；解法：命令内 `$env:LOCALAPPDATA='<Temp>\dlp'` 重定向缓存。
 
+### Admin BLE 可视化编辑（2026-11-19）
+- [决策] User/Admin 统一走 `PowerCalculator.calculateBle`；Admin 从 `_FieldDraft` 即时构造预览，场景 `ProfileParams` 不写回 JSON，Save 仍是唯一仓储写入口。
+- [决策] 图表阶段以稳定 `PowerEvent.stageId` 选择并映射当前模型实际生效字段；重复阶段带序号，嵌套 TX/HDT 按档位与频段写回同一草稿，避免依赖重名 label。
+
 ### 状态管理
 - [决策] 采用 `provider + ChangeNotifier`
   - 理由：Demo 规模小、学习成本低、现有代码已成体系
@@ -296,6 +300,7 @@
 
 ## 6. Progress · 高价值里程碑
 
+- [事实] 2026-11-19 · Admin BLE 支持草稿驱动的图表/KPI 实时预览及图表选阶段编辑，User/Admin 共用功耗计算入口，预览不落库。
 - [事实] 2026-05-09 · AI 文档体系 v1：`.TRAE/rules/project-rules.md` + `docs/ai/` 九文件 + `CLAUDE.md` + `.ai/memory.md`（单文件按章节组织）
 - [事实] 已完成六端工程 + M3 亮暗主题切换（`ThemeController`）
 - [事实] 已完成 BLE / BT / Wi-Fi 场景页 + 耳机对比页 + Sniff 专页

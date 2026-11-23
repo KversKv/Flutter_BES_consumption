@@ -1,5 +1,27 @@
 # Task Log
 
+### 2026-11-23 - Admin BLE 预览与 JSON 编辑纵向分区
+- **Type**: fix / ui
+- **Scope**: `pages/admin_page.dart`、`widgets/ble_admin_preview.dart`
+- **Reason**: 用户明确上方左侧放预览场景和阶段编辑，右侧顶部 KPI、下方图表，下方整个区域仅放 JSON 参数。
+- **Change**: 上部分为左右 2:3 两栏：左侧预览/阶段编辑独立滚动，右侧 KPI 在上、图表在下；下部分仅为 JSON 字段编辑并独立滚动。KPI 与图表按右侧高度分配，上区高度随可用空间收敛。
+- **Verification**: `flutter analyze` 0 issue；`flutter build web --debug --no-web-resources-cdn` 通过。
+
+### 2026-11-19 - Admin BLE JSON 可视化实时编辑
+- **Type**: feature
+- **Scope**: `pages/admin_page.dart`、新增 `widgets/ble_admin_preview.dart`、`services/power_calculator.dart`、`state/app_state.dart`、`models/power_event.dart`、图表/KPI 组件、`l10n`、相关测试。
+- **Reason**: Admin 原仅直接编辑 JSON 字段，无法直观确认芯片参数对 BLE 时序与功耗结果的影响。
+- **Change**: 抽取 User/Admin 共用 `PowerCalculator.calculateBle`；BLE 草稿变更即时生成图表和 KPI；图表柱段及图例支持按稳定 `stageId` 选择阶段，并将当前模式实际生效字段（含 TX 嵌套 map/HDT band）写回同一草稿；新增预览场景控件、共享/派生参数提示及 zh/en 文案。预览不调用仓储，Save 流程与 JSON schema 不变。
+- **Verification**: `flutter analyze` 0 issue；`flutter build web --debug --no-web-resources-cdn` 通过。新增算法/组件测试已完成静态检查，但 `flutter_tester` 在加载或本地连接阶段空转，未获得运行结果。Windows 构建受既有 `windows/flutter/CMakeLists.txt` 缺失阻断；浏览器已验证 `/admin` SPA 路由可访问，交互验收因登录接管未完成而暂缓。
+
+### 2026-11-19 - 芯片数据双向同步方案（Git 化）设计
+- **Type**: docs / design
+- **Scope**: 新增 `docs/NewPlan/01_芯片数据GitOps架构与路线.md`、`docs/NewPlan/02_AI_Coding_Prompts.md`（未改源码）
+- **Reason**: 用户反馈 `update_serve.py` 的 scp 整目录覆盖会让服务器 admin 改动与本地改动互相覆盖，要求多管理员可双向修改并正确合并，且两端都有修改记录。
+- **Change**: 推荐「Git 托管数据 + 字段级 JSON 三方合并 + 只允许快进的 GitOps 发布」：服务器数据目录改为 Git 工作区，admin Save 即带 trailer 的 commit；新增 `sync_from_server.py`（开发者主动触发）；admin 保存带 baseRevision 做服务端三方合并/409；admin 新增「变更记录」页读取 Git 历史。路线 P0~P6，含逐阶段 AI Prompt。未采纳：纯 PR 驱动的 GitOps（管理员需要网页编辑）、数据库（属非目标且与 JSON 种子冲突）、LWW/时间戳同步。
+- **Verification**: 文档任务；方案中的接口与路径已对照 `update_serve.py`、`tool/chip_server/bin/server.dart`、`chip_json_repository.dart` 现状核对。
+- **2026-11-23 精简**：按用户要求去掉过度设计——改用 Git 自带合并（不写 JSON merge driver/保真库）、409+刷新替代服务端三方合并与冲突对话框、Git 作者/提交说明替代 trailer 与 hooks、`receive.denyCurrentBranch=updateInstead` 推送替代中转分支与部署脚本、服务器不再需要 Python；路线由 P0~P6 收敛为 P1~P4。删去清单见架构文档 §6。
+
 ### 2026-11-19 - BLE 新增 BES2720IMC
 - **Type**: data
 - **Scope**: `config/ble_chip_config.dart`、`assets/data/chips/ble/{index.json,BES2720IMC.json}`
