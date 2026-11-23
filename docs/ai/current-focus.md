@@ -3,25 +3,23 @@
 > 当前迭代关注点。任务切换时**原地更新**，不追加历史（历史进 task-log）。
 
 ## 阶段目标
-- Admin BLE JSON 已升级为与 User 共用算法的图表/KPI 实时预览，并支持图表或图例选择阶段编辑真实草稿字段。
-- 上方左右按 2:3 分配：左侧为预览场景/阶段编辑，右侧顶部 KPI、下方功耗图表；下方整个区域仅为 JSON 参数，各编辑区独立滚动。预览不写库，Save 仍是唯一写入口。
+- NewPlan P1「服务器 Git 化 + Git 发布」本地实现与临时仓库验证已完成；未实际部署。
+- 下一阶段实现 P2 `sync_from_server.py`，让开发者主动获取并合并服务器 admin 提交。
 
-## 本周期优先级（P0 → P2）
-1. **[P0]** — 在可用的 Flutter 测试环境运行新增算法与组件测试，并完成 Admin 登录后的交互验收。
-2. **[P1]** — 修复既有 `windows/flutter/CMakeLists.txt` 缺失后再验证 Windows 构建。
-3. **[P2]** — 保持 BT/Wi-Fi/TWS 与现有保存协议不扩散改动。
+## 本周期优先级（P2 → P4）
+1. **[P2]** — 按架构文档 §2.3 实现同步脚本及临时本地远端 unittest。
+2. **[P3]** — 在 P2 验收后实现 `baseRevision` 并发保护、409 刷新与操作人。
+3. **[P4]** — 最后实现 Git 历史接口与 admin「变更记录」Tab。
 
 ## 明确不做（Not Now）
-- 引入新状态管理库（Riverpod/Bloc）
-- 接入真实蓝牙/电流采样
-- 预览过程自动保存或把场景参数写入芯片 JSON
+- 不执行实际部署、SSH、scp 或服务器 Git 写操作。
+- 不恢复架构文档 §6 已删除的 P0 差异比对止血、CI 或自研 JSON 合并器。
+- 不提前实现 P3/P4 的并发保护、操作人页面或变更记录页面。
 
 ## 当前风险 / 阻塞
-- 本机 `flutter_tester` 在加载或本地连接阶段空转，新增测试尚未取得运行结果。
-- Windows 构建缺少既有 `windows/flutter/CMakeLists.txt`；Web Debug 构建与 `flutter analyze` 已通过。
-- 浏览器 `/admin` 路由已验证，交互验收尚未完成 Admin 登录接管。
+- `sync_from_server.py` 尚未实现；P1 的推送拒绝提示需在 P2 完成后才能直接执行。
+- [待确认] 服务器是否已安装 Git，以及一次性迁移是否已执行。
 
 ## 下一步动作候选
-- [ ] 串行运行 `test/power_calculator_test.dart` 与 `test/ble_admin_preview_test.dart`
-- [ ] 登录 `/admin`，核对字段/嵌套 TX 修改、KPI 联动、图表选阶段、固定结果区及独立滚动条
-- [ ] 修复 Windows Flutter CMake 文件后执行 `flutter build windows --debug`
+- [ ] 按 `docs/NewPlan/02_AI_Coding_Prompts.md` 的 P2 Prompt 实现并验证同步脚本。
+- [ ] 实际迁移后在 admin 保存一个字段，并用服务器 `git log -1` 核对提交。

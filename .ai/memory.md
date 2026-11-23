@@ -300,6 +300,7 @@
 
 ## 6. Progress · 高价值里程碑
 
+- [事实] 2026-11-23 · NewPlan P1 完成：admin 后端支持 Git 提交/revision，发布改为 Git 推送且不再覆盖 chips；临时仓库集成验证通过，未实际部署。
 - [事实] 2026-11-19 · Admin BLE 支持草稿驱动的图表/KPI 实时预览及图表选阶段编辑，User/Admin 共用功耗计算入口，预览不落库。
 - [事实] 2026-05-09 · AI 文档体系 v1：`.TRAE/rules/project-rules.md` + `docs/ai/` 九文件 + `CLAUDE.md` + `.ai/memory.md`（单文件按章节组织）
 - [事实] 已完成六端工程 + M3 亮暗主题切换（`ThemeController`）

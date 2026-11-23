@@ -1,5 +1,12 @@
 # Task Log
 
+### 2026-11-23 - NewPlan P1 服务器 Git 化 + Git 发布
+- **Type**: feature / infrastructure
+- **Scope**: 新增 `tool/chip_data_check.py`；`tool/chip_server/bin/server.dart`、`update_serve.py`、`docs/admin/{服务器更新流程,部署流程}.md`、`docs/NewPlan/01_芯片数据GitOps架构与路线.md`。
+- **Reason**: 执行 `docs/NewPlan/02_AI_Coding_Prompts.md` 当前首个实施阶段 P1，消除 scp 覆盖线上芯片数据的风险，并让 admin 保存产生 Git 记录。
+- **Change**: 新增 JSON/index 最小校验；POST 全量预检文件 JSON、进程内串行写入，Git 模式按域处理删除、仅在暂存差异存在时以 actor 提交，GET/POST 返回 revision，非 Git 模式保留备份行为；发布改为校验后 `git push server HEAD:main`，后端从 `/opt/chip_server/repo` 编译并启用 `CHIP_GIT_COMMIT=1`，移除数据/源码上传及旧数据参数；文档补入一次性迁移与同步流程。
+- **Verification**: `python tool/chip_data_check.py` 通过；`dart analyze tool/chip_server` 与 `flutter analyze` 均 0 issue；`python update_serve.py --help` 通过；`git diff --check` 通过。临时仓库真实启动服务后 POST 生成 `alice <alice@chip-admin>` 的 `admin(ble): A, B` 提交并返回新 revision，重复保存未新增提交，非法文件 JSON 返回 400 且 HEAD 不变；未执行实际部署或服务器命令。
+
 ### 2026-11-23 - Admin BLE 预览与 JSON 编辑纵向分区
 - **Type**: fix / ui
 - **Scope**: `pages/admin_page.dart`、`widgets/ble_admin_preview.dart`
