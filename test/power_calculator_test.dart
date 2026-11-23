@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bes_consumption/models/ble_chip.dart';
+import 'package:bes_consumption/models/power_event.dart';
 import 'package:bes_consumption/models/profile_params.dart';
 import 'package:bes_consumption/services/power_calculator.dart';
 import 'package:bes_consumption/state/app_state.dart';
@@ -208,6 +209,156 @@ void main() {
     state.setUseNordicModel(true);
     expect(state.periodUs, 200000 * 10);
     expect(state.events.any((e) => e.label == 'Window widening'), isTrue);
+  });
+
+  test('shared BLE calculation matches generators and assigns stable stage IDs',
+      () {
+    void expectSameEvents(
+      List<PowerEvent> actual,
+      List<PowerEvent> expected,
+    ) {
+      expect(actual.length, expected.length);
+      for (var i = 0; i < actual.length; i++) {
+        expect(actual[i].label, expected[i].label);
+        expect(actual[i].startUs, closeTo(expected[i].startUs, 1e-9));
+        expect(actual[i].durationUs, closeTo(expected[i].durationUs, 1e-9));
+        expect(actual[i].currentMa, closeTo(expected[i].currentMa, 1e-9));
+      }
+    }
+
+    const modes = [
+      Mode.advertisingTxOnly,
+      Mode.advertisingTxRx,
+      Mode.bleConnectionCentral,
+      Mode.bleConnectionPeripheral,
+    ];
+    for (final nordic in [true, false]) {
+      for (final mode in modes) {
+        final params = _params(mode: mode, tx: 3, rx: 20);
+        final result = PowerCalculator.calculateBle(
+          chip: _chip(),
+          params: params,
+          useNordicModel: nordic,
+          rxWindowUs: 300,
+        );
+        late final double period;
+        late final List<PowerEvent> expected;
+        switch (mode) {
+          case Mode.advertisingTxOnly:
+            period = (nordic ? 105 : 100) * 1000.0;
+            expected = nordic
+                ? PowerCalculator.generateBleAdvertisingTxOnly(
+                    chip: _chip(), params: params, periodUs: period)
+                : PowerCalculator.generateBleAdvertisingTxOnlyLegacy(
+                    chip: _chip(), params: params, periodUs: period);
+          case Mode.advertisingTxRx:
+            period = (nordic ? 105 : 100) * 1000.0;
+            expected = nordic
+                ? PowerCalculator.generateBleAdvertisingTxRx(
+                    chip: _chip(),
+                    params: params,
+                    periodUs: period,
+                    rxCurrentMa: 0,
+                  )
+                : PowerCalculator.generateBleAdvertisingTxRxLegacy(
+                    chip: _chip(),
+                    params: params,
+                    periodUs: period,
+                    rxCurrentMa: 0,
+                  );
+          case Mode.bleConnectionCentral:
+            period = 100000;
+            expected = nordic
+                ? PowerCalculator.generateBleConnectedCentral(
+                    chip: _chip(),
+                    params: params,
+                    periodUs: period,
+                    rxCurrentMa: 0,
+                  )
+                : PowerCalculator.generateBleConnectedCentralLegacy(
+                    chip: _chip(),
+                    params: params,
+                    periodUs: period,
+                    rxWindowUs: 300,
+                    rxCurrentMa: 0,
+                  );
+          case Mode.bleConnectionPeripheral:
+            period = 100000;
+            expected = nordic
+                ? PowerCalculator.generateBleConnectedPeripheral(
+                    chip: _chip(),
+                    params: params,
+                    periodUs: period,
+                    rxCurrentMa: 0,
+                  )
+                : PowerCalculator.generateBleConnectedPeripheralLegacy(
+                    chip: _chip(),
+                    params: params,
+                    periodUs: period,
+                    rxWindowUs: 300,
+                    rxCurrentMa: 0,
+                  );
+          case Mode.hdt:
+            throw StateError('HDT is tested separately');
+        }
+        expect(result.periodUs, period);
+        expectSameEvents(result.events, expected);
+        final ids = result.events.map((event) => event.stageId).toList();
+        expect(ids, everyElement(isNotNull));
+        expect(ids.toSet().length, ids.length);
+        final repeated = PowerCalculator.calculateBle(
+          chip: _chip(),
+          params: params,
+          useNordicModel: nordic,
+          rxWindowUs: 300,
+        );
+        expect(
+          repeated.events.map((event) => event.stageId).toList(),
+          ids,
+        );
+      }
+    }
+
+    final hdtParams = _params(mode: Mode.hdt);
+    final hdt = PowerCalculator.calculateBle(
+      chip: _chip(),
+      params: hdtParams,
+      useNordicModel: true,
+    );
+    expectSameEvents(
+      hdt.events,
+      PowerCalculator.generateHdt(
+        chip: _chip(),
+        periodUs: 500,
+        txPowerDbm: 0,
+      ),
+    );
+    expect(hdt.events.map((event) => event.stageId).toSet().length,
+        hdt.events.length);
+  });
+
+  test('shared BLE calculation matches AppState output', () {
+    final state = AppState();
+    final result = PowerCalculator.calculateBle(
+      chip: state.chip,
+      params: state.params,
+      useNordicModel: state.useNordicModel,
+      rxWindowUs: state.rxWindowConnectedUs,
+      rxCurrentMa: state.rxCurrentConnected_mA,
+      hdtModule: state.hdtModule,
+      hdtBand: state.hdtBand,
+    );
+    expect(result.periodUs, state.periodUs);
+    expect(result.events.length, state.events.length);
+    for (var i = 0; i < result.events.length; i++) {
+      expect(result.events[i].stageId, state.events[i].stageId);
+      expect(result.events[i].durationUs, state.events[i].durationUs);
+      expect(result.events[i].currentMa, state.events[i].currentMa);
+    }
+    expect(
+      PowerCalculator.computeAverageCurrent(result.events, result.periodUs),
+      closeTo(state.averageCurrent_mA, 1e-9),
+    );
   });
 
   test('charge excludes sleep and average matches charge/period + idle', () {

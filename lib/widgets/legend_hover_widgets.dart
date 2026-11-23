@@ -64,9 +64,17 @@ class EventLegendPanel extends StatelessWidget {
   final List<PowerEvent> events;
   final PowerEvent? hovered;
   final ValueChanged<PowerEvent?>? onHover;
+  final String? selectedStageId;
+  final ValueChanged<PowerEvent>? onTap;
 
-  const EventLegendPanel(
-      {super.key, required this.events, required this.hovered, this.onHover});
+  const EventLegendPanel({
+    super.key,
+    required this.events,
+    required this.hovered,
+    this.onHover,
+    this.selectedStageId,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -84,35 +92,46 @@ class EventLegendPanel extends StatelessWidget {
         runSpacing: 8,
         children: events.map((e) {
           final isHovered = hovered == e;
+          final isSelected =
+              e.stageId != null && e.stageId == selectedStageId;
           return MouseRegion(
+            cursor: onTap == null ? MouseCursor.defer : SystemMouseCursors.click,
             onEnter: (_) => onHover?.call(e),
             onExit: (_) => onHover?.call(null),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
+            child: Material(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(6),
+              child: InkWell(
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: isHovered
-                      ? theme.colorScheme.primary
-                      : palette.borderSubtle,
-                  width: isHovered ? 2 : 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 14,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: e.color,
-                      borderRadius: BorderRadius.circular(3),
+                onTap: onTap == null ? null : () => onTap!(e),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isSelected || isHovered
+                          ? theme.colorScheme.primary
+                          : palette.borderSubtle,
+                      width: isSelected ? 2.5 : (isHovered ? 1.5 : 1),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(e.label, style: theme.textTheme.labelLarge),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: e.color,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(e.label, style: theme.textTheme.labelLarge),
+                    ],
+                  ),
+                ),
               ),
             ),
           );

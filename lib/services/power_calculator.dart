@@ -6,11 +6,199 @@ import '../models/ble_chip.dart';
 import '../models/power_event.dart';
 import '../models/profile_params.dart';
 
+class BleCalculationResult {
+  final List<PowerEvent> events;
+  final double periodUs;
+
+  const BleCalculationResult({
+    required this.events,
+    required this.periodUs,
+  });
+}
+
 /// 纯业务逻辑服务类，负责通用的功耗计算和Setup阶段生成
 class PowerCalculator {
 
+  static BleCalculationResult calculateBle({
+    required BleChip chip,
+    required ProfileParams params,
+    required bool useNordicModel,
+    double rxWindowUs = 0,
+    double rxCurrentMa = 0,
+    HdtModule hdtModule = HdtModule.sink,
+    String hdtBand = '2.4G',
+  }) {
+    late final double periodUs;
+    late final List<PowerEvent> events;
+
+    switch (params.mode) {
+      case Mode.advertisingTxOnly:
+        periodUs = useNordicModel
+            ? ((params.advIntervalMs + 5) * 1000)
+                .clamp(25000, 3_005_000)
+                .toDouble()
+            : (params.advIntervalMs * 1000)
+                .clamp(20000, 3_000_000)
+                .toDouble();
+        events = useNordicModel
+            ? generateBleAdvertisingTxOnly(
+                chip: chip,
+                params: params,
+                periodUs: periodUs,
+              )
+            : generateBleAdvertisingTxOnlyLegacy(
+                chip: chip,
+                params: params,
+                periodUs: periodUs,
+              );
+      case Mode.advertisingTxRx:
+        periodUs = useNordicModel
+            ? ((params.advIntervalMs + 5) * 1000)
+                .clamp(25000, 3_005_000)
+                .toDouble()
+            : (params.advIntervalMs * 1000)
+                .clamp(20000, 3_000_000)
+                .toDouble();
+        events = useNordicModel
+            ? generateBleAdvertisingTxRx(
+                chip: chip,
+                params: params,
+                periodUs: periodUs,
+                rxCurrentMa: rxCurrentMa,
+              )
+            : generateBleAdvertisingTxRxLegacy(
+                chip: chip,
+                params: params,
+                periodUs: periodUs,
+                rxCurrentMa: rxCurrentMa,
+              );
+      case Mode.bleConnectionCentral:
+        final intervalUs = (params.connIntervalMs * 1000)
+            .clamp(7500, 4_000_000)
+            .toDouble();
+        periodUs = useNordicModel
+            ? intervalUs * (params.slaveLatency + 1)
+            : intervalUs;
+        events = useNordicModel
+            ? generateBleConnectedCentral(
+                chip: chip,
+                params: params,
+                periodUs: periodUs,
+                rxCurrentMa: rxCurrentMa,
+              )
+            : generateBleConnectedCentralLegacy(
+                chip: chip,
+                params: params,
+                periodUs: periodUs,
+                rxWindowUs: rxWindowUs,
+                rxCurrentMa: rxCurrentMa,
+              );
+      case Mode.bleConnectionPeripheral:
+        final intervalUs = (params.connIntervalMs * 1000)
+            .clamp(7500, 4_000_000)
+            .toDouble();
+        periodUs = useNordicModel
+            ? intervalUs * (params.slaveLatency + 1)
+            : intervalUs;
+        events = useNordicModel
+            ? generateBleConnectedPeripheral(
+                chip: chip,
+                params: params,
+                periodUs: periodUs,
+                rxCurrentMa: rxCurrentMa,
+              )
+            : generateBleConnectedPeripheralLegacy(
+                chip: chip,
+                params: params,
+                periodUs: periodUs,
+                rxWindowUs: rxWindowUs,
+                rxCurrentMa: rxCurrentMa,
+              );
+      case Mode.hdt:
+        periodUs = 500.0;
+        events = generateHdt(
+          chip: chip,
+          periodUs: periodUs,
+          txPowerDbm: params.txPowerDbm,
+          band: hdtBand,
+          repeats: 1,
+          moduleSink: hdtModule == HdtModule.sink,
+          hdtPhyRateMbps: 15.0,
+          hdtPayloadBytes: 144,
+        );
+    }
+
+    return BleCalculationResult(
+      events: _withBleStageIds(events),
+      periodUs: periodUs,
+    );
+  }
+
+  static List<PowerEvent> _withBleStageIds(List<PowerEvent> events) {
+    final counts = <String, int>{};
+    return events.map((event) {
+      if (event.stageId != null) return event;
+      final base = _bleStageKey(event.label);
+      final index = counts.update(base, (value) => value + 1,
+          ifAbsent: () => 0);
+      return PowerEvent(
+        startUs: event.startUs,
+        durationUs: event.durationUs,
+        currentMa: event.currentMa,
+        label: event.label,
+        color: event.color,
+        stageId: index == 0 ? base : '$base.$index',
+        previewLabel: event.previewLabel,
+        totalLengthUs: event.totalLengthUs,
+        windowWideningLengthUs: event.windowWideningLengthUs,
+        occupiedLengthUs: event.occupiedLengthUs,
+      );
+    }).toList(growable: false);
+  }
+
+  static String _bleStageKey(String label) {
+    if (label.startsWith('ADV CH')) {
+      final parts = label.split(' ');
+      final channel = parts[1].substring(2).toLowerCase();
+      return 'adv.$channel.${parts[2].toLowerCase()}';
+    }
+    switch (label) {
+      case 'Start radio':
+        return 'radio.start';
+      case 'RX':
+        return 'rx';
+      case 'TX':
+        return 'tx';
+      case 'TX + CPU':
+        return 'txCpu';
+      case 'TIFS':
+        return 'tifs';
+      case 'ADV_GAP':
+        return 'adv.gap';
+      case 'Post':
+        return 'post';
+      case 'Sleep':
+        return 'sleep';
+      case 'Window widening':
+        return 'windowWidening';
+      case 'HDT RX':
+        return 'hdt.rx';
+      case 'HDT TX':
+        return 'hdt.tx';
+      case 'Idle':
+        return 'hdt.idle';
+      default:
+        return 'stage';
+    }
+  }
+
   /// 添加通用的 Setup 阶段 (适用于 BLE 和 BT)
-  static void addSetupPhases(List<PowerEvent> list, double startT, dynamic chip) {
+  static void addSetupPhases(
+    List<PowerEvent> list,
+    double startT,
+    dynamic chip, {
+    String? stagePrefix,
+  }) {
     double t = startT;
     list.add(PowerEvent(
       startUs: t,
@@ -18,6 +206,7 @@ class PowerCalculator {
       currentMa: chip.preProcessCurrent_mA,
       label: 'Pre-processing',
       color: Colors.orange.shade300,
+      stageId: stagePrefix == null ? null : '$stagePrefix.preProcess',
     ));
     t += chip.preProcess_us;
 
@@ -27,6 +216,7 @@ class PowerCalculator {
       currentMa: chip.crystalRampUpCurrent_mA,
       label: 'Crystal ramp-up',
       color: Colors.orange.shade400,
+      stageId: stagePrefix == null ? null : '$stagePrefix.crystalRampUp',
     ));
     t += chip.crystalRampUp_us;
 
@@ -36,6 +226,7 @@ class PowerCalculator {
       currentMa: chip.standbyCurrent_mA,
       label: 'Standby',
       color: Colors.orange.shade200,
+      stageId: stagePrefix == null ? null : '$stagePrefix.standby',
     ));
     t += chip.standby_us;
   }
@@ -65,6 +256,23 @@ class PowerCalculator {
       m = math.max(m, e.currentMa);
     }
     return m;
+  }
+
+  static double computeBleThroughputBps(
+    ProfileParams params,
+    double periodUs,
+    int payloadBytes,
+    bool useNordicModel,
+  ) {
+    if (periodUs <= 0) return 0;
+    final perEvent = useNordicModel
+        ? (params.eventLengthExt
+            ? payloadBytes
+            : (payloadBytes < llPduMax(params.dle)
+                ? payloadBytes
+                : llPduMax(params.dle)))
+        : payloadBytes;
+    return perEvent * 8 * 1e6 / periodUs;
   }
 
   // --- BLE 辅助计算（Nordic OPP 模型；电流取自芯片数据） ---
@@ -132,6 +340,7 @@ class PowerCalculator {
         currentMa: chip.standbyCurrent_mA,
         label: 'Standby',
         color: Colors.orange.shade200,
+        stageId: 'tail.standby',
       ));
       t += chip.tailStandby_us;
     }
@@ -143,6 +352,7 @@ class PowerCalculator {
         currentMa: chip.sleepCurrent_uA / 1000.0,
         label: 'Sleep',
         color: Colors.green.shade200,
+        stageId: 'sleep',
       ));
     }
   }
@@ -161,7 +371,7 @@ class PowerCalculator {
     final txI = chip.txCurrentForPower(params.txPowerDbm);
 
     double t = 0;
-    addSetupPhases(events, t, chip);
+    addSetupPhases(events, t, chip, stagePrefix: 'setup');
     t += getSetupTotalUs(chip);
     events.add(PowerEvent(
       startUs: t,
@@ -232,7 +442,7 @@ class PowerCalculator {
     final txI = chip.txCurrentForPower(params.txPowerDbm);
 
     double t = 0;
-    addSetupPhases(events, t, chip);
+    addSetupPhases(events, t, chip, stagePrefix: 'setup');
     t += getSetupTotalUs(chip);
     events.add(PowerEvent(
       startUs: t,
@@ -328,7 +538,7 @@ class PowerCalculator {
     final n = math.max(txPackets.length, rxPackets.length);
 
     double t = 0;
-    addSetupPhases(events, t, chip);
+    addSetupPhases(events, t, chip, stagePrefix: 'setup');
     t += getSetupTotalUs(chip);
     events.add(PowerEvent(
       startUs: t,
@@ -364,13 +574,14 @@ class PowerCalculator {
       if (rxB > 0) anyRx = true;
       maxOverlap = math.max(maxOverlap, overlap);
 
-      void addSwitch(double current) {
+      void addSwitch(double current, bool rxPowered, String stageId) {
         events.add(PowerEvent(
           startUs: t,
           durationUs: chip.tifs_us,
           currentMa: current,
           label: 'TIFS',
           color: Colors.amber.shade300,
+          stageId: 'connection.$i.$stageId.${rxPowered ? 'rx' : 'tifs'}',
         ));
         t += chip.tifs_us;
       }
@@ -412,14 +623,18 @@ class PowerCalculator {
 
       if (peripheral) {
         addRx();
-        addSwitch(rxB > 0 ? rxI : chip.tifsCurrent_mA);
+        addSwitch(rxB > 0 ? rxI : chip.tifsCurrent_mA, rxB > 0, 'rxTx');
         addTx();
-        if (i < n - 1) addSwitch(chip.tifsCurrent_mA);
+        if (i < n - 1) {
+          addSwitch(chip.tifsCurrent_mA, false, 'next');
+        }
       } else {
         addTx();
-        addSwitch(chip.tifsCurrent_mA);
+        addSwitch(chip.tifsCurrent_mA, false, 'txRx');
         addRx();
-        if (i < n - 1) addSwitch(rxB > 0 ? rxI : chip.tifsCurrent_mA);
+        if (i < n - 1) {
+          addSwitch(rxB > 0 ? rxI : chip.tifsCurrent_mA, rxB > 0, 'next');
+        }
       }
     }
 
@@ -465,7 +680,7 @@ class PowerCalculator {
     double t = 0;
 
     // 1. Setup
-    addSetupPhases(events, t, chip);
+    addSetupPhases(events, t, chip, stagePrefix: 'setup');
     t += getSetupTotalUs(chip);
 
     // 2. 广播三个信道
@@ -560,7 +775,7 @@ class PowerCalculator {
     double t = 0;
 
     // 1. Setup
-    addSetupPhases(events, t, chip);
+    addSetupPhases(events, t, chip, stagePrefix: 'setup');
     t += getSetupTotalUs(chip);
 
     // 2. 广播三个信道
@@ -671,7 +886,7 @@ class PowerCalculator {
     double t = 0;
 
     // Setup
-    addSetupPhases(events, t, chip);
+    addSetupPhases(events, t, chip, stagePrefix: 'setup');
     t += getSetupTotalUs(chip);
 
     void addRx() {

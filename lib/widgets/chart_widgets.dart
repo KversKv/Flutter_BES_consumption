@@ -20,6 +20,8 @@ class UnifiedPowerChart extends StatefulWidget {
   // 仅 BLE 页传入；其余页面不渲染模式开关
   final bool? useNordicModel;
   final ValueChanged<bool>? onToggleModel;
+  final String? selectedStageId;
+  final ValueChanged<PowerEvent>? onEventTap;
 
   const UnifiedPowerChart({
     super.key,
@@ -30,6 +32,8 @@ class UnifiedPowerChart extends StatefulWidget {
     required this.onToggleHideGaps,
     this.useNordicModel,
     this.onToggleModel,
+    this.selectedStageId,
+    this.onEventTap,
   });
 
   @override
@@ -103,6 +107,8 @@ class _UnifiedPowerChartState extends State<UnifiedPowerChart> {
               maxCurrent: math.max(1.0, widget.maxCurrent),
               hideLowPowerGaps: widget.hideLowPowerGaps,
               onHoverEvent: (e) => setState(() => hovered = e),
+              selectedStageId: widget.selectedStageId,
+              onEventTap: widget.onEventTap,
             ),
           ),
         ),
@@ -113,6 +119,8 @@ class _UnifiedPowerChartState extends State<UnifiedPowerChart> {
               : widget.events,
           hovered: hovered,
           onHover: (e) => setState(() => hovered = e),
+          selectedStageId: widget.selectedStageId,
+          onTap: widget.onEventTap,
         ),
       ],
     );
@@ -129,6 +137,8 @@ class TimelineChartInteractive extends StatefulWidget {
   final double maxCurrent;
   final bool hideLowPowerGaps;
   final ValueChanged<PowerEvent?>? onHoverEvent;
+  final String? selectedStageId;
+  final ValueChanged<PowerEvent>? onEventTap;
 
   const TimelineChartInteractive({
     super.key,
@@ -137,6 +147,8 @@ class TimelineChartInteractive extends StatefulWidget {
     required this.maxCurrent,
     required this.hideLowPowerGaps,
     this.onHoverEvent,
+    this.selectedStageId,
+    this.onEventTap,
   });
 
   @override
@@ -186,17 +198,32 @@ class _TimelineChartInteractiveState extends State<TimelineChartInteractive> {
     }
   }
 
+  PowerEvent? _hitEvent(Offset position) {
+    _EventRect? best;
+    var bestDistance = double.infinity;
+    for (final r in _rects) {
+      final hitRect = r.rect.width < 6
+          ? Rect.fromCenter(
+              center: r.rect.center,
+              width: 6,
+              height: r.rect.height,
+            )
+          : r.rect;
+      if (!hitRect.contains(position)) continue;
+      final distance = (r.rect.center.dx - position.dx).abs();
+      if (distance < bestDistance) {
+        best = r;
+        bestDistance = distance;
+      }
+    }
+    return best?.event;
+  }
+
   void _handleHover(PointerHoverEvent e, Size size) {
     if (_rects.isEmpty) _forceRecomputeRects(size);
     final pos = e.localPosition;
     pointerLocalPos = pos;
-    PowerEvent? hit;
-    for (final r in _rects) {
-      if (r.rect.contains(pos)) {
-        hit = r.event;
-        break;
-      }
-    }
+    final hit = _hitEvent(pos);
     if (hit != hoveredEvent) {
       setState(() => hoveredEvent = hit);
       widget.onHoverEvent?.call(hit);
@@ -216,29 +243,43 @@ class _TimelineChartInteractiveState extends State<TimelineChartInteractive> {
     return LayoutBuilder(builder: (context, cons) {
       final size = Size(cons.maxWidth, cons.maxHeight);
       _recomputeRects(size);
-      return MouseRegion(
-        onHover: (ev) => _handleHover(ev, size),
-        onExit: _handleExit,
-        child: Stack(
-          children: [
-            CustomPaint(
-              painter: _TimelinePainter(
-                events: widget.events,
-                periodUs: widget.periodUs,
-                maxCurrent: widget.maxCurrent,
-                hideLowPowerGaps: widget.hideLowPowerGaps,
-                hovered: hoveredEvent,
-                palette: AppPalette.of(context),
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapUp: widget.onEventTap == null
+            ? null
+            : (event) {
+                if (_rects.isEmpty) _forceRecomputeRects(size);
+                final hit = _hitEvent(event.localPosition);
+                if (hit != null) widget.onEventTap!(hit);
+              },
+        child: MouseRegion(
+          cursor: widget.onEventTap == null
+              ? MouseCursor.defer
+              : SystemMouseCursors.click,
+          onHover: (ev) => _handleHover(ev, size),
+          onExit: _handleExit,
+          child: Stack(
+            children: [
+              CustomPaint(
+                painter: _TimelinePainter(
+                  events: widget.events,
+                  periodUs: widget.periodUs,
+                  maxCurrent: widget.maxCurrent,
+                  hideLowPowerGaps: widget.hideLowPowerGaps,
+                  hovered: hoveredEvent,
+                  selectedStageId: widget.selectedStageId,
+                  palette: AppPalette.of(context),
+                ),
+                size: Size.infinite,
               ),
-              size: Size.infinite,
-            ),
-            if (hoveredEvent != null && pointerLocalPos != null)
-              _ChartTooltip(
-                event: hoveredEvent!,
-                pointer: pointerLocalPos!,
-                containerSize: size,
-              ),
-          ],
+              if (hoveredEvent != null && pointerLocalPos != null)
+                _ChartTooltip(
+                  event: hoveredEvent!,
+                  pointer: pointerLocalPos!,
+                  containerSize: size,
+                ),
+            ],
+          ),
         ),
       );
     });
@@ -395,6 +436,7 @@ class _TimelinePainter extends CustomPainter {
   final double maxCurrent;
   final bool hideLowPowerGaps;
   final PowerEvent? hovered;
+  final String? selectedStageId;
   final AppPalette palette;
 
   _TimelinePainter({
@@ -404,6 +446,7 @@ class _TimelinePainter extends CustomPainter {
     required this.hideLowPowerGaps,
     required this.palette,
     this.hovered,
+    this.selectedStageId,
   });
 
   @override
@@ -532,6 +575,15 @@ class _TimelinePainter extends CustomPainter {
       );
       final p = Paint()..color = e.color.withValues(alpha: 0.9);
       canvas.drawRRect(r, p);
+      if (e.stageId != null && e.stageId == selectedStageId) {
+        canvas.drawRRect(
+          r,
+          Paint()
+            ..color = palette.textPrimary
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.5,
+        );
+      }
 
       if (hideLowPowerGaps) tAccUs += e.durationUs;
     }
@@ -544,6 +596,7 @@ class _TimelinePainter extends CustomPainter {
         oldDelegate.maxCurrent != maxCurrent ||
         oldDelegate.hideLowPowerGaps != hideLowPowerGaps ||
         oldDelegate.hovered != hovered ||
+        oldDelegate.selectedStageId != selectedStageId ||
         oldDelegate.palette.brightness != palette.brightness;
   }
 }

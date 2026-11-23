@@ -6,6 +6,7 @@ class PowerEvent {
   final double currentMa;
   final String label;
   final Color color;
+  final String? stageId;
   final String? previewLabel;
   final double? totalLengthUs;
   final double? windowWideningLengthUs;
@@ -17,6 +18,7 @@ class PowerEvent {
     required this.currentMa,
     required this.label,
     required this.color,
+    this.stageId,
     this.previewLabel,
     this.totalLengthUs,
     this.windowWideningLengthUs,
