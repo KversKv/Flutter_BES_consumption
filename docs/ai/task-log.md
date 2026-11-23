@@ -1,5 +1,12 @@
 # Task Log
 
+### 2026-11-23 - NewPlan 真实服务器迁移与推送修复
+- **Type**: fix / deployment
+- **Scope**: `update_serve.py`；真实服务器 `/opt/chip_server/repo`、systemd 与 Flutter Web；相关状态文档。
+- **Reason**: 实际 `git push server HEAD:main` 因服务器仓库未初始化而失败；首次线上保存进一步暴露 Git committer 身份未配置。
+- **Change**: 初始化 main 与 `receive.denyCurrentBranch=updateInstead`，比对确认共有有效芯片数据一致后完成前后端部署；旧数据归档为 `assets.bak-20261123`，旧二进制和 systemd 单元保留备份。部署脚本及线上服务注入 `GIT_COMMITTER_NAME=chip_server` / `GIT_COMMITTER_EMAIL=chip_server@chip-admin`；验收账号产生的暂存改动已还原。
+- **Verification**: 真实 `git push`、`update_serve.py --backend-only/--frontend-only`、同步 dry-run 与快进合并均成功。线上 API 新增/删除 `chip_new` 分别生成 `72b44c1` / `0fa03ce`，最终芯片内容逐字节还原且服务器工作区干净；首页、manifest、字体、chips/history API 均 200，admin 变更记录及 diff 浏览器验收通过。双管理员线上并发场景尚未验收。
+
 ### 2026-11-23 - NewPlan P4 芯片变更记录
 - **Type**: feature / audit
 - **Scope**: `tool/chip_server/bin/server.dart`、`services/chip_backend_client.dart`、新增 `pages/admin_pages/admin_change_log_tab.dart`、`pages/admin_page.dart`、`l10n` 及 P4 状态文档。

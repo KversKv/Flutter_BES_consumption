@@ -232,6 +232,8 @@ def update_backend():
         f"Environment=CHIP_SERVER_PORT={BACKEND_PORT}",
         f"Environment=CHIP_PROJECT_ROOT={REPO_DIR}",
         "Environment=CHIP_GIT_COMMIT=1",
+        "Environment=GIT_COMMITTER_NAME=chip_server",
+        "Environment=GIT_COMMITTER_EMAIL=chip_server@chip-admin",
         f"ExecStart={BACKEND_DIR}/chip_server",
         "Restart=always",
         f"User={SSH_USER}",

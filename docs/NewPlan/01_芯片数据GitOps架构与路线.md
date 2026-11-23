@@ -1,6 +1,6 @@
 # 芯片数据双向同步：Git 化架构与路线（精简版）
 
-> 状态：**P1～P4 本地实现完成；P4 已通过真实 HTTP 与浏览器验收（未部署、待线上验收）** · 修订：2026-11-23（在初稿基础上删去非必要功能）
+> 状态：**P1～P4 已完成真实服务器部署；Git 推送/同步、API 提交回环及变更记录页面已线上验收（双管理员并发待验收）** · 修订：2026-11-23（在初稿基础上删去非必要功能）
 > 适用：`assets/data/chips/**.json`（BLE / BT / Wi-Fi / Earbuds）
 > 配套：[02_AI_Coding_Prompts.md](./02_AI_Coding_Prompts.md)
 > 标注：`[事实]` 仓库可验证 · `[决策]` 本方案选择 · `[待确认]` 需确认
@@ -127,7 +127,7 @@ python sync_from_server.py --dry-run  # 只看服务器上有哪些新改动，�
   1. `assets/data/chips` 有未提交改动 → 退出，提示先提交；
   2. 最小校验；
   3. `git push server HEAD:main`；被拒绝（服务器有新的 admin 提交）→ 提示"先运行 `python sync_from_server.py`"并退出。
-- 后端：不再 scp 后端源码，改为在 `/opt/chip_server/repo/tool/chip_server` 里编译并重启（仅在非 `--frontend-only` 时）；systemd 单元的 `WorkingDirectory`、`CHIP_PROJECT_ROOT` 改为 `/opt/chip_server/repo`，并加 `Environment=CHIP_GIT_COMMIT=1`。
+- 后端：不再 scp 后端源码，改为在 `/opt/chip_server/repo/tool/chip_server` 里编译并重启（仅在非 `--frontend-only` 时）；systemd 单元的 `WorkingDirectory`、`CHIP_PROJECT_ROOT` 改为 `/opt/chip_server/repo`，并加 `Environment=CHIP_GIT_COMMIT=1` 及专用 `GIT_COMMITTER_NAME` / `GIT_COMMITTER_EMAIL`，避免新服务器因缺少 Git 提交者身份而保存失败。
 - 前端构建与上传流程不变。
 
 ### 2.5 最小校验（`tool/chip_data_check.py`，同步和发布共用）
@@ -158,7 +158,7 @@ python sync_from_server.py --dry-run  # 只看服务器上有哪些新改动，�
 | **P3 管理员并发保护** | `baseRevision` 检查 + 409；前端带版本号、操作人输入框、409 提示 | 管理员之间不再互相覆盖；记录有操作人 | S |
 | **P4 变更记录页** | `/api/history*` + admin「变更记录」Tab | 在网页上查看修改记录 | S |
 
-P1～P4 均已实现，但尚未执行实际服务器迁移与线上验收；新版 `update_serve.py` 已移除 `--skip-data` / `--pull-data`，P2 同步脚本已通过临时本地远端 unittest，P3 已通过临时仓库真实 HTTP 并发场景验证，P4 已通过项目根真实 HTTP 与浏览器记录/diff 验证。
+P1～P4 均已实现并完成真实服务器迁移与部署；新版 `update_serve.py` 已移除 `--skip-data` / `--pull-data`。真实 `git push`、P2 dry-run/快进同步、API 提交回环与 P4 浏览器记录/diff 均已线上验证；P3 双管理员双窗口并发场景仍待线上手工验收。
 
 ---
 
@@ -172,7 +172,7 @@ P1～P4 均已实现，但尚未执行实际服务器迁移与线上验收；新
 6. 运行新版 `python update_serve.py --backend-only`（更新 systemd 单元、编译、重启）；
 7. 在 admin 改一个字段 → 服务器 `git -C /opt/chip_server/repo log -1` 能看到该提交 → 恢复编辑。
 
-[待确认] 服务器是否已安装 git。
+[事实] 2026-11-23 已完成真实服务器迁移；旧数据备份为 `/opt/chip_server/assets.bak-20261123`。
 
 ---
 
