@@ -302,6 +302,7 @@
 
 ## 6. Progress · 高价值里程碑
 
+- [事实] 2026-11-23 · NewPlan P4 完成：`/api/history*` 提供按域 Git log、未提交文件和 SHA diff；admin 新增变更记录 Tab，真实 HTTP 与浏览器验收通过，未部署。
 - [事实] 2026-11-23 · NewPlan P3 完成：POST 按 baseRevision 逐文件深度比较并原子返回 409；Flutter 保存/刷新 revision，操作人进入 Git 作者；临时仓库 HTTP 集成验证通过，未部署。
 - [事实] 2026-11-23 · NewPlan P2 完成：`sync_from_server.py` 支持 fetch/merge、dry-run/check 与冲突退出码 2；临时本地远端 3 项 unittest 通过，未访问真实服务器。
 - [事实] 2026-11-23 · NewPlan P1 完成：admin 后端支持 Git 提交/revision，发布改为 Git 推送且不再覆盖 chips；临时仓库集成验证通过，未实际部署。

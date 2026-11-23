@@ -1,5 +1,12 @@
 # Task Log
 
+### 2026-11-23 - NewPlan P4 芯片变更记录
+- **Type**: feature / audit
+- **Scope**: `tool/chip_server/bin/server.dart`、`services/chip_backend_client.dart`、新增 `pages/admin_pages/admin_change_log_tab.dart`、`pages/admin_page.dart`、`l10n` 及 P4 状态文档。
+- **Reason**: 执行 `docs/NewPlan/02_AI_Coding_Prompts.md` 的 P4，让管理员直接查看 Git 中的芯片修改记录，不引入独立审计系统。
+- **Change**: 新增按域/limit/skip 的 Git log 接口、全 chips 未提交文件和单 SHA diff 接口，校验域路径、分页与 SHA，非 Git 仓库返回 501；Flutter 客户端解析历史响应，admin 在 Wi-Fi 后新增「变更记录」懒加载 Tab，支持域筛选、30 条分页、加载更多、未提交列表及 zh/en 文案；diff 弹窗按主题将新增行标绿、删除行标红并支持选择复制。
+- **Verification**: `flutter analyze --no-pub` 与 `dart analyze tool/chip_server` 均 0 issue；`flutter build web --release --no-web-resources-cdn` 通过。项目根真实 HTTP 验证全部/BLE/嵌套 Earbuds 域、分页与非空 diff 通过，非法域/SHA 返回 400，非 Git 目录返回 501；浏览器确认 Tab 顺序、提交时间/作者/说明/短 SHA 和 diff 弹窗，history 请求均 200。未访问真实服务器或执行部署。
+
 ### 2026-11-23 - NewPlan P3 管理员并发保护 + 操作人
 - **Type**: feature / concurrency
 - **Scope**: `tool/chip_server/bin/server.dart`、`services/chip_{backend_client,json_repository}.dart`、`services/admin_session_store.dart`、`pages/admin_page.dart`、`l10n` 及 P3 状态文档。

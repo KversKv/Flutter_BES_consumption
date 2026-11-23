@@ -12,6 +12,8 @@ import 'package:shelf_router/shelf_router.dart';
 ///   - GET  /api/chips  读取 assets/data/chips/ 下全部 JSON，返回 {files:{相对路径:内容}}
 ///   - POST /api/chips  接收同样结构的 {files:{...}}，校验后写回 JSON 源文件；
 ///                      CHIP_GIT_COMMIT=1 时提交 Git，否则写前备份
+///   - GET  /api/history 读取芯片 Git 提交与工作区状态
+///   - GET  /api/history/<sha> 读取单提交的芯片 diff
 ///   - 其余路径：静态托管 web build 产物（若存在），便于部署时一个服务同时发前端 + API
 ///
 /// 协议中的「相对路径」与前端 ChipJsonRepository.exportFiles() 完全一致，
@@ -54,6 +56,15 @@ void main(List<String> args) async {
       () => _saveChips(req, chipsRoot, backupRoot, projectRoot, gitCommit),
     );
   });
+
+  router.get(
+    '/api/history',
+    (Request req) => _history(req, projectRoot),
+  );
+  router.get(
+    '/api/history/<sha>',
+    (Request req, String sha) => _historyDiff(projectRoot, sha),
+  );
 
   Response notFound(Request req) => Response.notFound('not found');
 
@@ -237,9 +248,8 @@ Future<Response> _saveWithGit(
   final sortedPaths = paths.toList()..sort();
   for (final rel in sortedPaths) {
     final base = await _readBaseJson(projectRoot, baseRevision, rel);
-    final current = files.containsKey(rel)
-        ? jsonDecode(files[rel]!)
-        : _jsonAbsent;
+    final current =
+        files.containsKey(rel) ? jsonDecode(files[rel]!) : _jsonAbsent;
     if (_jsonEquals(current, base)) continue;
 
     final disk = await _readCurrentJson(chipsRoot, rel);
@@ -436,6 +446,127 @@ Future<String?> _gitRevision(Directory projectRoot) async {
   } catch (_) {
     return null;
   }
+}
+
+Future<Response> _history(Request req, Directory projectRoot) async {
+  final domain = req.url.queryParameters['domain']?.trim() ?? '';
+  if (!_isSafeHistoryDomain(domain)) {
+    return Response(400, body: 'unsafe domain: $domain');
+  }
+
+  final limit = int.tryParse(req.url.queryParameters['limit'] ?? '30');
+  final skip = int.tryParse(req.url.queryParameters['skip'] ?? '0');
+  if (limit == null || limit <= 0 || skip == null || skip < 0) {
+    return Response(400, body: 'invalid limit or skip');
+  }
+  if (!await _isGitRepository(projectRoot)) return _historyNotGit();
+
+  final path =
+      domain.isEmpty ? 'assets/data/chips' : 'assets/data/chips/$domain';
+  try {
+    final log = await _runGit(projectRoot, [
+      'log',
+      '--format=%H%x1f%an%x1f%aI%x1f%s',
+      '-n',
+      '$limit',
+      '--skip',
+      '$skip',
+      '--',
+      path,
+    ]);
+    final status = await _runGit(projectRoot, [
+      'status',
+      '--porcelain',
+      '--',
+      'assets/data/chips',
+    ]);
+    final entries = <Map<String, String>>[];
+    for (final line in log.stdout.toString().split(RegExp(r'\r?\n'))) {
+      if (line.isEmpty) continue;
+      final fields = line.split('\x1f');
+      if (fields.length < 4) continue;
+      entries.add({
+        'sha': fields[0],
+        'author': fields[1],
+        'time': fields[2],
+        'subject': fields.sublist(3).join('\x1f'),
+      });
+    }
+    return Response.ok(
+      jsonEncode({
+        'entries': entries,
+        'uncommitted': _uncommittedPaths(status.stdout.toString()),
+      }),
+      headers: {'content-type': 'application/json; charset=utf-8'},
+    );
+  } catch (e) {
+    stderr.writeln('[chip_server] git history failed: $e');
+    return Response(500, body: 'git history failed: $e');
+  }
+}
+
+Future<Response> _historyDiff(Directory projectRoot, String sha) async {
+  if (!RegExp(r'^[0-9a-fA-F]{7,40}$').hasMatch(sha)) {
+    return Response(400, body: 'invalid sha');
+  }
+  if (!await _isGitRepository(projectRoot)) return _historyNotGit();
+
+  try {
+    final result = await _runGit(projectRoot, [
+      'show',
+      '--format=',
+      sha,
+      '--',
+      'assets/data/chips',
+    ]);
+    return Response.ok(
+      jsonEncode({'sha': sha, 'diff': result.stdout.toString()}),
+      headers: {'content-type': 'application/json; charset=utf-8'},
+    );
+  } catch (e) {
+    return Response(404, body: 'git show failed: $e');
+  }
+}
+
+Response _historyNotGit() => Response(
+      501,
+      body: jsonEncode({'error': 'not a git repository'}),
+      headers: {'content-type': 'application/json; charset=utf-8'},
+    );
+
+Future<bool> _isGitRepository(Directory projectRoot) async {
+  try {
+    final result = await Process.run(
+      'git',
+      ['rev-parse', '--is-inside-work-tree'],
+      workingDirectory: projectRoot.path,
+      stdoutEncoding: utf8,
+      stderrEncoding: utf8,
+    );
+    return result.exitCode == 0 && result.stdout.toString().trim() == 'true';
+  } catch (_) {
+    return false;
+  }
+}
+
+bool _isSafeHistoryDomain(String domain) {
+  if (domain.isEmpty) return true;
+  return RegExp(r'^[A-Za-z0-9_-]+(?:/[A-Za-z0-9_-]+)*$').hasMatch(domain);
+}
+
+List<String> _uncommittedPaths(String status) {
+  final paths = <String>[];
+  for (final line in status.split(RegExp(r'\r?\n'))) {
+    if (line.length < 4) continue;
+    var path = line.substring(3);
+    final rename = path.indexOf(' -> ');
+    if (rename >= 0) path = path.substring(rename + 4);
+    const prefix = 'assets/data/';
+    if (path.startsWith('${prefix}chips/')) {
+      paths.add(path.substring(prefix.length));
+    }
+  }
+  return paths;
 }
 
 Future<ProcessResult> _runGit(

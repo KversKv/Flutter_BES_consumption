@@ -230,7 +230,8 @@ class AppLocalizations {
       'eb_search_chip': 'Search chip...',
       'eb_chip_info': 'Chip Info',
       'eb_no_data': 'No Data',
-      'eb_noisepink_detail_title': 'NoisePink 8/15 AAC · Voltage & Power Breakdown',
+      'eb_noisepink_detail_title':
+          'NoisePink 8/15 AAC · Voltage & Power Breakdown',
       'eb_npd_voltage': 'Voltage (V)',
       'eb_npd_current': 'Current (mA)',
       'eb_npd_isys': 'Isys',
@@ -260,8 +261,7 @@ class AppLocalizations {
       'admin_sync_excel_pick_failed': 'No file selected or read failed.',
       'admin_sync_excel_parse_failed':
           'Could not parse the file. Please check the format.',
-      'admin_sync_excel_empty':
-          'No valid NoisePink rows found in the file.',
+      'admin_sync_excel_empty': 'No valid NoisePink rows found in the file.',
       'admin_sync_excel_result_title': 'Sync finished',
       'admin_sync_excel_result_body':
           'Synced {matched} chip(s); skipped {skipped} unmatched.',
@@ -338,6 +338,19 @@ class AppLocalizations {
       'admin_bt_case': 'BT CASE Management',
       'admin_earbuds': 'Earbuds Management',
       'admin_wifi': 'Wi-Fi Management',
+      'admin_change_log': 'Change log',
+      'admin_history_domain': 'Data domain',
+      'admin_history_all_domains': 'All domains',
+      'admin_history_uncommitted': 'Uncommitted files',
+      'admin_history_unavailable':
+          'Git history is unavailable because this server is not a Git repository.',
+      'admin_history_empty': 'No chip data changes found.',
+      'admin_history_load_more': 'Load more',
+      'admin_history_refresh': 'Refresh change history',
+      'admin_history_load_failed': 'Failed to load change history: {error}',
+      'admin_history_diff_failed': 'Failed to load commit diff: {error}',
+      'admin_history_no_diff': 'This commit contains no chip data changes.',
+      'admin_history_close': 'Close',
       'admin_ops': 'Operations',
       'admin_heat': 'Visit Heat',
       'admin_json_editor': 'JSON fields',
@@ -718,6 +731,18 @@ class AppLocalizations {
       'admin_bt_case': 'BT CASE 管理',
       'admin_earbuds': 'Earbuds 管理',
       'admin_wifi': 'Wi-Fi 管理',
+      'admin_change_log': '变更记录',
+      'admin_history_domain': '数据域',
+      'admin_history_all_domains': '全部域',
+      'admin_history_uncommitted': '未提交文件',
+      'admin_history_unavailable': '服务器不是 Git 仓库，无法查看变更记录。',
+      'admin_history_empty': '暂无芯片数据变更记录。',
+      'admin_history_load_more': '加载更多',
+      'admin_history_refresh': '刷新变更记录',
+      'admin_history_load_failed': '变更记录加载失败：{error}',
+      'admin_history_diff_failed': '提交差异加载失败：{error}',
+      'admin_history_no_diff': '该提交没有芯片数据差异。',
+      'admin_history_close': '关闭',
       'admin_ops': '运维管理',
       'admin_heat': '访问热度',
       'admin_json_editor': 'JSON 字段',
@@ -1095,6 +1120,20 @@ class AppLocalizations {
   String get adminBtCase => _t('admin_bt_case');
   String get adminEarbuds => _t('admin_earbuds');
   String get adminWifi => _t('admin_wifi');
+  String get adminChangeLog => _t('admin_change_log');
+  String get adminHistoryDomain => _t('admin_history_domain');
+  String get adminHistoryAllDomains => _t('admin_history_all_domains');
+  String get adminHistoryUncommitted => _t('admin_history_uncommitted');
+  String get adminHistoryUnavailable => _t('admin_history_unavailable');
+  String get adminHistoryEmpty => _t('admin_history_empty');
+  String get adminHistoryLoadMore => _t('admin_history_load_more');
+  String get adminHistoryRefresh => _t('admin_history_refresh');
+  String adminHistoryLoadFailed(String error) =>
+      _t('admin_history_load_failed').replaceFirst('{error}', error);
+  String adminHistoryDiffFailed(String error) =>
+      _t('admin_history_diff_failed').replaceFirst('{error}', error);
+  String get adminHistoryNoDiff => _t('admin_history_no_diff');
+  String get adminHistoryClose => _t('admin_history_close');
   String get adminOps => _t('admin_ops');
   String get adminHeat => _t('admin_heat');
   String get adminJsonEditor => _t('admin_json_editor');

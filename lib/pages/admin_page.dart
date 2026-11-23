@@ -17,6 +17,7 @@ import '../services/power_calculator.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/ble_admin_preview.dart';
+import 'admin_pages/admin_change_log_tab.dart';
 
 class AdminPage extends StatefulWidget {
   final String secretKey;
@@ -61,7 +62,7 @@ class _AdminPageState extends State<AdminPage> {
     if (!_repoReady) return const _AdminSessionLoadingView();
 
     return DefaultTabController(
-      length: 6,
+      length: 7,
       child: Scaffold(
         body: SafeArea(
           child: Column(
@@ -81,6 +82,7 @@ class _AdminPageState extends State<AdminPage> {
                     _DomainAdminTab(domain: ChipJsonDomain.bt),
                     const _EarbudsAdminTab(),
                     _DomainAdminTab(domain: ChipJsonDomain.wifi),
+                    const AdminChangeLogTab(),
                     _InfoPanel(
                       icon: Icons.settings_outlined,
                       title: t.adminOps,
@@ -652,6 +654,7 @@ class _AdminTabStrip extends StatelessWidget {
             ),
             Tab(icon: const Icon(Icons.earbuds_outlined), text: t.adminEarbuds),
             Tab(icon: const Icon(Icons.wifi), text: t.adminWifi),
+            Tab(icon: const Icon(Icons.history), text: t.adminChangeLog),
             Tab(icon: const Icon(Icons.settings_outlined), text: t.adminOps),
             Tab(
               icon: const Icon(Icons.local_fire_department_outlined),
