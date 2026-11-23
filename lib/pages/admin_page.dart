@@ -9,6 +9,7 @@ import '../models/ble_chip.dart';
 import '../models/power_event.dart';
 import '../models/profile_params.dart';
 import '../services/admin_session_store.dart';
+import '../services/chip_backend_client.dart';
 import '../services/chip_json_repository.dart';
 import '../services/chips_export_service.dart';
 import '../services/noisepink_sync_service.dart';
@@ -30,6 +31,7 @@ class AdminPage extends StatefulWidget {
 }
 
 class _AdminPageState extends State<AdminPage> {
+  final _actorCtrl = TextEditingController();
   final _secretCtrl = TextEditingController();
   bool _authed = false;
   bool _sessionReady = false;
@@ -46,6 +48,7 @@ class _AdminPageState extends State<AdminPage> {
 
   @override
   void dispose() {
+    _actorCtrl.dispose();
     _secretCtrl.dispose();
     super.dispose();
   }
@@ -189,6 +192,17 @@ class _AdminPageState extends State<AdminPage> {
                         ),
                         const SizedBox(height: AppSpacing.x5),
                         TextField(
+                          controller: _actorCtrl,
+                          enabled: !_loginBusy,
+                          decoration: InputDecoration(
+                            labelText: t.adminActor,
+                            hintText: t.adminActorHint,
+                            prefixIcon: const Icon(Icons.person_outline),
+                          ),
+                          textInputAction: TextInputAction.next,
+                        ),
+                        const SizedBox(height: AppSpacing.x4),
+                        TextField(
                           controller: _secretCtrl,
                           enabled: !_loginBusy,
                           obscureText: !_secretVisible,
@@ -264,6 +278,11 @@ class _AdminPageState extends State<AdminPage> {
 
   Future<void> _tryLogin(AppLocalizations t) async {
     if (_loginBusy) return;
+    final actor = _actorCtrl.text.trim();
+    if (actor.isEmpty) {
+      setState(() => _loginError = t.adminActorRequired);
+      return;
+    }
     setState(() {
       _loginBusy = true;
       _loginError = null;
@@ -272,6 +291,7 @@ class _AdminPageState extends State<AdminPage> {
     if (!mounted) return;
     final ok = _secretCtrl.text == widget.secretKey;
     if (ok) {
+      await AdminSessionStore.instance.saveActor(actor);
       await AdminSessionStore.instance.unlock();
       await ChipJsonRepository.instance.load();
     } else {
@@ -287,12 +307,14 @@ class _AdminPageState extends State<AdminPage> {
   }
 
   Future<void> _restoreSession() async {
+    final actor = await AdminSessionStore.instance.loadActor();
     final authed = await AdminSessionStore.instance.isUnlocked();
     if (authed) {
       await ChipJsonRepository.instance.load();
     }
     if (!mounted) return;
     setState(() {
+      _actorCtrl.text = actor;
       _authed = authed;
       _repoReady = authed;
       _sessionReady = true;
@@ -888,6 +910,11 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
       await ChipJsonRepository.instance.resetToSeed(widget.domain);
       try {
         await ChipJsonRepository.instance.pushToBackend(only: widget.domain);
+      } on ChipSaveConflict {
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(content: Text(t.adminSaveConflict)),
+        );
       } catch (e) {
         if (!mounted) return;
         messenger.showSnackBar(
@@ -963,16 +990,25 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
         await ChipJsonRepository.instance.syncEarbudsNoisePinkDetail(details);
 
     String? saveError;
+    var saveConflict = false;
     if (result.matched.isNotEmpty) {
       try {
         await ChipJsonRepository.instance
             .pushToBackend(only: ChipJsonDomain.earbuds);
+      } on ChipSaveConflict {
+        saveConflict = true;
       } catch (e) {
         saveError = '$e';
       }
     }
 
     if (!mounted) return;
+    if (saveConflict) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.adminSaveConflict)),
+      );
+      return;
+    }
     final summary = t.adminSyncExcelResultBody(
       result.matched.length,
       result.skipped.length,
@@ -2921,6 +2957,12 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
       await ChipJsonRepository.instance.pushToBackend(only: widget.domain);
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(content: Text(t.adminSavedJson)));
+    } on ChipSaveConflict {
+      if (messenger.mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(t.adminSaveConflict)),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(

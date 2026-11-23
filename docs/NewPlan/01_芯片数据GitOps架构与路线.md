@@ -1,6 +1,6 @@
 # 芯片数据双向同步：Git 化架构与路线（精简版）
 
-> 状态：**P1～P2 本地实现与临时验证完成（未部署、待线上验收）；P3～P4 未实施** · 修订：2026-11-23（在初稿基础上删去非必要功能）
+> 状态：**P1～P3 本地实现与临时验证完成（未部署、待线上验收）；P4 未实施** · 修订：2026-11-23（在初稿基础上删去非必要功能）
 > 适用：`assets/data/chips/**.json`（BLE / BT / Wi-Fi / Earbuds）
 > 配套：[02_AI_Coding_Prompts.md](./02_AI_Coding_Prompts.md)
 > 标注：`[事实]` 仓库可验证 · `[决策]` 本方案选择 · `[待确认]` 需确认
@@ -158,7 +158,7 @@ python sync_from_server.py --dry-run  # 只看服务器上有哪些新改动，�
 | **P3 管理员并发保护** | `baseRevision` 检查 + 409；前端带版本号、操作人输入框、409 提示 | 管理员之间不再互相覆盖；记录有操作人 | S |
 | **P4 变更记录页** | `/api/history*` + admin「变更记录」Tab | 在网页上查看修改记录 | S |
 
-P1～P2 尚未执行实际服务器迁移与线上验收；新版 `update_serve.py` 已移除 `--skip-data` / `--pull-data`，P2 同步脚本已通过临时本地远端 unittest。
+P1～P3 尚未执行实际服务器迁移与线上验收；新版 `update_serve.py` 已移除 `--skip-data` / `--pull-data`，P2 同步脚本已通过临时本地远端 unittest，P3 已通过临时仓库真实 HTTP 并发场景验证。
 
 ---
 

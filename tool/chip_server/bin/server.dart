@@ -143,12 +143,20 @@ Future<Response> _saveChips(
     files[rel] = content;
   }
 
-  if (!gitCommit) {
+  final revision = await _gitRevision(projectRoot);
+  if (!gitCommit && revision == null) {
     return _saveWithBackup(files, chipsRoot, backupRoot);
   }
 
   try {
-    return await _saveWithGit(files, decoded, chipsRoot, projectRoot);
+    return await _saveWithGit(
+      files,
+      decoded,
+      chipsRoot,
+      projectRoot,
+      commit: gitCommit,
+      backupRoot: gitCommit ? null : backupRoot,
+    );
   } catch (e) {
     stderr.writeln('[chip_server] git save failed: $e');
     return Response(500, body: 'git save failed: $e');
@@ -185,6 +193,7 @@ Future<Response> _saveWithBackup(
       'ok': true,
       'written': written.length,
       'backup': written.isEmpty ? null : backupDir.path,
+      'revision': null,
     }),
     headers: {'content-type': 'application/json; charset=utf-8'},
   );
@@ -194,40 +203,99 @@ Future<Response> _saveWithGit(
   Map<String, String> files,
   Map<String, dynamic> request,
   Directory chipsRoot,
-  Directory projectRoot,
-) async {
+  Directory projectRoot, {
+  required bool commit,
+  required Directory? backupRoot,
+}) async {
+  final baseRevision =
+      await _resolveBaseRevision(projectRoot, request['baseRevision']);
   final domainDirs =
       files.keys.map((rel) => rel.substring(0, rel.lastIndexOf('/'))).toSet();
-  final deleted = <String>[];
+  final paths = <String>{...files.keys};
 
   for (final domainDir in domainDirs) {
-    final dir = Directory('${chipsRoot.path}/$domainDir');
-    if (!await dir.exists()) continue;
-    await for (final entity in dir.list(followLinks: false)) {
-      if (entity is! File || !entity.path.toLowerCase().endsWith('.json')) {
+    final tree = await _runGit(projectRoot, [
+      'ls-tree',
+      '-r',
+      '--name-only',
+      baseRevision,
+      '--',
+      'assets/data/$domainDir',
+    ]);
+    for (final repoPath in tree.stdout.toString().split(RegExp(r'\r?\n'))) {
+      if (!repoPath.startsWith('assets/data/chips/') ||
+          !repoPath.toLowerCase().endsWith('.json')) {
         continue;
       }
-      final rel = _relativePosix(chipsRoot.path, entity.path);
-      if (files.containsKey(rel)) continue;
-      await entity.delete();
-      deleted.add(rel);
+      paths.add(repoPath.substring('assets/data/'.length));
     }
   }
 
-  for (final entry in files.entries) {
+  final writes = <String, String>{};
+  final deleted = <String>[];
+  final conflicts = <String>[];
+  final sortedPaths = paths.toList()..sort();
+  for (final rel in sortedPaths) {
+    final base = await _readBaseJson(projectRoot, baseRevision, rel);
+    final current = files.containsKey(rel)
+        ? jsonDecode(files[rel]!)
+        : _jsonAbsent;
+    if (_jsonEquals(current, base)) continue;
+
+    final disk = await _readCurrentJson(chipsRoot, rel);
+    if (_jsonEquals(disk, base)) {
+      if (identical(current, _jsonAbsent)) {
+        deleted.add(rel);
+      } else {
+        writes[rel] = files[rel]!;
+      }
+    } else if (!_jsonEquals(disk, current)) {
+      conflicts.add(rel);
+    }
+  }
+
+  if (conflicts.isNotEmpty) {
+    return Response(
+      409,
+      body: jsonEncode({
+        'revision': await _gitRevision(projectRoot),
+        'conflicts': conflicts,
+      }),
+      headers: {'content-type': 'application/json; charset=utf-8'},
+    );
+  }
+
+  final touched = <String>[...writes.keys, ...deleted];
+  Directory? backupDir;
+  if (backupRoot != null && touched.isNotEmpty) {
+    final stamp = DateTime.now()
+        .toIso8601String()
+        .replaceAll(':', '-')
+        .replaceAll('.', '-');
+    backupDir = Directory('${backupRoot.path}/$stamp');
+    for (final rel in touched) {
+      final target = File('${chipsRoot.path}/$rel');
+      if (!await target.exists()) continue;
+      final backupFile = File('${backupDir.path}/$rel');
+      await backupFile.parent.create(recursive: true);
+      await target.copy(backupFile.path);
+    }
+  }
+
+  for (final rel in deleted) {
+    final target = File('${chipsRoot.path}/$rel');
+    if (await target.exists()) await target.delete();
+  }
+  for (final entry in writes.entries) {
     final target = File('${chipsRoot.path}/${entry.key}');
     await target.parent.create(recursive: true);
     await target.writeAsString(entry.value, flush: true);
   }
 
-  final touched = <String>[...files.keys, ...deleted];
-  final repoPaths = touched.map(_repoPath).toList();
-  if (repoPaths.isNotEmpty) {
-    await _runGit(projectRoot, ['add', '--', ...repoPaths]);
-  }
-
   final changed = <String>[];
-  if (repoPaths.isNotEmpty) {
+  if (commit && touched.isNotEmpty) {
+    final repoPaths = touched.map(_repoPath).toList();
+    await _runGit(projectRoot, ['add', '--', ...repoPaths]);
     final diff = await _runGit(
       projectRoot,
       ['diff', '--cached', '--name-only', '--', ...repoPaths],
@@ -263,12 +331,72 @@ Future<Response> _saveWithGit(
   return Response.ok(
     jsonEncode({
       'ok': true,
-      'written': files.length,
+      'written': writes.length,
       'deleted': deleted.length,
+      'backup': backupDir?.path,
       'revision': await _gitRevision(projectRoot),
     }),
     headers: {'content-type': 'application/json; charset=utf-8'},
   );
+}
+
+const Object _jsonAbsent = Object();
+
+Future<String> _resolveBaseRevision(
+  Directory projectRoot,
+  dynamic rawRevision,
+) async {
+  final requested = rawRevision?.toString().trim() ?? '';
+  final candidate = requested.isEmpty ? 'HEAD' : requested;
+  final result = await _runGit(
+    projectRoot,
+    ['rev-parse', '--verify', '$candidate^{commit}'],
+  );
+  return result.stdout.toString().trim();
+}
+
+Future<dynamic> _readBaseJson(
+  Directory projectRoot,
+  String baseRevision,
+  String rel,
+) async {
+  final result = await Process.run(
+    'git',
+    ['show', '$baseRevision:${_repoPath(rel)}'],
+    workingDirectory: projectRoot.path,
+    stdoutEncoding: utf8,
+    stderrEncoding: utf8,
+  );
+  if (result.exitCode != 0) return _jsonAbsent;
+  return jsonDecode(result.stdout.toString());
+}
+
+Future<dynamic> _readCurrentJson(Directory chipsRoot, String rel) async {
+  final file = File('${chipsRoot.path}/$rel');
+  if (!await file.exists()) return _jsonAbsent;
+  return jsonDecode(await file.readAsString());
+}
+
+bool _jsonEquals(dynamic a, dynamic b) {
+  if (identical(a, b)) return true;
+  if (a is Map && b is Map) {
+    if (a.length != b.length) return false;
+    for (final entry in a.entries) {
+      if (!b.containsKey(entry.key) ||
+          !_jsonEquals(entry.value, b[entry.key])) {
+        return false;
+      }
+    }
+    return true;
+  }
+  if (a is List && b is List) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (!_jsonEquals(a[i], b[i])) return false;
+    }
+    return true;
+  }
+  return a == b;
 }
 
 String _repoPath(String rel) => 'assets/data/$rel';

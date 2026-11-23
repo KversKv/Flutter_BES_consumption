@@ -5,6 +5,17 @@ class AdminSessionStore {
 
   static final AdminSessionStore instance = AdminSessionStore._();
   static const _unlockedKey = 'admin_session_unlocked_v1';
+  static const _actorKey = 'admin_actor_name_v1';
+
+  Future<String> loadActor() async {
+    final sp = await SharedPreferences.getInstance();
+    return sp.getString(_actorKey)?.trim() ?? '';
+  }
+
+  Future<void> saveActor(String actor) async {
+    final sp = await SharedPreferences.getInstance();
+    await sp.setString(_actorKey, actor.trim());
+  }
 
   Future<bool> isUnlocked() async {
     final sp = await SharedPreferences.getInstance();

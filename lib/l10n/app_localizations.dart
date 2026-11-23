@@ -321,6 +321,11 @@ class AppLocalizations {
       'admin_login_subtitle':
           'Enter your administrator credentials to continue (Demo).',
       'admin_login_badge': 'Secure admin verification',
+      'admin_actor': 'Operator',
+      'admin_actor_hint': 'Your name for saved changes',
+      'admin_actor_required': 'Please enter the operator name.',
+      'admin_save_conflict':
+          'Data was changed by someone else. It has been refreshed; please edit again.',
       'admin_secret': 'Access key',
       'admin_secret_hint': 'Enter administrator access key',
       'admin_login': 'Login',
@@ -697,6 +702,10 @@ class AppLocalizations {
       'admin_login_title': '欢迎登录 BES 管理系统',
       'admin_login_subtitle': '请输入您的管理员凭证以继续 (Demo)。',
       'admin_login_badge': '安全管理员验证',
+      'admin_actor': '操作人',
+      'admin_actor_hint': '用于记录本次保存的姓名',
+      'admin_actor_required': '请输入操作人。',
+      'admin_save_conflict': '数据已被其他人修改，已刷新，请重新编辑',
       'admin_secret': 'Access Key',
       'admin_secret_hint': '请输入管理员 Access Key',
       'admin_login': '登录',
@@ -1070,6 +1079,10 @@ class AppLocalizations {
   String get adminLoginTitle => _t('admin_login_title');
   String get adminLoginSubtitle => _t('admin_login_subtitle');
   String get adminLoginBadge => _t('admin_login_badge');
+  String get adminActor => _t('admin_actor');
+  String get adminActorHint => _t('admin_actor_hint');
+  String get adminActorRequired => _t('admin_actor_required');
+  String get adminSaveConflict => _t('admin_save_conflict');
   String get adminSecret => _t('admin_secret');
   String get adminSecretHint => _t('admin_secret_hint');
   String get adminLogin => _t('admin_login');

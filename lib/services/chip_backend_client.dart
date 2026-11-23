@@ -3,11 +3,28 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+class ChipBackendSnapshot {
+  final Map<String, String> files;
+  final String? revision;
+
+  const ChipBackendSnapshot({required this.files, required this.revision});
+}
+
+class ChipSaveConflict implements Exception {
+  final List<String> conflicts;
+
+  ChipSaveConflict(List<String> conflicts)
+      : conflicts = List.unmodifiable(conflicts);
+
+  @override
+  String toString() => 'ChipSaveConflict(${conflicts.join(', ')})';
+}
+
 /// 与最小后端 `tool/chip_server` 通信的客户端。
 ///
 /// 协议（与 ChipJsonRepository.exportFiles() 的 map 结构一致）：
-///   - GET  $base/api/chips        -> { "files": { "chips/earbuds/Scene/index.json": "...", ... } }
-///   - POST $base/api/chips        body { "files": { 相对路径: JSON字符串 } }
+///   - GET  $base/api/chips        -> { "revision": ..., "files": { "chips/earbuds/Scene/index.json": "...", ... } }
+///   - POST $base/api/chips        body { "baseRevision": ..., "actor": ..., "domain": ..., "files": { 相对路径: JSON字符串 } }
 ///
 /// base 地址解析顺序：
 ///   1. 编译期注入 `--dart-define=CHIP_API_BASE=http://host:port`
@@ -35,8 +52,8 @@ class ChipBackendClient {
   bool _available = false;
   bool get isAvailable => _available;
 
-  /// 从后端读取全部 chips JSON。返回 {相对路径: 内容}；不可用时返回 null。
-  Future<Map<String, String>?> fetchFiles() async {
+  /// 从后端读取全部 chips JSON 与 Git revision；不可用时返回 null。
+  Future<ChipBackendSnapshot?> fetchFiles() async {
     try {
       final res = await http
           .get(_endpoint())
@@ -52,7 +69,12 @@ class ChipBackendClient {
         return null;
       }
       _available = true;
-      return files.map((k, v) => MapEntry(k.toString(), v?.toString() ?? ''));
+      return ChipBackendSnapshot(
+        files: files.map(
+          (k, v) => MapEntry(k.toString(), v?.toString() ?? ''),
+        ),
+        revision: decoded['revision']?.toString(),
+      );
     } catch (e) {
       _available = false;
       debugPrint('[ChipBackendClient] fetch failed: $e');
@@ -60,19 +82,41 @@ class ChipBackendClient {
     }
   }
 
-  /// 把 {相对路径: 内容} 写回后端 JSON 源文件。成功 true，失败抛异常。
-  Future<void> saveFiles(Map<String, String> files) async {
+  /// 把 {相对路径: 内容} 写回后端，成功返回新 revision。
+  Future<String?> saveFiles(
+    Map<String, String> files, {
+    String? baseRevision,
+    String actor = 'unknown',
+    String? domain,
+  }) async {
     final res = await http
         .post(
           _endpoint(),
           headers: {'content-type': 'application/json; charset=utf-8'},
-          body: jsonEncode({'files': files}),
+          body: jsonEncode({
+            'baseRevision': baseRevision,
+            'actor': actor,
+            'domain': domain,
+            'files': files,
+          }),
         )
         .timeout(const Duration(seconds: 10));
+    if (res.statusCode == 409) {
+      _available = true;
+      final decoded = jsonDecode(utf8.decode(res.bodyBytes));
+      final rawConflicts = decoded is Map ? decoded['conflicts'] : null;
+      throw ChipSaveConflict(
+        rawConflicts is List
+            ? rawConflicts.map((path) => path.toString()).toList()
+            : const [],
+      );
+    }
     if (res.statusCode != 200) {
       _available = false;
       throw StateError('backend POST ${res.statusCode}: ${res.body}');
     }
     _available = true;
+    final decoded = jsonDecode(utf8.decode(res.bodyBytes));
+    return decoded is Map ? decoded['revision']?.toString() : null;
   }
 }

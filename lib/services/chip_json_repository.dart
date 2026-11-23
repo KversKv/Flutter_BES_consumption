@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/ble_chip.dart';
 import '../models/bt_chip.dart';
 import '../models/wifi_chip.dart';
+import 'admin_session_store.dart';
 import 'chip_backend_client.dart';
 import 'config/config_repository.dart';
 import 'earbuds_repository.dart';
@@ -103,6 +104,7 @@ class ChipJsonRepository extends ChangeNotifier {
 
   /// 本次 load 是否成功从后端拉到了数据（决定 Save 是否能真正落地 JSON）。
   bool _backendActive = false;
+  String? _backendRevision;
 
   bool get isLoaded => _loaded;
   ChipJsonDomain? get lastChangedDomain => _lastChangedDomain;
@@ -160,11 +162,11 @@ class ChipJsonRepository extends ChangeNotifier {
   /// 尝试从后端拉取全部 chips JSON 并填充 `_records`。
   /// 成功返回 true（同时置 `_backendActive=true`），否则返回 false。
   Future<bool> _tryLoadFromBackend() async {
-    final files = await ChipBackendClient.instance.fetchFiles();
-    if (files == null || files.isEmpty) return false;
+    final snapshot = await ChipBackendClient.instance.fetchFiles();
+    if (snapshot == null || snapshot.files.isEmpty) return false;
     try {
       for (final domain in ChipJsonDomain.values) {
-        final records = _recordsFromBackendFiles(domain, files);
+        final records = _recordsFromBackendFiles(domain, snapshot.files);
         if (records == null) continue;
         _records[domain]!
           ..clear()
@@ -173,6 +175,7 @@ class ChipJsonRepository extends ChangeNotifier {
       for (final domain in ChipJsonDomain.values) {
         _applyDomain(domain);
       }
+      _backendRevision = snapshot.revision;
       _backendActive = true;
       return true;
     } catch (e, st) {
@@ -251,8 +254,24 @@ class ChipJsonRepository extends ChangeNotifier {
   /// 后端不可用时抛异常，调用方负责提示用户「未落地」。
   Future<void> pushToBackend({ChipJsonDomain? only}) async {
     final files = exportFiles(only: only);
-    await ChipBackendClient.instance.saveFiles(files);
-    _backendActive = true;
+    try {
+      final actor = (await AdminSessionStore.instance.loadActor()).trim();
+      _backendRevision = await ChipBackendClient.instance.saveFiles(
+        files,
+        baseRevision: _backendRevision,
+        actor: actor.isEmpty ? 'unknown' : actor,
+        domain: only?.key,
+      );
+      _backendActive = true;
+    } on ChipSaveConflict {
+      if (await _tryLoadFromBackend()) {
+        _loaded = true;
+        _lastChangedDomain = null;
+        _revision++;
+        notifyListeners();
+      }
+      rethrow;
+    }
   }
 
   Future<List<ChipJsonRecord>> _loadDomain(
@@ -594,7 +613,7 @@ class ChipJsonRepository extends ChangeNotifier {
     // 失败不在此处抛出（无 UI 上下文），由显式 Save/Sync/Reset 负责报错。
     if (_backendActive) {
       unawaited(
-        ChipBackendClient.instance.saveFiles(exportFiles(only: domain)).catchError(
+        pushToBackend(only: domain).catchError(
           (Object e) => debugPrint('[ChipJsonRepository] backend sync: $e'),
         ),
       );

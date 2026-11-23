@@ -1,5 +1,12 @@
 # Task Log
 
+### 2026-11-23 - NewPlan P3 管理员并发保护 + 操作人
+- **Type**: feature / concurrency
+- **Scope**: `tool/chip_server/bin/server.dart`、`services/chip_{backend_client,json_repository}.dart`、`services/admin_session_store.dart`、`pages/admin_page.dart`、`l10n` 及 P3 状态文档。
+- **Reason**: 执行 `docs/NewPlan/02_AI_Coding_Prompts.md` 的 P3，避免两个管理员基于同一版本保存时互相覆盖，并让 Git 提交作者对应真实操作人。
+- **Change**: POST 按 `baseRevision` 对域内文件执行 base/current/new 的 JSON 深度比较，逐文件跳过未改或相同改动，冲突时写盘前返回 409；成功仅写实际变化并返回新 revision，非提交模式在 Git 工作区复用检查。Flutter 获取/携带/更新 revision，自动与显式保存均带 actor/domain，409 后复用后端加载刷新；登录增加必填操作人并以 `admin_actor_name_v1` 记住，Save/Reset/Excel Sync 增加 zh/en 冲突提示。
+- **Verification**: `flutter analyze` 0 issue；`dart compile exe` 通过；临时 Git 仓库真实 HTTP 验证同文件 409 原子性、不同文件连续保存、alice/bob 作者及 JSON 格式无关相等均通过；`git diff --check` 通过。`flutter test --concurrency=1` 卡在 `ble_admin_preview_test.dart` 加载阶段后停止，未获得测试结果。未访问真实服务器、未部署，浏览器双窗口手工验收未执行。
+
 ### 2026-11-23 - NewPlan P2 服务器芯片数据同步
 - **Type**: feature / test
 - **Scope**: 新增 `sync_from_server.py`、`tool/tests/test_sync.py`；更新 `docs/ai/current-focus.md`、`.ai/memory.md`、`docs/NewPlan/01_芯片数据GitOps架构与路线.md`。

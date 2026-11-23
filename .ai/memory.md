@@ -52,6 +52,7 @@
 
 - [事实] `/admin` 为密钥登录管理界面，密钥常量在 `lib/main.dart` 的 `adminSecretKey`，默认值 `admin`；芯片编辑统一走 `lib/services/chip_json_repository.dart`，支持对象字段展开、自定义字段保留和按当前列表顺序导出 `index.json`。
 - [事实] `/admin` 登录态由 `lib/services/admin_session_store.dart` 通过 `shared_preferences` 持久化；刷新页面保持已登录，点击 Logout 会清除本地登录态。
+- [事实] admin 操作人以 `admin_actor_name_v1` 持久化并作为 Git 作者；`ChipJsonRepository` 保存后端 revision，409 时刷新后端数据并向页面抛 `ChipSaveConflict`。
 
 ### 外部参照 · Nordic OPP（2026-11-16 反推，详见 task-log 同日）
 - [事实] Nordic OPP(BLE) 无开源、Azure 后端计算；`POST power-profiler.azurewebsites.net/profiler/content/?prot=ble` 返回全精度分段波形，可作我方模型校准/数值验证基准。
@@ -301,6 +302,7 @@
 
 ## 6. Progress · 高价值里程碑
 
+- [事实] 2026-11-23 · NewPlan P3 完成：POST 按 baseRevision 逐文件深度比较并原子返回 409；Flutter 保存/刷新 revision，操作人进入 Git 作者；临时仓库 HTTP 集成验证通过，未部署。
 - [事实] 2026-11-23 · NewPlan P2 完成：`sync_from_server.py` 支持 fetch/merge、dry-run/check 与冲突退出码 2；临时本地远端 3 项 unittest 通过，未访问真实服务器。
 - [事实] 2026-11-23 · NewPlan P1 完成：admin 后端支持 Git 提交/revision，发布改为 Git 推送且不再覆盖 chips；临时仓库集成验证通过，未实际部署。
 - [事实] 2026-11-19 · Admin BLE 支持草稿驱动的图表/KPI 实时预览及图表选阶段编辑，User/Admin 共用功耗计算入口，预览不落库。
