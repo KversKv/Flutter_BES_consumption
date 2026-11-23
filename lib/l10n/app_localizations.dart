@@ -369,6 +369,25 @@ class AppLocalizations {
           'Use Export all JSON after editing, then replace assets/data/chips/ with the exported files.',
       'admin_heat_hint':
           'Visit heat is reserved for future instrumentation. No telemetry is collected in this demo.',
+      'admin_ble_preview': 'Live power preview',
+      'admin_ble_preview_scenario': 'Preview scenario',
+      'admin_ble_preview_hint':
+          'Changes update the preview immediately and are stored only when you press Save.',
+      'admin_ble_preview_invalid':
+          'Invalid draft input. Showing the last valid preview.',
+      'admin_ble_preview_unavailable':
+          'The current draft cannot generate a preview.',
+      'admin_ble_json_fields': 'JSON fields',
+      'admin_ble_stage_editor': 'Edit selected phase',
+      'admin_ble_stage_hint':
+          'Select a phase in the chart or legend to edit its parameters.',
+      'admin_ble_stage_no_fields':
+          'No editable chip fields are mapped to this phase.',
+      'admin_ble_stage_shared':
+          'Shared parameter: changes also affect other phases.',
+      'admin_ble_stage_derived':
+          'Duration is derived from the scenario. Edit the related scenario controls above.',
+      'kpi_days_unit': 'days',
       'chart_hide_sleep_gaps': 'Hide sleep/gaps',
       'chart_timeline_compressed': 'Timeline: compressed view (sleep hidden)',
       'chart_timeline_full': 'Timeline: full period view',
@@ -723,6 +742,18 @@ class AppLocalizations {
       'admin_export_all': '导出全部 JSON',
       'admin_ops_hint': '编辑后使用“导出全部 JSON”，再用导出的文件覆盖 assets/data/chips/。',
       'admin_heat_hint': '访问热度预留给后续埋点；当前 Demo 不采集遥测数据。',
+      'admin_ble_preview': '实时功耗预览',
+      'admin_ble_preview_scenario': '预览场景',
+      'admin_ble_preview_hint': '修改会即时更新预览，点击 Save 后才会保存。',
+      'admin_ble_preview_invalid': '草稿输入无效，当前显示最近一次有效预览。',
+      'admin_ble_preview_unavailable': '当前草稿无法生成预览。',
+      'admin_ble_json_fields': 'JSON 字段',
+      'admin_ble_stage_editor': '编辑选中阶段',
+      'admin_ble_stage_hint': '点击图表或图例中的阶段以编辑参数。',
+      'admin_ble_stage_no_fields': '该阶段没有可编辑的芯片字段。',
+      'admin_ble_stage_shared': '共享参数：修改会同时影响其他阶段。',
+      'admin_ble_stage_derived': '该时长由场景参数计算，请修改上方场景控件。',
+      'kpi_days_unit': '天',
       'chart_hide_sleep_gaps': '隐藏睡眠/空隙',
       'chart_timeline_compressed': '时间轴：压缩视图（睡眠已隐藏）',
       'chart_timeline_full': '时间轴：完整周期视图',
@@ -1107,6 +1138,18 @@ class AppLocalizations {
   String get adminExportAll => _t('admin_export_all');
   String get adminOpsHint => _t('admin_ops_hint');
   String get adminHeatHint => _t('admin_heat_hint');
+  String get adminBlePreview => _t('admin_ble_preview');
+  String get adminBlePreviewScenario => _t('admin_ble_preview_scenario');
+  String get adminBlePreviewHint => _t('admin_ble_preview_hint');
+  String get adminBlePreviewInvalid => _t('admin_ble_preview_invalid');
+  String get adminBlePreviewUnavailable => _t('admin_ble_preview_unavailable');
+  String get adminBleJsonFields => _t('admin_ble_json_fields');
+  String get adminBleStageEditor => _t('admin_ble_stage_editor');
+  String get adminBleStageHint => _t('admin_ble_stage_hint');
+  String get adminBleStageNoFields => _t('admin_ble_stage_no_fields');
+  String get adminBleStageShared => _t('admin_ble_stage_shared');
+  String get adminBleStageDerived => _t('admin_ble_stage_derived');
+  String get kpiDaysUnit => _t('kpi_days_unit');
 
   String get chartHideSleepGaps => _t('chart_hide_sleep_gaps');
   String get chartTimelineCompressed => _t('chart_timeline_compressed');

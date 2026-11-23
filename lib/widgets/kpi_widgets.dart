@@ -6,18 +6,46 @@ import '../state/bt_state.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
-class _KPI extends StatelessWidget {
+class KpiMetric {
   final String title;
   final String value;
   final IconData icon;
   final Color? accent;
 
-  const _KPI({
+  const KpiMetric({
     required this.title,
     required this.value,
     required this.icon,
     this.accent,
   });
+}
+
+class KpiRow extends StatelessWidget {
+  final List<KpiMetric> metrics;
+
+  const KpiRow({super.key, required this.metrics});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
+      child: Wrap(
+        spacing: AppSpacing.x3,
+        runSpacing: AppSpacing.x3,
+        children: metrics.map((metric) => KpiTile(metric: metric)).toList(),
+      ),
+    );
+  }
+}
+
+class KpiTile extends StatelessWidget {
+  final KpiMetric metric;
+
+  const KpiTile({super.key, required this.metric});
+  String get title => metric.title;
+  String get value => metric.value;
+  IconData get icon => metric.icon;
+  Color? get accent => metric.accent;
 
   @override
   Widget build(BuildContext context) {
@@ -111,58 +139,53 @@ class KPIRowAppState extends StatelessWidget {
     final days = hours / 24.0;
     final palette = AppPalette.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
-      child: Wrap(
-        spacing: AppSpacing.x3,
-        runSpacing: AppSpacing.x3,
-        children: [
-          _KPI(
-            title: AppLocalizations.of(context).kpiPeriod,
-            value: '${app.period_ms.toStringAsFixed(1)} ms',
-            icon: Icons.timelapse,
+    return KpiRow(
+      metrics: [
+        KpiMetric(
+          title: AppLocalizations.of(context).kpiPeriod,
+          value: '${app.period_ms.toStringAsFixed(1)} ms',
+          icon: Icons.timelapse,
+          accent: palette.info,
+        ),
+        KpiMetric(
+          title: AppLocalizations.of(context).kpiAvgCurrent,
+          value: app.formatCurrentAuto(avg),
+          icon: Icons.bolt,
+          accent: palette.accent,
+        ),
+        KpiMetric(
+          title: AppLocalizations.of(context).kpiSleepCurrent,
+          value: '${app.sleepCurrent_uA.toStringAsFixed(2)} uA',
+          icon: Icons.bedtime,
+          accent: palette.textSecondary,
+        ),
+        KpiMetric(
+          title: AppLocalizations.of(context).kpiBatteryLifeEst,
+          value: '${days.isFinite ? days.toStringAsFixed(1) : '--'} ${AppLocalizations.of(context).kpiDaysUnit}',
+          icon: Icons.battery_full,
+          accent: palette.success,
+        ),
+        KpiMetric(
+          title: AppLocalizations.of(context).kpiPeakCurrent,
+          value: '${app.maxCurrent_mA.toStringAsFixed(2)} mA',
+          icon: Icons.signal_cellular_alt,
+          accent: palette.warning,
+        ),
+        if (app.useNordicModel) ...[
+          KpiMetric(
+            title: AppLocalizations.of(context).kpiEventCharge,
+            value: '${app.eventCharge_uC.toStringAsFixed(2)} µC',
+            icon: Icons.electric_meter,
             accent: palette.info,
           ),
-          _KPI(
-            title: AppLocalizations.of(context).kpiAvgCurrent,
-            value: app.formatCurrentAuto(avg),
-            icon: Icons.bolt,
+          KpiMetric(
+            title: AppLocalizations.of(context).kpiTxThroughput,
+            value: '${(app.txThroughput_bps / 1000).toStringAsFixed(2)} kbps',
+            icon: Icons.speed,
             accent: palette.accent,
           ),
-          _KPI(
-            title: AppLocalizations.of(context).kpiSleepCurrent,
-            value: '${app.sleepCurrent_uA.toStringAsFixed(2)} uA',
-            icon: Icons.bedtime,
-            accent: palette.textSecondary,
-          ),
-          _KPI(
-            title: AppLocalizations.of(context).kpiBatteryLifeEst,
-            value: '${days.isFinite ? days.toStringAsFixed(1) : '--'} 天',
-            icon: Icons.battery_full,
-            accent: palette.success,
-          ),
-          _KPI(
-            title: AppLocalizations.of(context).kpiPeakCurrent,
-            value: '${app.maxCurrent_mA.toStringAsFixed(2)} mA',
-            icon: Icons.signal_cellular_alt,
-            accent: palette.warning,
-          ),
-          if (app.useNordicModel) ...[
-            _KPI(
-              title: AppLocalizations.of(context).kpiEventCharge,
-              value: '${app.eventCharge_uC.toStringAsFixed(2)} µC',
-              icon: Icons.electric_meter,
-              accent: palette.info,
-            ),
-            _KPI(
-              title: AppLocalizations.of(context).kpiTxThroughput,
-              value: '${(app.txThroughput_bps / 1000).toStringAsFixed(2)} kbps',
-              icon: Icons.speed,
-              accent: palette.accent,
-            ),
-          ],
         ],
-      ),
+      ],
     );
   }
 }
@@ -178,38 +201,33 @@ class KPIRowSniffing extends StatelessWidget {
     final days = hours / 24.0;
     final palette = AppPalette.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
-      child: Wrap(
-        spacing: AppSpacing.x3,
-        runSpacing: AppSpacing.x3,
-        children: [
-          _KPI(
-            title: AppLocalizations.of(context).kpiPeriod,
-            value: '${st.period_ms.toStringAsFixed(1)} ms',
-            icon: Icons.timelapse,
-            accent: palette.info,
-          ),
-          _KPI(
-            title: AppLocalizations.of(context).kpiAvgCurrent,
-            value: st.formatCurrentAuto(avg),
-            icon: Icons.bolt,
-            accent: palette.accent,
-          ),
-          _KPI(
-            title: AppLocalizations.of(context).kpiBatteryLifeEst,
-            value: '${days.isFinite ? days.toStringAsFixed(1) : '--'} 天',
-            icon: Icons.battery_full,
-            accent: palette.success,
-          ),
-          _KPI(
-            title: AppLocalizations.of(context).kpiPeakCurrent,
-            value: '${st.maxCurrent_mA.toStringAsFixed(2)} mA',
-            icon: Icons.signal_cellular_alt,
-            accent: palette.warning,
-          ),
-        ],
-      ),
+    return KpiRow(
+      metrics: [
+        KpiMetric(
+          title: AppLocalizations.of(context).kpiPeriod,
+          value: '${st.period_ms.toStringAsFixed(1)} ms',
+          icon: Icons.timelapse,
+          accent: palette.info,
+        ),
+        KpiMetric(
+          title: AppLocalizations.of(context).kpiAvgCurrent,
+          value: st.formatCurrentAuto(avg),
+          icon: Icons.bolt,
+          accent: palette.accent,
+        ),
+        KpiMetric(
+          title: AppLocalizations.of(context).kpiBatteryLifeEst,
+          value: '${days.isFinite ? days.toStringAsFixed(1) : '--'} ${AppLocalizations.of(context).kpiDaysUnit}',
+          icon: Icons.battery_full,
+          accent: palette.success,
+        ),
+        KpiMetric(
+          title: AppLocalizations.of(context).kpiPeakCurrent,
+          value: '${st.maxCurrent_mA.toStringAsFixed(2)} mA',
+          icon: Icons.signal_cellular_alt,
+          accent: palette.warning,
+        ),
+      ],
     );
   }
 }

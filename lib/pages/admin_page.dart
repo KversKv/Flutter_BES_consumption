@@ -5,12 +5,17 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/ble_chip.dart';
+import '../models/power_event.dart';
+import '../models/profile_params.dart';
 import '../services/admin_session_store.dart';
 import '../services/chip_json_repository.dart';
 import '../services/chips_export_service.dart';
 import '../services/noisepink_sync_service.dart';
+import '../services/power_calculator.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
+import '../widgets/ble_admin_preview.dart';
 
 class AdminPage extends StatefulWidget {
   final String secretKey;
@@ -680,8 +685,7 @@ class _EarbudsAdminTab extends StatelessWidget {
             child: Container(
               alignment: Alignment.centerLeft,
               decoration: BoxDecoration(
-                border:
-                    Border(bottom: BorderSide(color: palette.borderSubtle)),
+                border: Border(bottom: BorderSide(color: palette.borderSubtle)),
               ),
               child: TabBar(
                 isScrollable: true,
@@ -955,8 +959,8 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
       return;
     }
 
-    final result = await ChipJsonRepository.instance
-        .syncEarbudsNoisePinkDetail(details);
+    final result =
+        await ChipJsonRepository.instance.syncEarbudsNoisePinkDetail(details);
 
     String? saveError;
     if (result.matched.isNotEmpty) {
@@ -1002,7 +1006,8 @@ class _DomainAdminTabState extends State<_DomainAdminTab> {
     } catch (e, st) {
       debugPrint('[admin] sync excel dialog failed: $e\n$st');
       messenger.showSnackBar(
-        SnackBar(content: Text('$summary${saveLine == null ? '' : '\n$saveLine'}')),
+        SnackBar(
+            content: Text('$summary${saveLine == null ? '' : '\n$saveLine'}')),
       );
     }
   }
@@ -1486,6 +1491,13 @@ class _FieldSection {
   const _FieldSection(this.category, this.indexes);
 }
 
+class _BleStageFieldSpec {
+  final List<String> path;
+  final bool shared;
+
+  const _BleStageFieldSpec(this.path, {this.shared = false});
+}
+
 class _JsonRecordEditor extends StatefulWidget {
   final ChipJsonDomain domain;
   final ChipJsonRecord record;
@@ -1505,12 +1517,42 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
   String? _error;
   int? _editingIndex;
 
+  late ProfileParams _previewParams;
+  bool _previewUseNordicModel = true;
+  bool _previewHideLowPowerGaps = true;
+  bool _previewInvalid = false;
+  double _previewBatteryCapacityMah = 220;
+  HdtModule _previewHdtModule = HdtModule.sink;
+  String _previewHdtBand = '2.4G';
+  BleChip? _previewChip;
+  BleCalculationResult? _previewResult;
+  String? _selectedStageId;
+
   @override
   void initState() {
     super.initState();
     _fields = widget.record.data.entries
         .map((entry) => _fieldFromValue(entry.key, entry.value))
         .toList();
+    var initialTx = 0.0;
+    try {
+      final levels = BleChip.fromJson(widget.record.data).txPowerLevelsDbm;
+      initialTx = levels.firstWhere(
+        (level) => level == 0,
+        orElse: () => levels.isEmpty ? 0 : levels.first,
+      );
+    } catch (_) {
+      // The preview error is handled by _refreshPreview.
+    }
+    _previewParams = ProfileParams(
+      mode: Mode.bleConnectionPeripheral,
+      phy: Phy.le1M,
+      txPowerDbm: initialTx,
+      advIntervalMs: 100,
+      connIntervalMs: 200,
+      payloadBytes: 3,
+    );
+    if (widget.domain == ChipJsonDomain.ble) _refreshPreview();
   }
 
   @override
@@ -1560,26 +1602,37 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final wide = constraints.maxWidth >= 960;
-                if (wide) {
-                  return SingleChildScrollView(
+                if (widget.domain != ChipJsonDomain.ble) {
+                  if (wide) {
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(AppSpacing.x4),
+                      child: _buildGrid(t, sections, crossAxisCount: 2),
+                    );
+                  }
+                  return ListView.builder(
                     padding: const EdgeInsets.all(AppSpacing.x4),
-                    child: _buildGrid(t, sections, crossAxisCount: 2),
+                    itemCount: sections.length,
+                    itemBuilder: (context, sectionIndex) {
+                      final section = sections[sectionIndex];
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom: sectionIndex == sections.length - 1
+                              ? 0
+                              : AppSpacing.x4,
+                        ),
+                        child: _buildCategoryCard(t, section),
+                      );
+                    },
                   );
                 }
-                return ListView.builder(
+
+                return Padding(
                   padding: const EdgeInsets.all(AppSpacing.x4),
-                  itemCount: sections.length,
-                  itemBuilder: (context, sectionIndex) {
-                    final section = sections[sectionIndex];
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        bottom: sectionIndex == sections.length - 1
-                            ? 0
-                            : AppSpacing.x4,
-                      ),
-                      child: _buildCategoryCard(t, section),
-                    );
-                  },
+                  child: _buildBlePreview(
+                    t,
+                    sections,
+                    crossAxisCount: wide ? 2 : 1,
+                  ),
                 );
               },
             ),
@@ -1587,6 +1640,410 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
         ),
       ],
     );
+  }
+
+  Widget _buildBlePreview(
+    AppLocalizations t,
+    List<_FieldSection> sections, {
+    required int crossAxisCount,
+  }) {
+    final chip = _previewChip;
+    final result = _previewResult;
+    if (chip == null || result == null) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.x4),
+          child: Text(t.adminBlePreviewUnavailable),
+        ),
+      );
+    }
+
+    PowerEvent? selectedEvent;
+    for (final event in result.events) {
+      if (event.stageId == _selectedStageId) {
+        selectedEvent = event;
+        break;
+      }
+    }
+
+    return BleAdminPreview(
+      chip: chip,
+      params: _previewParams,
+      result: result,
+      useNordicModel: _previewUseNordicModel,
+      hideLowPowerGaps: _previewHideLowPowerGaps,
+      hasPreviewError: _previewInvalid,
+      batteryCapacityMah: _previewBatteryCapacityMah,
+      hdtModule: _previewHdtModule,
+      hdtBand: _previewHdtBand,
+      selectedStageId: _selectedStageId,
+      stageFields: selectedEvent == null
+          ? const []
+          : _stageFieldsFor(selectedEvent, chip),
+      selectedStageHasDerivedTiming:
+          selectedEvent != null && _hasDerivedTiming(selectedEvent),
+      parameterEditor: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.x3),
+            child: Text(
+              t.adminBleJsonFields,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ),
+          _buildGrid(t, sections, crossAxisCount: crossAxisCount),
+        ],
+      ),
+      onParamsChanged: (value) => _updatePreview(() => _previewParams = value),
+      onUseNordicModelChanged: (value) => _updatePreview(() {
+        _previewUseNordicModel = value;
+        if (!value) {
+          _previewParams.payloadBytes =
+              _previewParams.payloadBytes.clamp(0, 251);
+        }
+      }),
+      onHideLowPowerGapsChanged: (value) =>
+          setState(() => _previewHideLowPowerGaps = value),
+      onBatteryCapacityChanged: (value) =>
+          setState(() => _previewBatteryCapacityMah = value),
+      onHdtModuleChanged: (value) =>
+          _updatePreview(() => _previewHdtModule = value),
+      onHdtBandChanged: (value) =>
+          _updatePreview(() => _previewHdtBand = value),
+      onEventTap: (event) => setState(() {
+        _selectedStageId = event.stageId;
+        _editingIndex = null;
+      }),
+      onStageFieldChanged: (path, value) =>
+          _updatePreview(() => _setDraftValue(path, value)),
+    );
+  }
+
+  void _updatePreview(VoidCallback update) {
+    setState(() {
+      update();
+      _refreshPreview();
+    });
+  }
+
+  void _refreshPreview() {
+    if (widget.domain != ChipJsonDomain.ble) return;
+    try {
+      _validateNumericDrafts(_fields);
+      final chip = BleChip.fromJson(_draftData());
+      if (!chip.supportsHDT && _previewParams.mode == Mode.hdt) {
+        final params = _copyPreviewParams();
+        params.mode = Mode.bleConnectionPeripheral;
+        _previewParams = params;
+      }
+      final result = PowerCalculator.calculateBle(
+        chip: chip,
+        params: _previewParams,
+        useNordicModel: _previewUseNordicModel,
+        hdtModule: _previewHdtModule,
+        hdtBand: _previewHdtBand,
+      );
+      if (!_isValidPreview(result)) throw const FormatException();
+      _previewChip = chip;
+      _previewResult = result;
+      _previewInvalid = false;
+      if (_selectedStageId != null &&
+          !result.events.any((event) => event.stageId == _selectedStageId)) {
+        _selectedStageId = null;
+      }
+    } catch (_) {
+      _previewInvalid = true;
+    }
+  }
+
+  ProfileParams _copyPreviewParams() {
+    return ProfileParams(
+      mode: _previewParams.mode,
+      phy: _previewParams.phy,
+      txPowerDbm: _previewParams.txPowerDbm,
+      advIntervalMs: _previewParams.advIntervalMs,
+      connIntervalMs: _previewParams.connIntervalMs,
+      payloadBytes: _previewParams.payloadBytes,
+      rxPayloadBytes: _previewParams.rxPayloadBytes,
+      dle: _previewParams.dle,
+      eventLengthExt: _previewParams.eventLengthExt,
+      slaveLatency: _previewParams.slaveLatency,
+      centralPpm: _previewParams.centralPpm,
+      peripheralPpm: _previewParams.peripheralPpm,
+      lfRc: _previewParams.lfRc,
+    );
+  }
+
+  static void _validateNumericDrafts(List<_FieldDraft> fields) {
+    for (final field in fields) {
+      if (field.type == _FieldType.number) {
+        final value = num.tryParse(field.value.trim());
+        if (value == null || !value.isFinite) throw const FormatException();
+      }
+      if (field.children.isNotEmpty) _validateNumericDrafts(field.children);
+    }
+  }
+
+  static bool _isValidPreview(BleCalculationResult result) {
+    if (!result.periodUs.isFinite || result.periodUs <= 0) return false;
+    for (final event in result.events) {
+      if (!event.startUs.isFinite ||
+          !event.durationUs.isFinite ||
+          !event.currentMa.isFinite ||
+          event.startUs < 0 ||
+          event.durationUs < 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Map<String, dynamic> _draftData() {
+    final data = <String, dynamic>{};
+    for (final field in _fields) {
+      final name = field.name.trim();
+      if (name.isEmpty) continue;
+      data[name] = _valueFromField(field);
+    }
+    return data;
+  }
+
+  bool _hasDerivedTiming(PowerEvent event) {
+    return event.label == 'TX' ||
+        event.label == 'TX + CPU' ||
+        event.label == 'RX' ||
+        event.label == 'Post' ||
+        event.label == 'Window widening' ||
+        event.label == 'HDT RX' ||
+        event.label == 'HDT TX' ||
+        event.label.endsWith(' TX') ||
+        (event.label == 'ADV_GAP' && _previewUseNordicModel);
+  }
+
+  List<BleAdminStageField> _stageFieldsFor(
+    PowerEvent event,
+    BleChip chip,
+  ) {
+    final fields = <BleAdminStageField>[];
+    for (final spec in _stageFieldSpecs(event, chip)) {
+      final value = _draftValueAt(spec.path);
+      if (value == null) continue;
+      fields.add(BleAdminStageField(
+        path: spec.path,
+        value: value,
+        shared: spec.shared,
+      ));
+    }
+    return fields;
+  }
+
+  List<_BleStageFieldSpec> _stageFieldSpecs(
+    PowerEvent event,
+    BleChip chip,
+  ) {
+    final id = event.stageId ?? '';
+    if (id.startsWith('hdt.rx')) {
+      return [_hdtRxSpec(chip)];
+    }
+    if (id.startsWith('hdt.tx')) {
+      final spec = _txSpec(chip);
+      return spec == null ? const [] : [spec];
+    }
+    if (id.startsWith('hdt.idle')) {
+      return [
+        const _BleStageFieldSpec(['hdtIdleCurrent_mA'], shared: true)
+      ];
+    }
+    if (id == 'setup.preProcess') {
+      return const [
+        _BleStageFieldSpec(['preProcess_us']),
+        _BleStageFieldSpec(['preProcessCurrent_mA']),
+      ];
+    }
+    if (id == 'setup.crystalRampUp') {
+      return const [
+        _BleStageFieldSpec(['crystalRampUp_us']),
+        _BleStageFieldSpec(['crystalRampUpCurrent_mA']),
+      ];
+    }
+    if (id == 'setup.standby') {
+      return const [
+        _BleStageFieldSpec(['standby_us']),
+        _BleStageFieldSpec(['standbyCurrent_mA'], shared: true),
+      ];
+    }
+    if (id == 'tail.standby') {
+      return const [
+        _BleStageFieldSpec(['tailStandby_us']),
+        _BleStageFieldSpec(['standbyCurrent_mA'], shared: true),
+      ];
+    }
+    if (id.startsWith('radio.start')) {
+      return const [
+        _BleStageFieldSpec(['startRadio_us']),
+        _BleStageFieldSpec(['startRadioCurrent_mA']),
+      ];
+    }
+    if (id == 'post') {
+      return const [
+        _BleStageFieldSpec(['postProcess_us']),
+        _BleStageFieldSpec(['postCurrent_mA'], shared: true),
+      ];
+    }
+    if (id == 'sleep') {
+      return const [
+        _BleStageFieldSpec(['sleepCurrent_uA'])
+      ];
+    }
+    if (event.label == 'Window widening') {
+      return const [
+        _BleStageFieldSpec(['rxCurrent_mA'], shared: true)
+      ];
+    }
+    if (event.label == 'TIFS') {
+      return [
+        const _BleStageFieldSpec(['tifs_us']),
+        if (id.endsWith('.rx'))
+          const _BleStageFieldSpec(['rxCurrent_mA'], shared: true)
+        else
+          const _BleStageFieldSpec(['tifsCurrent_mA'], shared: true),
+      ];
+    }
+    if (event.label == 'RX') {
+      return [
+        const _BleStageFieldSpec(['rxCurrent_mA'], shared: true),
+        if (!_previewUseNordicModel &&
+            (_previewParams.mode == Mode.bleConnectionCentral ||
+                _previewParams.mode == Mode.bleConnectionPeripheral))
+          const _BleStageFieldSpec(['rxWindow_us']),
+      ];
+    }
+    if (event.label == 'TX + CPU') {
+      return [
+        if (_txSpec(chip) != null) _txSpec(chip)!,
+        const _BleStageFieldSpec(['postCurrent_mA'], shared: true),
+      ];
+    }
+    if (event.label == 'TX' || (id.startsWith('adv.') && id.endsWith('.tx'))) {
+      final spec = _txSpec(chip);
+      return spec == null ? const [] : [spec];
+    }
+    if (event.label == 'ADV_GAP') {
+      return [
+        if (!_previewUseNordicModel) const _BleStageFieldSpec(['advGap_us']),
+        const _BleStageFieldSpec(['advGapCurrent_mA'], shared: true),
+      ];
+    }
+    return const [];
+  }
+
+  _BleStageFieldSpec _hdtRxSpec(BleChip chip) {
+    if (chip.rxCurrentByBand?.containsKey(_previewHdtBand) ?? false) {
+      return _BleStageFieldSpec(
+        ['rxCurrentByBand', _previewHdtBand],
+        shared: true,
+      );
+    }
+    return const _BleStageFieldSpec(['rxCurrent_mA'], shared: true);
+  }
+
+  _BleStageFieldSpec? _txSpec(BleChip chip) {
+    final bandMap = _previewParams.mode == Mode.hdt
+        ? (chip.txCurrentByBand?[_previewHdtBand])
+        : null;
+    final values =
+        bandMap == null || bandMap.isEmpty ? chip.txCurrent_mA_forDbm : bandMap;
+    if (values.isEmpty) return null;
+    final parent = bandMap == null || bandMap.isEmpty
+        ? <String>['txCurrent_mA_forDbm']
+        : <String>['txCurrentByBand', _previewHdtBand];
+    final target = _closestLevel(values.keys, _previewParams.txPowerDbm);
+    final key = _numericDraftKey(parent, target);
+    return _BleStageFieldSpec([...parent, key], shared: true);
+  }
+
+  static double _closestLevel(Iterable<double> levels, double target) {
+    var closest = levels.first;
+    for (final level in levels) {
+      if ((level - target).abs() < (closest - target).abs()) closest = level;
+    }
+    return closest;
+  }
+
+  String _numericDraftKey(List<String> parent, double key) {
+    final decimal = key.toString();
+    if (_draftValueAt([...parent, decimal]) != null) return decimal;
+    final integer = key.toStringAsFixed(0);
+    if (_draftValueAt([...parent, integer]) != null) return integer;
+    return decimal;
+  }
+
+  String? _draftValueAt(List<String> path) {
+    if (path.isEmpty) return null;
+    for (final field in _fields) {
+      if (field.name == path.first) {
+        return _valueAtPath(field, path.sublist(1));
+      }
+    }
+    return null;
+  }
+
+  static String? _valueAtPath(_FieldDraft field, List<String> path) {
+    if (path.isEmpty) {
+      if (field.hasObjectChildren) return null;
+      return field.value;
+    }
+    if (field.children.isNotEmpty) {
+      for (final child in field.children) {
+        if (child.name == path.first) {
+          return _valueAtPath(child, path.sublist(1));
+        }
+      }
+      return null;
+    }
+    final raw = field.rawValue;
+    if (raw is! Map) return null;
+    dynamic value = raw;
+    for (final segment in path) {
+      if (value is! Map || !value.containsKey(segment)) return null;
+      value = value[segment];
+    }
+    return value == null || value is Map || value is List
+        ? null
+        : _formatValue(value);
+  }
+
+  void _setDraftValue(List<String> path, String value) {
+    if (path.isEmpty) return;
+    for (final field in _fields) {
+      if (field.name == path.first) {
+        _setValueAtPath(field, path.sublist(1), value);
+        return;
+      }
+    }
+  }
+
+  static void _setValueAtPath(
+    _FieldDraft field,
+    List<String> path,
+    String value,
+  ) {
+    if (path.isEmpty) {
+      field.value = value;
+      return;
+    }
+    if (field.children.isEmpty && field.rawValue is Map) {
+      _ensureChildren(field);
+    }
+    for (final child in field.children) {
+      if (child.name == path.first) {
+        _setValueAtPath(child, path.sublist(1), value);
+        return;
+      }
+    }
   }
 
   Widget _buildGrid(
@@ -1607,9 +2064,10 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
         rowChildren.add(const Expanded(child: SizedBox.shrink()));
       }
       rows.add(Padding(
-        padding:
-            EdgeInsets.only(bottom: i + crossAxisCount < sections.length ? AppSpacing.x4 : 0),
-        child: IntrinsicHeight(child: Row(
+        padding: EdgeInsets.only(
+            bottom: i + crossAxisCount < sections.length ? AppSpacing.x4 : 0),
+        child: IntrinsicHeight(
+            child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: rowChildren,
         )),
@@ -1635,7 +2093,10 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.x4, AppSpacing.x3, AppSpacing.x4, AppSpacing.x2,
+              AppSpacing.x4,
+              AppSpacing.x3,
+              AppSpacing.x4,
+              AppSpacing.x2,
             ),
             child: Text(
               _categoryTitle(t, section.category),
@@ -1647,10 +2108,18 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
           ),
           for (int i = 0; i < section.indexes.length; i++) ...[
             if (i > 0)
-              Divider(height: 1, color: palette.borderSubtle, indent: AppSpacing.x4, endIndent: AppSpacing.x4),
+              Divider(
+                  height: 1,
+                  color: palette.borderSubtle,
+                  indent: AppSpacing.x4,
+                  endIndent: AppSpacing.x4),
             _structuredFieldRow(t, section.indexes[i]),
           ],
-          Divider(height: 1, color: palette.borderSubtle, indent: AppSpacing.x4, endIndent: AppSpacing.x4),
+          Divider(
+              height: 1,
+              color: palette.borderSubtle,
+              indent: AppSpacing.x4,
+              endIndent: AppSpacing.x4),
           Padding(
             padding: const EdgeInsets.all(AppSpacing.x3),
             child: InkWell(
@@ -1728,7 +2197,7 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                     child: Switch(
                       value: field.value.trim().toLowerCase() == 'true',
                       onChanged: (v) {
-                        setState(() => field.value = v.toString());
+                        _updatePreview(() => field.value = v.toString());
                       },
                     ),
                   ),
@@ -1752,7 +2221,8 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
               IconButton(
                 tooltip: t.adminFieldEdit,
                 onPressed: () => setState(() => _editingIndex = index),
-                icon: Icon(Icons.edit_outlined, size: 18, color: palette.accent),
+                icon:
+                    Icon(Icons.edit_outlined, size: 18, color: palette.accent),
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 padding: EdgeInsets.zero,
                 splashRadius: 18,
@@ -1761,9 +2231,10 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                 tooltip: t.adminRemoveRow,
                 onPressed: () => _confirmRemoveField(
                   field.name,
-                  () => setState(() => _fields.removeAt(index)),
+                  () => _updatePreview(() => _fields.removeAt(index)),
                 ),
-                icon: Icon(Icons.delete_outline, size: 18, color: palette.danger),
+                icon:
+                    Icon(Icons.delete_outline, size: 18, color: palette.danger),
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 padding: EdgeInsets.zero,
                 splashRadius: 18,
@@ -1802,7 +2273,7 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                     prefixIcon: const Icon(Icons.label_outline, size: 18),
                     isDense: true,
                   ),
-                  onChanged: (v) => field.name = v,
+                  onChanged: (v) => _updatePreview(() => field.name = v),
                 ),
               ),
               const SizedBox(width: AppSpacing.x2),
@@ -1817,7 +2288,7 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                   items: _fieldTypeItems(t),
                   onChanged: (value) {
                     if (value == null) return;
-                    setState(() {
+                    _updatePreview(() {
                       field.type = value;
                       if (value != _FieldType.json) {
                         field.children = [];
@@ -1839,11 +2310,13 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
           if (field.type == _FieldType.boolean)
             Row(
               children: [
-                Text(t.adminFieldValue, style: Theme.of(context).textTheme.bodySmall),
+                Text(t.adminFieldValue,
+                    style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(width: AppSpacing.x2),
                 Switch(
                   value: field.value.trim().toLowerCase() == 'true',
-                  onChanged: (v) => setState(() => field.value = v.toString()),
+                  onChanged: (v) =>
+                      _updatePreview(() => field.value = v.toString()),
                 ),
               ],
             )
@@ -1857,7 +2330,7 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                 prefixIcon: const Icon(Icons.edit_note, size: 18),
                 isDense: true,
               ),
-              onChanged: (v) => field.value = v,
+              onChanged: (v) => _updatePreview(() => field.value = v),
             ),
           const SizedBox(height: AppSpacing.x2),
           Align(
@@ -1900,7 +2373,8 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.data_object_outlined, size: 16, color: palette.accent),
+                    Icon(Icons.data_object_outlined,
+                        size: 16, color: palette.accent),
                     const SizedBox(width: AppSpacing.x2),
                     Expanded(
                       child: Text(
@@ -1923,8 +2397,10 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                     IconButton(
                       tooltip: t.adminFieldEdit,
                       onPressed: () => _openObjectEditor(t, field),
-                      icon: Icon(Icons.edit_outlined, size: 16, color: palette.accent),
-                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      icon: Icon(Icons.edit_outlined,
+                          size: 16, color: palette.accent),
+                      constraints:
+                          const BoxConstraints(minWidth: 28, minHeight: 28),
                       padding: EdgeInsets.zero,
                       splashRadius: 16,
                     ),
@@ -1932,10 +2408,12 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                       tooltip: t.adminRemoveRow,
                       onPressed: () => _confirmRemoveField(
                         field.name,
-                        () => setState(() => _fields.removeAt(index)),
+                        () => _updatePreview(() => _fields.removeAt(index)),
                       ),
-                      icon: Icon(Icons.delete_outline, size: 16, color: palette.danger),
-                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      icon: Icon(Icons.delete_outline,
+                          size: 16, color: palette.danger),
+                      constraints:
+                          const BoxConstraints(minWidth: 28, minHeight: 28),
                       padding: EdgeInsets.zero,
                       splashRadius: 16,
                     ),
@@ -1987,7 +2465,9 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                     child: Text(
                       children[i].hasObjectChildren
                           ? '{...}'
-                          : (children[i].value.isEmpty ? '-' : children[i].value),
+                          : (children[i].value.isEmpty
+                              ? '-'
+                              : children[i].value),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -2016,7 +2496,7 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
 
   void _addFieldToCategory(_FieldCategory category) {
     final insertIndex = _findInsertIndex(category);
-    setState(() {
+    _updatePreview(() {
       _fields.insert(
         insertIndex,
         _FieldDraft(name: '', value: '', type: _FieldType.string),
@@ -2230,7 +2710,7 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                 hintText: t.adminFieldName,
                 isDense: true,
               ),
-              onChanged: (value) => field.name = value,
+              onChanged: (value) => mutate(() => field.name = value),
             ),
           ),
           const SizedBox(width: AppSpacing.x2),
@@ -2262,13 +2742,15 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                     onTap: () => _openObjectEditor(t, field),
                     child: Row(
                       children: [
-                        Icon(Icons.data_object_outlined, size: 14, color: palette.accent),
+                        Icon(Icons.data_object_outlined,
+                            size: 14, color: palette.accent),
                         const SizedBox(width: AppSpacing.x1),
                         Text(
                           '${field.childCount} fields',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: palette.accent,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: palette.accent,
+                                  ),
                         ),
                       ],
                     ),
@@ -2280,7 +2762,7 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
                       hintText: t.adminFieldValue,
                       isDense: true,
                     ),
-                    onChanged: (value) => field.value = value,
+                    onChanged: (value) => mutate(() => field.value = value),
                   ),
           ),
           const SizedBox(width: AppSpacing.x1),
@@ -2312,7 +2794,7 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
           builder: (context, setDialogState) {
             void mutateDialog(VoidCallback fn) {
               setDialogState(fn);
-              setState(() {});
+              setState(_refreshPreview);
             }
 
             return Dialog(
@@ -2377,11 +2859,11 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
         );
       },
     );
-    if (mounted) setState(() {});
+    if (mounted) setState(_refreshPreview);
   }
 
   void _addField() {
-    setState(() {
+    _updatePreview(() {
       _fields.add(_FieldDraft(
         name: 'customField',
         value: '',
@@ -2404,16 +2886,12 @@ class _JsonRecordEditorState extends State<_JsonRecordEditor> {
   Future<void> _save() async {
     final t = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final data = <String, dynamic>{};
-    for (final field in _fields) {
-      final name = field.name.trim();
-      if (name.isEmpty) continue;
-      try {
-        data[name] = _valueFromField(field);
-      } catch (_) {
-        setState(() => _error = t.adminBadJson);
-        return;
-      }
+    late final Map<String, dynamic> data;
+    try {
+      data = _draftData();
+    } catch (_) {
+      setState(() => _error = t.adminBadJson);
+      return;
     }
     final newId = (data['id'] ?? '').toString().trim();
     if (newId.isEmpty || newId == ChipJsonRepository.placeholderId) {
